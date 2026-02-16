@@ -1,13 +1,69 @@
-#!/usr/bin/env node
+#!/usr/bin/env npx tsx
 /**
- * OpenGFX Logo Pipeline v5 — Dynamic alignment via vision feedback
+ * OpenGFX Logo Pipeline v7 — Creative Director Mode
+ * TypeScript implementation
  */
 
-const { GoogleGenAI, Modality } = require("@google/genai");
-const sharp = require("sharp");
-const fs = require("fs");
-const path = require("path");
-const { createCanvas, registerFont } = require("canvas");
+import { GoogleGenAI, Modality } from "@google/genai";
+import sharp from "sharp";
+import * as fs from "fs";
+import * as path from "path";
+import { createCanvas, registerFont } from "canvas";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// ═══════════════════════════════════════════════════════════════════
+// TYPE DEFINITIONS
+// ═══════════════════════════════════════════════════════════════════
+
+type FontCategory = "sans-serif" | "serif" | "slab" | "script" | "monospace";
+type FontUse = "body" | "display" | "accent" | "code";
+
+interface FontConfig {
+  weights: number[];
+  category: FontCategory;
+  use: FontUse;
+}
+
+interface FontLibrary {
+  [fontName: string]: FontConfig;
+}
+
+interface BrandAnalysis {
+  explicitFont: string | null;
+  explicitWeight: number | null;
+  styleRequest: string | null;
+  brandVibe: string[];
+  recommendation: "library" | "generate";
+  recommendedFont: string | null;
+  recommendedWeight: number | null;
+  reasoning: string;
+}
+
+interface WordmarkOptions {
+  fontFamily: string | null;
+  fontWeight: number;
+}
+
+interface PipelineOptions {
+  fontOverride: string | null;
+  weightOverride: number | null;
+}
+
+interface LogoMetadata {
+  brand: string;
+  concept: string;
+  typography: {
+    method: "ai-generated" | "library";
+    font: string | null;
+    weight: number;
+  };
+  version: string;
+  generatedAt: string;
+  files: string[];
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // FONT LIBRARY REGISTRATION
@@ -15,8 +71,7 @@ const { createCanvas, registerFont } = require("canvas");
 
 const fontDir = path.join(__dirname, "..", "fonts");
 
-// Font library manifest
-const FONT_LIBRARY = {
+const FONT_LIBRARY: FontLibrary = {
   // ─── SANS-SERIF: Body/UI ───
   "Inter": { weights: [400, 500, 600, 700], category: "sans-serif", use: "body" },
   "Geist": { weights: [400, 500, 600, 700], category: "sans-serif", use: "body" },
@@ -55,7 +110,6 @@ const FONT_LIBRARY = {
 Object.entries(FONT_LIBRARY).forEach(([family, { weights }]) => {
   const filePrefix = family.replace(/ /g, "-");
   weights.forEach((weight) => {
-    // Try both naming conventions
     const paths = [
       path.join(fontDir, `${filePrefix}-${weight}.ttf`),
       path.join(fontDir, `${family.replace(/ /g, "")}-${weight}.ttf`),
@@ -69,7 +123,24 @@ Object.entries(FONT_LIBRARY).forEach(([family, { weights }]) => {
   });
 });
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Generate INSTALLED_FONTS map (kebab-case → family name)
+const INSTALLED_FONTS: Record<string, string> = Object.fromEntries(
+  Object.keys(FONT_LIBRARY).map((family) => [
+    family.toLowerCase().replace(/ /g, "-"),
+    family
+  ])
+);
+
+// ═══════════════════════════════════════════════════════════════════
+// GEMINI AI CLIENT
+// ═══════════════════════════════════════════════════════════════════
+
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  throw new Error("GEMINI_API_KEY environment variable is required");
+}
+
+const ai = new GoogleGenAI({ apiKey });
 const MODEL = "gemini-2.0-flash-exp-image-generation";
 const VISION_MODEL = "gemini-2.0-flash";
 
@@ -108,7 +179,7 @@ MONOSPACE (Code/Technical):
 - JetBrains Mono: Developer, technical docs (400-700)
 `;
 
-async function analyzeBrandIntent(brandName, concept) {
+async function analyzeBrandIntent(brandName: string, concept: string): Promise<BrandAnalysis> {
   console.log(`\n[BRAND ANALYSIS] Parsing intent...`);
   
   const prompt = `You are a senior creative director at a top branding agency. Analyze this brand request and decide the typography approach.
@@ -146,15 +217,23 @@ Respond in this EXACT JSON format (no markdown, no explanation):
       contents: prompt,
     });
     
-    const text = response.text.trim();
-    // Extract JSON from response (handle potential markdown wrapping)
+    const text = response.text?.trim() || "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.log(`      [warn] Could not parse analysis, defaulting to AI generation`);
-      return { recommendation: "generate", reasoning: "Parse error, using AI generation" };
+      return { 
+        explicitFont: null, 
+        explicitWeight: null, 
+        styleRequest: null, 
+        brandVibe: [], 
+        recommendation: "generate", 
+        recommendedFont: null, 
+        recommendedWeight: null, 
+        reasoning: "Parse error, using AI generation" 
+      };
     }
     
-    const analysis = JSON.parse(jsonMatch[0]);
+    const analysis: BrandAnalysis = JSON.parse(jsonMatch[0]);
     console.log(`      Vibe: ${analysis.brandVibe?.join(", ") || "unknown"}`);
     console.log(`      Decision: ${analysis.recommendation}`);
     if (analysis.recommendedFont) {
@@ -164,8 +243,18 @@ Respond in this EXACT JSON format (no markdown, no explanation):
     
     return analysis;
   } catch (err) {
-    console.log(`      [warn] Analysis failed: ${err.message}, defaulting to AI generation`);
-    return { recommendation: "generate", reasoning: "Analysis error, using AI generation" };
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.log(`      [warn] Analysis failed: ${message}, defaulting to AI generation`);
+    return { 
+      explicitFont: null, 
+      explicitWeight: null, 
+      styleRequest: null, 
+      brandVibe: [], 
+      recommendation: "generate", 
+      recommendedFont: null, 
+      recommendedWeight: null, 
+      reasoning: "Analysis error, using AI generation" 
+    };
   }
 }
 
@@ -213,45 +302,29 @@ CRITICAL: Preserve the EXACT capitalization provided.
 `;
 
 // ═══════════════════════════════════════════════════════════════════
-// PROGRAMMATIC WORDMARK RENDERING (using actual font)
+// PROGRAMMATIC WORDMARK RENDERING
 // ═══════════════════════════════════════════════════════════════════
 
-// Generate INSTALLED_FONTS map from FONT_LIBRARY (kebab-case → family name)
-const INSTALLED_FONTS = Object.fromEntries(
-  Object.keys(FONT_LIBRARY).map((family) => [
-    family.toLowerCase().replace(/ /g, "-"),
-    family
-  ])
-);
+function renderWordmark(brandName: string, outputPath: string, options: WordmarkOptions): string | null {
+  const { fontFamily, fontWeight = 600 } = options;
 
-function renderWordmark(brandName, outputPath, options = {}) {
-  const {
-    fontFamily = null,  // null = use AI-generated wordmark instead
-    fontWeight = 600,
-  } = options;
-
-  // If no font specified, return null to signal AI generation
   if (!fontFamily) {
     return null;
   }
 
-  // Canvas dimensions - wide rectangle
   const canvasWidth = 2048;
   const canvasHeight = 512;
   
   const canvas = createCanvas(canvasWidth, canvasHeight);
   const ctx = canvas.getContext("2d");
   
-  // White background
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
   
-  // Black text
   ctx.fillStyle = "#000000";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   
-  // Find optimal font size to fill ~90% of width
   let fontSize = 400;
   ctx.font = `${fontWeight} ${fontSize}px "${fontFamily}", sans-serif`;
   let textWidth = ctx.measureText(brandName).width;
@@ -262,10 +335,8 @@ function renderWordmark(brandName, outputPath, options = {}) {
     textWidth = ctx.measureText(brandName).width;
   }
   
-  // Draw text centered
   ctx.fillText(brandName, canvasWidth / 2, canvasHeight / 2);
   
-  // Save to file
   const buffer = canvas.toBuffer("image/png");
   fs.writeFileSync(outputPath, buffer);
   
@@ -277,7 +348,7 @@ function renderWordmark(brandName, outputPath, options = {}) {
 // IMAGE GENERATION
 // ═══════════════════════════════════════════════════════════════════
 
-async function generate(prompt, filename, outputDir) {
+async function generate(prompt: string, filename: string, outputDir: string): Promise<string> {
   const filepath = path.join(outputDir, filename);
   
   const response = await ai.models.generateContent({
@@ -286,8 +357,9 @@ async function generate(prompt, filename, outputDir) {
     config: { responseModalities: [Modality.TEXT, Modality.IMAGE] },
   });
 
-  for (const part of response.candidates[0].content.parts) {
-    if (part.inlineData) {
+  const parts = response.candidates?.[0]?.content?.parts || [];
+  for (const part of parts) {
+    if (part.inlineData?.data) {
       const buffer = Buffer.from(part.inlineData.data, "base64");
       fs.writeFileSync(filepath, buffer);
       return filepath;
@@ -297,71 +369,10 @@ async function generate(prompt, filename, outputDir) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// VISION ASSESSMENT — Analyze lockup and return adjustment
-// ═══════════════════════════════════════════════════════════════════
-
-async function assessHorizontalAlignment(imagePath) {
-  const imageData = fs.readFileSync(imagePath);
-  const base64 = imageData.toString("base64");
-  
-  const response = await ai.models.generateContent({
-    model: VISION_MODEL,
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            inlineData: {
-              mimeType: "image/png",
-              data: base64
-            }
-          },
-          {
-            text: `You are a senior graphic designer assessing logo lockup alignment.
-
-Analyze this horizontal logo lockup (icon on left, wordmark on right).
-
-Check if the BASELINE of the text (where letters like 'n', 'e', 'o' sit, NOT where descenders like 'p', 'g', 'y' end) aligns horizontally with the BOTTOM of the icon.
-
-The cap-height (top of capital letters) should roughly align with the top of the icon.
-Descenders should hang BELOW the icon's bottom edge — this is correct and expected.
-
-Respond with ONLY a JSON object:
-{
-  "aligned": true/false,
-  "adjustment": number (positive = move wordmark DOWN in pixels, negative = move UP),
-  "reason": "brief explanation"
-}
-
-If aligned is true, adjustment should be 0.
-Estimate adjustment based on a 512px canvas height.
-
-BE STRICT: Even if "close", provide adjustment. Only return aligned:true if PERFECTLY aligned.
-Small adjustments (5-15px) are valid and expected for fine-tuning.`
-          }
-        ]
-      }
-    ]
-  });
-
-  const text = response.candidates[0].content.parts[0].text;
-  // Extract JSON from response
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (jsonMatch) {
-    try {
-      return JSON.parse(jsonMatch[0]);
-    } catch (e) {
-      return { aligned: true, adjustment: 0, reason: "Could not parse response" };
-    }
-  }
-  return { aligned: true, adjustment: 0, reason: "No assessment" };
-}
-
-// ═══════════════════════════════════════════════════════════════════
 // STACKED LOCKUP
 // ═══════════════════════════════════════════════════════════════════
 
-async function compositeStacked(outputDir) {
+async function compositeStacked(outputDir: string): Promise<string> {
   const iconPath = path.join(outputDir, "icon.png");
   const wordmarkPath = path.join(outputDir, "wordmark.png");
   const outPath = path.join(outputDir, "stacked.png");
@@ -373,6 +384,10 @@ async function compositeStacked(outputDir) {
   
   const iconMeta = await sharp(iconTrimmed).metadata();
   const wmMeta = await sharp(wmTrimmed).metadata();
+  
+  if (!iconMeta.width || !iconMeta.height || !wmMeta.width || !wmMeta.height) {
+    throw new Error("Could not read image metadata");
+  }
   
   const iconTargetWidth = Math.round(canvasSize * 0.40);
   const iconScale = iconTargetWidth / iconMeta.width;
@@ -406,44 +421,38 @@ async function compositeStacked(outputDir) {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// HORIZONTAL LOCKUP — Deterministic mathematical alignment
-// 
-// RULES:
-// 1. Icon = 100% height (determines canvas height)
-// 2. Wordmark = 90% of icon height
-// 3. If ALL CAPS (no descenders): wordmark vertically centered
-// 4. If has descenders (g,j,p,q,y): apply upward offset to center baseline
+// HORIZONTAL LOCKUP
 // ═══════════════════════════════════════════════════════════════════
 
-function hasDescenders(text) {
-  const descenderLetters = ['g', 'j', 'p', 'q', 'y'];
+function hasDescenders(text: string): boolean {
+  const descenderLetters = ["g", "j", "p", "q", "y"];
   return descenderLetters.some(letter => text.includes(letter));
 }
 
-async function compositeHorizontal(outputDir, brandName) {
+async function compositeHorizontal(outputDir: string, brandName: string): Promise<string> {
   const iconPath = path.join(outputDir, "icon.png");
   const wordmarkPath = path.join(outputDir, "wordmark.png");
   const outPath = path.join(outputDir, "horizontal.png");
 
-  // Trim whitespace from source images
   const iconTrimmed = await sharp(iconPath).trim().toBuffer();
   const wmTrimmed = await sharp(wordmarkPath).trim().toBuffer();
   
   const iconMeta = await sharp(iconTrimmed).metadata();
   const wmMeta = await sharp(wmTrimmed).metadata();
   
-  // RULE 1: Icon determines height (100%)
+  if (!iconMeta.width || !iconMeta.height || !wmMeta.width || !wmMeta.height) {
+    throw new Error("Could not read image metadata");
+  }
+  
   const canvasHeight = 512;
   const iconHeight = canvasHeight;
   const iconScale = iconHeight / iconMeta.height;
   const iconWidth = Math.round(iconMeta.width * iconScale);
   
-  // RULE 2: Wordmark = 90% of icon height
   const wmHeight = Math.round(canvasHeight * 0.90);
   const wmScale = wmHeight / wmMeta.height;
   const wmWidth = Math.round(wmMeta.width * wmScale);
   
-  // Gap between icon and wordmark (10% of height)
   const gap = Math.round(canvasHeight * 0.10);
   const canvasWidth = iconWidth + gap + wmWidth;
 
@@ -455,25 +464,20 @@ async function compositeHorizontal(outputDir, brandName) {
     .resize(wmWidth, wmHeight, { fit: "fill" })
     .toBuffer();
 
-  // RULE 3 & 4: Vertical alignment
   const iconTop = 0;
-  const wmCenterY = Math.round((canvasHeight - wmHeight) / 2); // Centered position
+  const wmCenterY = Math.round((canvasHeight - wmHeight) / 2);
   
-  let wmTop;
+  let wmTop: number;
   if (hasDescenders(brandName)) {
-    // RULE 4: Has descenders — shift UP to center baseline instead of full height
-    // Shift up by 4% of wmHeight
     const descenderOffset = Math.round(wmHeight * 0.04);
     wmTop = wmCenterY - descenderOffset;
     console.log(`      [align] descenders detected, offset -${descenderOffset}px`);
   } else {
-    // RULE 5: No descenders — keep centered
     wmTop = wmCenterY;
     console.log(`      [align] no descenders, centered`);
   }
 
-  // Composite
-  const tempPath = outPath.replace('.png', '-temp.png');
+  const tempPath = outPath.replace(".png", "-temp.png");
   await sharp({ create: { width: canvasWidth, height: canvasHeight, channels: 3, background: "#ffffff" } })
     .composite([
       { input: iconBuf, top: iconTop, left: 0 },
@@ -482,7 +486,6 @@ async function compositeHorizontal(outputDir, brandName) {
     .png()
     .toFile(tempPath);
 
-  // Trim final output
   await sharp(tempPath).trim().toFile(outPath);
   fs.unlinkSync(tempPath);
 
@@ -493,11 +496,12 @@ async function compositeHorizontal(outputDir, brandName) {
 // MAIN PIPELINE
 // ═══════════════════════════════════════════════════════════════════
 
-async function generateLogoSystem(brandName, concept, options = {}) {
-  const {
-    fontOverride = null,  // CLI override: skip analysis, use this font
-    weightOverride = null,
-  } = options;
+async function generateLogoSystem(
+  brandName: string, 
+  concept: string, 
+  options: PipelineOptions = { fontOverride: null, weightOverride: null }
+): Promise<void> {
+  const { fontOverride, weightOverride } = options;
 
   const outputDir = path.join(__dirname, "..", "output", brandName.toLowerCase().replace(/\s+/g, "-"));
   fs.mkdirSync(outputDir, { recursive: true });
@@ -507,32 +511,26 @@ async function generateLogoSystem(brandName, concept, options = {}) {
   console.log(`  Brand: ${brandName}`);
   console.log(`══════════════════════════════════════════════════════════════`);
 
-  // ─── STEP 0: DETERMINE TYPOGRAPHY APPROACH ───
-  let fontFamily = null;
+  let fontFamily: string | null = null;
   let fontWeight = 600;
   let useAIGeneration = false;
 
   if (fontOverride) {
-    // CLI specified exact font — use it directly
     fontFamily = fontOverride;
     fontWeight = weightOverride || 600;
     console.log(`\n[FONT OVERRIDE] Using: ${fontFamily} (${fontWeight})`);
   } else {
-    // No override — run brand analysis
     const analysis = await analyzeBrandIntent(brandName, concept);
     
     if (analysis.explicitFont) {
-      // User explicitly requested a font in their prompt
       fontFamily = analysis.explicitFont;
       fontWeight = analysis.explicitWeight || 600;
       console.log(`      → Explicit request: ${fontFamily} (${fontWeight})`);
     } else if (analysis.recommendation === "library" && analysis.recommendedFont) {
-      // Analysis recommends a library font
       fontFamily = analysis.recommendedFont;
       fontWeight = analysis.recommendedWeight || 600;
       console.log(`      → Library match: ${fontFamily} (${fontWeight})`);
     } else {
-      // Analysis recommends custom generation
       useAIGeneration = true;
       console.log(`      → Custom generation: AI wordmark`);
     }
@@ -555,7 +553,6 @@ ${ICON_STYLE}`;
   const wordmarkPath = path.join(outputDir, "wordmark.png");
   
   if (useAIGeneration) {
-    // AI-generated custom wordmark
     const wordmarkPrompt = `Create a wordmark that says exactly "${brandName}".
 
 BRAND CONTEXT: ${concept}
@@ -568,12 +565,10 @@ ${WORDMARK_STYLE}`;
     await generate(wordmarkPrompt, "wordmark.png", outputDir);
     console.log(`      [custom AI wordmark]`);
   } else {
-    // Library font rendering
     const rendered = renderWordmark(brandName, wordmarkPath, { fontFamily, fontWeight });
     if (rendered) {
       console.log(`      [${fontFamily} ${fontWeight}]`);
     } else {
-      // Fallback to AI if font rendering failed
       console.log(`      [warn] Font rendering failed, falling back to AI`);
       const wordmarkPrompt = `Create a wordmark that says exactly "${brandName}".
 CRITICAL: Preserve the EXACT capitalization provided.
@@ -583,18 +578,18 @@ ${WORDMARK_STYLE}`;
   }
   console.log(`      ✓ wordmark.png`);
 
-  // 3. STACKED LOCKUP
+  // ─── STEP 3: STACKED LOCKUP ───
   console.log(`[3/4] Compositing stacked lockup...`);
   await compositeStacked(outputDir);
   console.log(`      ✓ stacked.png`);
 
-  // 4. HORIZONTAL LOCKUP (deterministic math)
+  // ─── STEP 4: HORIZONTAL LOCKUP ───
   console.log(`[4/4] Compositing horizontal lockup...`);
   await compositeHorizontal(outputDir, brandName);
   console.log(`      ✓ horizontal.png`);
 
-  // 5. METADATA
-  const metadata = {
+  // ─── STEP 5: METADATA ───
+  const metadata: LogoMetadata = {
     brand: brandName,
     concept: concept,
     typography: {
@@ -617,17 +612,13 @@ ${WORDMARK_STYLE}`;
 // CLI
 // ═══════════════════════════════════════════════════════════════════
 
-const [brandName, concept] = process.argv.slice(2);
-const fontArg = process.argv[4];  // optional override: "Google Sans Flex" or "inter"
-const weightArg = process.argv[5]; // optional: 100-900
-
-if (!brandName || !concept) {
+function printUsage(): void {
   console.error(`
 ═══════════════════════════════════════════════════════════════════
-  OpenGFX Logo Pipeline v7 (Creative Director Mode)
+  OpenGFX Logo Pipeline v7 (Creative Director Mode) — TypeScript
 ═══════════════════════════════════════════════════════════════════
 
-Usage: node logo-pipeline.js "BrandName" "concept/brief" [fontOverride] [weight]
+Usage: npx tsx src/logo-pipeline.ts "BrandName" "concept/brief" [fontOverride] [weight]
 
 The pipeline analyzes your brand brief and automatically selects:
   • A matching library font if one fits the vibe
@@ -636,34 +627,43 @@ The pipeline analyzes your brand brief and automatically selects:
 EXAMPLES:
 
   # Let the AI decide based on brand vibe:
-  node logo-pipeline.js "Lumina" "luxury skincare, elegant, refined"
-  node logo-pipeline.js "ByteForge" "developer tools, technical, modern"
-  node logo-pipeline.js "Wanderlust" "travel blog, adventurous, handwritten feel"
+  npx tsx src/logo-pipeline.ts "Lumina" "luxury skincare, elegant, refined"
+  npx tsx src/logo-pipeline.ts "ByteForge" "developer tools, technical, modern"
+  npx tsx src/logo-pipeline.ts "Wanderlust" "travel blog, adventurous, handwritten feel"
 
   # Specify a font style in your brief:
-  node logo-pipeline.js "TechCorp" "enterprise SaaS, use a clean sans-serif"
+  npx tsx src/logo-pipeline.ts "TechCorp" "enterprise SaaS, use a clean sans-serif"
   
   # Force a specific font (override):
-  node logo-pipeline.js "OpenGFX" "design tools" "Google Sans Flex" 600
+  npx tsx src/logo-pipeline.ts "OpenGFX" "design tools" "Google Sans Flex" 600
 
 INSTALLED FONTS:
 `);
   Object.entries(FONT_LIBRARY).forEach(([name, { category, weights }]) => {
-    const shorthand = name.toLowerCase().replace(/ /g, "-");
     console.error(`  ${name} (${category}) — weights: ${weights.join(", ")}`);
   });
   console.error(``);
+}
+
+// Main execution
+const [brandName, concept, fontArg, weightArg] = process.argv.slice(2);
+
+if (!brandName || !concept) {
+  printUsage();
   process.exit(1);
 }
 
-// Resolve font override from shorthand or full name
-let fontOverride = null;
+let fontOverride: string | null = null;
 if (fontArg) {
   fontOverride = INSTALLED_FONTS[fontArg.toLowerCase()] || fontArg;
 }
 const weightOverride = weightArg ? parseInt(weightArg, 10) : null;
 
 generateLogoSystem(brandName, concept, { fontOverride, weightOverride }).catch(err => {
-  console.error(`✗ ${err.message}`);
+  console.error(`✗ ${err instanceof Error ? err.message : "Unknown error"}`);
   process.exit(1);
 });
+
+// Export for use as module
+export { generateLogoSystem, FONT_LIBRARY, INSTALLED_FONTS };
+export type { BrandAnalysis, LogoMetadata, PipelineOptions, FontLibrary };

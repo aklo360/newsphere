@@ -1,7 +1,10 @@
 # Dependencies
 node_modules/
 
-# Output (generated logos)
+# Build output
+dist/
+
+# Generated logos
 output/
 
 # OpenClaw workspace state
@@ -24,3 +27,6 @@ npm-debug.log*
 .vscode/
 *.swp
 *.swo
+
+# TypeScript cache
+*.tsbuildinfo

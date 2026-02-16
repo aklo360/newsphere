@@ -22,28 +22,31 @@ npm install
 export GEMINI_API_KEY="your-key-here"
 
 # Generate a logo system
-node scripts/logo-pipeline.js "BrandName" "brand concept/brief"
+npm run generate -- "BrandName" "brand concept/brief"
+
+# Or directly with tsx
+npx tsx src/logo-pipeline.ts "BrandName" "brand concept/brief"
 ```
 
 ## Usage Examples
 
 ```bash
 # Let AI analyze brand vibe and pick typography:
-node scripts/logo-pipeline.js "Lumina" "luxury skincare, elegant, refined"
+npm run generate -- "Lumina" "luxury skincare, elegant, refined"
 # → Picks Playfair Display (serif/luxury)
 
-node scripts/logo-pipeline.js "ByteForge" "developer tools, technical, modern"
+npm run generate -- "ByteForge" "developer tools, technical, modern"
 # → Picks Geist (tech/developer)
 
-node scripts/logo-pipeline.js "VOIDREALM" "electronic music, dark, experimental"
+npm run generate -- "VOIDREALM" "electronic music, dark, experimental"
 # → Picks Space Grotesk (bold/futuristic)
 
 # Request custom AI-generated wordmark:
-node scripts/logo-pipeline.js "Nocturn" "avant-garde, needs unique custom wordmark"
+npm run generate -- "Nocturn" "avant-garde, needs unique custom wordmark"
 # → AI generates custom typography
 
 # Override with specific font:
-node scripts/logo-pipeline.js "OpenGFX" "design tools" "Google Sans Flex" 600
+npm run generate -- "OpenGFX" "design tools" "Google Sans Flex" 600
 ```
 
 ## Font Library
@@ -117,16 +120,27 @@ output/brandname/
 └─────────────────────────────────────────────────┘
 ```
 
+## Scripts
+
+```bash
+npm run generate   # Run the logo pipeline
+npm run build      # Compile TypeScript to dist/
+npm run typecheck  # Type-check without emitting
+npm run clean      # Remove dist/
+```
+
 ## Requirements
 
 - Node.js 18+
 - Gemini API key (`GEMINI_API_KEY`)
 
-## Dependencies
+## Tech Stack
 
-- `@google/genai` — Gemini API
-- `sharp` — Image processing
-- `canvas` — Font rendering
+- **TypeScript** — Type-safe codebase
+- **@google/genai** — Gemini API for AI generation
+- **sharp** — High-performance image processing
+- **canvas** — Node.js canvas for font rendering
+- **tsx** — TypeScript execution without compilation
 
 ## License
 

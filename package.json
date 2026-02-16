@@ -1,21 +1,47 @@
 {
-  "name": "workspace",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "name": "opengfx",
+  "version": "7.0.0",
+  "description": "Agentic Brand Design System — Generate complete logo systems with AI-powered creative direction",
+  "type": "module",
+  "main": "dist/logo-pipeline.js",
+  "types": "dist/logo-pipeline.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "generate": "tsx src/logo-pipeline.ts",
+    "build": "tsc",
+    "dev": "tsx watch src/logo-pipeline.ts",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  "bin": {
+    "opengfx": "./dist/logo-pipeline.js"
+  },
+  "keywords": [
+    "logo",
+    "branding",
+    "design",
+    "ai",
+    "gemini",
+    "typography",
+    "creative"
+  ],
+  "author": "AKLO Labs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aklo360/openGFX.git"
+  },
   "dependencies": {
     "@google/genai": "^1.41.0",
     "canvas": "^3.2.1",
     "sharp": "^0.34.5"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.3",
+    "@types/sharp": "^0.31.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
