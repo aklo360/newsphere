@@ -1,19 +1,22 @@
 {
   "name": "opengfx",
   "version": "7.0.0",
-  "description": "Agentic Brand Design System — Generate complete logo systems with AI-powered creative direction",
+  "description": "Agentic Brand Design System — Generate complete brand systems with AI-powered creative direction",
   "type": "module",
-  "main": "dist/logo-pipeline.js",
-  "types": "dist/logo-pipeline.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "generate": "tsx src/logo-pipeline.ts",
+    "brand": "tsx src/cli/brand.ts",
+    "socials": "tsx src/cli/socials.ts",
+    "gfx": "tsx src/cli/gfx.ts",
     "build": "tsc",
-    "dev": "tsx watch src/logo-pipeline.ts",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "bin": {
-    "opengfx": "./dist/logo-pipeline.js"
+    "opengfx-brand": "./dist/cli/brand.js",
+    "opengfx-socials": "./dist/cli/socials.js",
+    "opengfx-gfx": "./dist/cli/gfx.js"
   },
   "keywords": [
     "logo",
@@ -22,7 +25,9 @@
     "ai",
     "gemini",
     "typography",
-    "creative"
+    "creative",
+    "social-media",
+    "marketing"
   ],
   "author": "AKLO Labs",
   "license": "MIT",
