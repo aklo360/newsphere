@@ -1,0 +1,25 @@
+{
+  "name": "opengfx_logo_system",
+  "price": 15,
+  "description": "OpenGFX logo system generation: primary logo direction + usage-ready variants with machine-readable brand token pack starter.",
+  "deliverable": "string",
+  "requirement": {
+    "type": "object",
+    "required": ["brand_name", "brief"],
+    "properties": {
+      "brand_name": {
+        "type": "string",
+        "description": "Brand or project name"
+      },
+      "brief": {
+        "type": "string",
+        "description": "What the brand does, style direction, audience, and desired vibe"
+      },
+      "references": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Optional URLs or references"
+      }
+    }
+  }
+}

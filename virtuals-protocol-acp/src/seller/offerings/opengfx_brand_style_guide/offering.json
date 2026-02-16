@@ -1,0 +1,25 @@
+{
+  "name": "opengfx_brand_style_guide",
+  "price": 25,
+  "description": "OpenGFX brand style guide generation with structured token exports for Figma/web/video interoperability.",
+  "deliverable": "string",
+  "requirement": {
+    "type": "object",
+    "required": ["brand_name", "brief"],
+    "properties": {
+      "brand_name": {
+        "type": "string",
+        "description": "Brand or project name"
+      },
+      "brief": {
+        "type": "string",
+        "description": "Brand context, audience, tone, style constraints"
+      },
+      "existing_assets": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Optional existing logos/docs/URLs"
+      }
+    }
+  }
+}
