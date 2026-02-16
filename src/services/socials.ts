@@ -1,19 +1,42 @@
 /**
  * OpenGFX Service 2: Socials
  * Generates avatars and banners for all social platforms
+ * 
+ * KEY PRINCIPLE: ONE rendered icon, used everywhere for consistency
  */
 
 import * as fs from "fs";
 import * as path from "path";
 import sharp from "sharp";
+import { createCanvas, registerFont } from "canvas";
 import { fileURLToPath } from "url";
 
 import type { BrandSystem, SocialsManifest, SocialsOptions } from "../types.js";
-import { SOCIAL_PLATFORMS } from "../constants.js";
-import { generateRenderedAvatar, generateBanner } from "../ai.js";
+import { SOCIAL_PLATFORMS, FONT_LIBRARY } from "../constants.js";
+import { generateRenderedAvatar } from "../ai.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const fontDir = path.join(__dirname, "..", "..", "fonts");
+
+// Register fonts for banner text
+Object.entries(FONT_LIBRARY).forEach(([family, { weights }]) => {
+  const filePrefix = family.replace(/ /g, "-");
+  weights.forEach((weight) => {
+    const paths = [
+      path.join(fontDir, `${filePrefix}-${weight}.ttf`),
+      path.join(fontDir, `${family.replace(/ /g, "")}-${weight}.ttf`),
+    ];
+    for (const fontPath of paths) {
+      if (fs.existsSync(fontPath)) {
+        try {
+          registerFont(fontPath, { family, weight: String(weight) });
+        } catch {}
+        break;
+      }
+    }
+  });
+});
 
 // ═══════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -24,6 +47,122 @@ async function resizeImage(inputPath: string, outputPath: string, width: number,
     .resize(width, height, { fit: "cover", position: "center" })
     .png()
     .toFile(outputPath);
+}
+
+/**
+ * Composite banner programmatically using the SAME rendered icon
+ * This ensures perfect color consistency across all assets
+ */
+async function compositeBanner(
+  renderedIconPath: string,
+  brandName: string,
+  tagline: string | undefined,
+  colors: BrandSystem["colors"],
+  typography: BrandSystem["typography"],
+  width: number,
+  height: number,
+  outputPath: string
+): Promise<void> {
+  // Create gradient background using canvas
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
+  
+  // Create gradient from primary to secondary (or subtle variation)
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, colors.background);
+  gradient.addColorStop(0.5, colors.background);
+  gradient.addColorStop(1, adjustColor(colors.background, colors.primary, 0.15));
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  
+  // Save background
+  const bgBuffer = canvas.toBuffer("image/png");
+  
+  // Load and resize rendered icon
+  const iconMeta = await sharp(renderedIconPath).metadata();
+  const iconTargetHeight = Math.round(height * 0.6);
+  const iconScale = iconTargetHeight / (iconMeta.height || 1024);
+  const iconTargetWidth = Math.round((iconMeta.width || 1024) * iconScale);
+  
+  const iconBuffer = await sharp(renderedIconPath)
+    .resize(iconTargetWidth, iconTargetHeight, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png()
+    .toBuffer();
+  
+  // Calculate positions - icon on left third, text on right
+  const iconX = Math.round(width * 0.08);
+  const iconY = Math.round((height - iconTargetHeight) / 2);
+  
+  // Create text overlay with canvas
+  const textCanvas = createCanvas(width, height);
+  const textCtx = textCanvas.getContext("2d");
+  
+  // Brand name
+  const headerFont = typography.headerFont;
+  const headerWeight = typography.headerWeight;
+  let fontSize = Math.round(height * 0.25);
+  textCtx.font = `${headerWeight} ${fontSize}px "${headerFont}", sans-serif`;
+  textCtx.fillStyle = colors.foreground;
+  textCtx.textAlign = "left";
+  textCtx.textBaseline = "middle";
+  
+  const textX = iconX + iconTargetWidth + Math.round(width * 0.06);
+  const textAreaWidth = width - textX - Math.round(width * 0.08);
+  
+  // Shrink font if needed
+  while (textCtx.measureText(brandName).width > textAreaWidth && fontSize > 30) {
+    fontSize -= 4;
+    textCtx.font = `${headerWeight} ${fontSize}px "${headerFont}", sans-serif`;
+  }
+  
+  const brandY = tagline ? height * 0.42 : height * 0.5;
+  textCtx.fillText(brandName, textX, brandY);
+  
+  // Tagline if present
+  if (tagline) {
+    const bodyFont = typography.bodyFont;
+    const bodyWeight = typography.bodyWeight;
+    const taglineFontSize = Math.round(fontSize * 0.35);
+    textCtx.font = `${bodyWeight} ${taglineFontSize}px "${bodyFont}", sans-serif`;
+    textCtx.fillStyle = adjustColor(colors.foreground, colors.background, 0.3);
+    textCtx.fillText(tagline, textX, height * 0.62);
+  }
+  
+  const textBuffer = textCanvas.toBuffer("image/png");
+  
+  // Composite everything
+  await sharp(bgBuffer)
+    .composite([
+      { input: iconBuffer, top: iconY, left: iconX },
+      { input: textBuffer, top: 0, left: 0 },
+    ])
+    .png()
+    .toFile(outputPath);
+}
+
+/**
+ * Blend two colors
+ */
+function adjustColor(base: string, target: string, amount: number): string {
+  const parseHex = (hex: string) => {
+    const h = hex.replace("#", "");
+    return {
+      r: parseInt(h.slice(0, 2), 16),
+      g: parseInt(h.slice(2, 4), 16),
+      b: parseInt(h.slice(4, 6), 16),
+    };
+  };
+  
+  const b = parseHex(base);
+  const t = parseHex(target);
+  
+  const blend = (bv: number, tv: number) => Math.round(bv + (tv - bv) * amount);
+  
+  const r = blend(b.r, t.r).toString(16).padStart(2, "0");
+  const g = blend(b.g, t.g).toString(16).padStart(2, "0");
+  const bl = blend(b.b, t.b).toString(16).padStart(2, "0");
+  
+  return `#${r}${g}${bl}`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -94,8 +233,9 @@ export async function generateSocials(
     console.log(`      ✓ ${platform}-profile.png (${width}x${height})`);
   }
 
-  // ─── STEP 3: GENERATE BANNERS ───
-  console.log(`\n[3/3] Generating platform-specific banners...`);
+  // ─── STEP 3: GENERATE BANNERS (using same rendered icon for consistency) ───
+  console.log(`\n[3/3] Compositing platform-specific banners...`);
+  console.log(`      Using rendered icon for perfect color consistency`);
   
   for (const platform of targetPlatforms) {
     const config = SOCIAL_PLATFORMS[platform];
@@ -104,13 +244,12 @@ export async function generateSocials(
     const { width, height } = config.banner;
     const outputPath = path.join(bannersDir, `${platform}-banner.png`);
     
-    console.log(`      Generating ${platform} banner (${width}x${height})...`);
+    console.log(`      Compositing ${platform} banner (${width}x${height})...`);
     
-    await generateBanner(
-      horizontalPath,
+    await compositeBanner(
+      masterAvatarPath,  // Use the SAME rendered icon!
       brandSystem.brand.name,
       includeTagline ? tagline : undefined,
-      brandSystem.renderStyle,
       brandSystem.colors,
       brandSystem.typography,
       width,
@@ -127,13 +266,12 @@ export async function generateSocials(
       const altHeight = config.bannerAlt.height;
       const altOutputPath = path.join(bannersDir, `${platform}-banner-alt.png`);
       
-      console.log(`      Generating ${platform} alt banner (${altWidth}x${altHeight})...`);
+      console.log(`      Compositing ${platform} alt banner (${altWidth}x${altHeight})...`);
       
-      await generateBanner(
-        horizontalPath,
+      await compositeBanner(
+        masterAvatarPath,
         brandSystem.brand.name,
         includeTagline ? tagline : undefined,
-        brandSystem.renderStyle,
         brandSystem.colors,
         brandSystem.typography,
         altWidth,
