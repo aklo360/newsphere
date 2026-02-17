@@ -377,7 +377,7 @@ export async function generateImage(prompt: string, outputPath: string): Promise
     contents: prompt,
     config: { 
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-      imageConfig: { imageSize: '2K' }
+      imageConfig: { imageSize: '1K' }
     },
   });
 
@@ -483,7 +483,7 @@ Create a premium, polished render that looks like it belongs to a top-tier brand
     ],
     config: { 
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-      imageConfig: { imageSize: '2K' }
+      imageConfig: { imageSize: '1K' }
     },
   });
 

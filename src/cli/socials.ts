@@ -66,10 +66,10 @@ if (!brandSystemPath) {
   process.exit(1);
 }
 
-// Parse platforms
+// Parse platforms (MVP default: twitter only)
 const platforms = flags.platforms 
   ? (flags.platforms as string).split(",").map(p => p.trim())
-  : undefined;
+  : ["twitter"];
 
 generateSocials(brandSystemPath, {
   platforms,
