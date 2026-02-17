@@ -119,17 +119,16 @@ const pricing = [
         </span>
       </div>
 
-      <a 
-        href="https://gateway.opengfx.app" 
-        target="_blank"
-        rel="noopener"
+      <button
+        type="button"
+        data-open-agent-api
         class="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
       >
-        View API Docs
+        See Agent Integration
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
         </svg>
-      </a>
+      </button>
     </div>
 
     <!-- Pricing -->
@@ -159,3 +158,30 @@ const pricing = [
     </div>
   </div>
 </div>
+
+
+<script>
+  function initAgentApiCta() {
+    document.querySelectorAll('[data-open-agent-api]').forEach((btn) => {
+      const button = btn as HTMLButtonElement;
+      if (button.dataset.bound === 'true') return;
+      button.dataset.bound = 'true';
+
+      button.addEventListener('click', () => {
+        const agentToggle = document.querySelector(
+          '#persona-toggle .toggle-option[data-persona="agent"]'
+        ) as HTMLButtonElement | null;
+
+        if (agentToggle) {
+          agentToggle.click();
+          setTimeout(() => {
+            document.getElementById('agent-view')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 50);
+        }
+      });
+    });
+  }
+
+  initAgentApiCta();
+  document.addEventListener('astro:after-swap', initAgentApiCta);
+</script>
