@@ -10,10 +10,10 @@
  * 3. Server returns job ID immediately
  * 4. Client polls /v1/jobs/:id for completion
  * 
- * Pricing:
- * - Logo System: $15 (icon, wordmark, lockups, brand-system.json)
- * - Social Assets: $10 (avatar, banners)
- * - Full Brand: $20 (logo + socials)
+ * Pricing (matches ACP):
+ * - Logo System: $5 (icon, wordmark, lockups, brand-system.json)
+ * - Social Assets: $5 (avatar, banners)
+ * - Full Brand: $5 (logo + socials)
  */
 
 import express from "express";
@@ -70,11 +70,11 @@ console.log(`
 ╚═══════════════════════════════════════════════════════════╝
 `);
 
-// Pricing (USD)
+// Pricing (USD) — matches ACP pricing
 const PRICING: Record<JobType, number> = {
-  logo: 15,
-  socials: 10,
-  brand: 20,
+  logo: 5,
+  socials: 5,
+  brand: 5,
 };
 
 // ============================================================
@@ -87,9 +87,9 @@ app.get("/", (req, res) => {
     description: "AI-powered brand design with multi-chain crypto payments",
     version: "1.0.0",
     pricing: {
-      logo: "$15 - Logo system (icon, wordmark, lockups)",
-      socials: "$10 - Social assets (avatar, banners)",
-      brand: "$20 - Full brand (logo + socials)",
+      logo: "$5 - Logo system (icon, wordmark, lockups)",
+      socials: "$5 - Social assets (avatar, banners)",
+      brand: "$5 - Full brand (logo + socials)",
     },
     supportedChains: [
       {
@@ -811,7 +811,7 @@ async function start() {
   app.listen(PORT, () => {
     console.log(`[gateway] Listening on http://localhost:${PORT}`);
     console.log(`[gateway] Chains: Base USDC, Solana SOL`);
-    console.log(`[gateway] Services: /v1/logo ($15), /v1/socials ($10), /v1/brand ($20)`);
+    console.log(`[gateway] Services: /v1/logo ($5), /v1/socials ($5), /v1/brand ($5)`);
   });
 }
 
