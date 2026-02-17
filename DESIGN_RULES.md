@@ -8,6 +8,17 @@
 - When in doubt, increase contrast
 - A beautiful but unreadable design is a FAILURE
 
+### Brand Mode (Dark vs Light)
+
+Every brand must declare a MODE early in the pipeline:
+
+| Mode | Background | Wordmark | Body Text | Best For |
+|------|------------|----------|-----------|----------|
+| **DARK** | Dark/black | White/light | White/light grey | Tech, gaming, nightlife, space, luxury, edgy |
+| **LIGHT** | White/light | Dark/charcoal | Black/dark grey | Health, wellness, corporate, friendly, approachable |
+
+The mode is detected during style guide analysis and propagated to all assets.
+
 ### Contrast Guidelines
 
 | Background | Wordmark/Text |
@@ -23,6 +34,28 @@ If you squint and can't read the text, contrast is too low. Fix it.
 2. **Contrast** — Does text stand out from background?
 3. **Hierarchy** — Is the important stuff prominent?
 4. **Style** — Does it look good? (only matters if 1-3 pass)
+
+---
+
+## 🟡 RULE #2: ICON COMPLEXITY
+
+**Icons must be the right level of complexity — not too simple, not too complex.**
+
+### Complexity Scale
+- **0-25%**: Too simple — basic shapes, single lines (AVOID)
+- **25-75%**: Sweet spot — recognizable, detailed but clean (TARGET)
+- **75-100%**: Too complex — intricate details that disappear at small sizes (AVOID)
+
+### Target: 75% Max Complexity
+- Think Apple SF Symbols — detailed but not cluttered
+- Must be recognizable at 32x32 pixels
+- Must look beautiful at 1024x1024 pixels
+- Should have CHARACTER but remain CLEAN
+
+### Forbidden
+- Intricate line work that disappears at small sizes
+- Overly detailed textures or patterns
+- Too many elements competing for attention
 
 ---
 

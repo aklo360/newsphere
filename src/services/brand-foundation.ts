@@ -355,6 +355,7 @@ ${WORDMARK_STYLE_PROMPT}`;
     colors,
     typography,
     renderStyle,
+    mode: styleAnalysis.mode || "light",
     version: "1.0.0",
     generatedAt: new Date().toISOString(),
   };

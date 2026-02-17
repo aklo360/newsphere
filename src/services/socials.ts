@@ -116,7 +116,8 @@ export async function generateSocials(
       height,
       outputPath,
       masterAvatarPath,  // Pass rendered icon as reference
-      wordmarkPath       // Pass wordmark for exact typography match
+      wordmarkPath,      // Pass wordmark for exact typography match
+      brandSystem.mode || "light"  // Pass mode for contrast rules
     );
     
     bannerPaths[platform] = `socials/banners/${platform}-banner.png`;

@@ -280,6 +280,13 @@ ${FONT_LIBRARY_DESCRIPTION}
 
 USER PROMPT IS THE BIBLE: If the user explicitly requested a specific style (e.g., "metallic gold", "iridescent", "chrome"), USE THAT. Otherwise, creatively interpret the best style for the brand.
 
+BRAND MODE DECISION — CRITICAL:
+Decide if this brand should be "dark" or "light" mode:
+- "dark": Dark backgrounds, light/white text — for: tech, gaming, nightlife, space, luxury, edgy brands
+- "light": Light backgrounds, dark/black text — for: health, wellness, corporate, friendly, approachable brands
+
+This affects ALL design outputs — banners, socials, etc. The mode ensures proper contrast and legibility.
+
 Respond in this EXACT JSON format (no markdown):
 {
   "renderStyle": {
@@ -307,7 +314,8 @@ Respond in this EXACT JSON format (no markdown):
     "bodyFont": "Font Name from list",
     "bodyWeight": 400-700
   },
-  "reasoning": "Brief explanation of style choices"
+  "mode": "dark|light",
+  "reasoning": "Brief explanation of style choices including mode decision"
 }`;
 
   try {
@@ -324,6 +332,11 @@ Respond in this EXACT JSON format (no markdown):
     }
     
     const analysis: StyleGuideAnalysis = JSON.parse(jsonMatch[0]);
+    // Ensure mode has a default
+    if (!analysis.mode) {
+      analysis.mode = "light";
+    }
+    console.log(`      Mode: ${analysis.mode.toUpperCase()}`);
     console.log(`      Render: ${analysis.renderStyle.preset}`);
     console.log(`      Colors: ${analysis.colors.primary} / ${analysis.colors.secondary}`);
     console.log(`      Typography: ${analysis.typography.headerFont} + ${analysis.typography.bodyFont}`);
@@ -363,6 +376,7 @@ function createDefaultStyleGuide(): StyleGuideAnalysis {
       bodyFont: "Inter",
       bodyWeight: 400
     },
+    mode: "light",
     reasoning: "Default style guide (analysis failed)"
   };
 }
@@ -525,7 +539,8 @@ export async function generateBannerWithStyle(
   height: number,
   outputPath: string,
   renderedIconPath?: string,
-  wordmarkPath?: string
+  wordmarkPath?: string,
+  mode: "dark" | "light" = "light"
 ): Promise<string> {
   const logoData = fs.readFileSync(logoPath);
   const base64Logo = logoData.toString("base64");
@@ -617,16 +632,29 @@ COMPOSITION & LAYOUT:
 - Safe zone: keep all content within the center area of the frame
 - DO NOT left-align or push content to one side — CENTERED composition only
 
+BRAND MODE: ${mode.toUpperCase()}
+${mode === "dark" ? `
+- DARK BACKGROUND: Use dark/black background (${colors.background} or darker)
+- LIGHT WORDMARK: "${brandName}" must be WHITE or very light colored for contrast
+- LIGHT TAGLINE: "${tagline || ""}" should be white or light grey
+- The icon should pop against the dark background
+` : `
+- LIGHT BACKGROUND: Use white or light background (${colors.background} or lighter)  
+- DARK WORDMARK: "${brandName}" must be DARK (charcoal, deep teal, near-black) for contrast
+- DARK TAGLINE: "${tagline || ""}" should be dark grey or black
+- The icon should pop against the light background
+`}
+
 ELEMENTS:
 - Icon and wordmark side-by-side (icon left, wordmark right) OR stacked — but CENTERED as a group
 - The WORDMARK "${brandName}" MUST have HIGH CONTRAST against the background:
-  * Use DARK tones (deep teal, charcoal, dark slate) on light backgrounds
+  * ${mode === "dark" ? "Use LIGHT tones (white, cream) on dark backgrounds" : "Use DARK tones (deep teal, charcoal, dark slate) on light backgrounds"}
   * The wordmark must be instantly readable — if you squint and can't read it, it's too low contrast
-  * Subtle 3D/glass treatment is OK but DARKNESS and READABILITY come first
-${tagline ? `- The TAGLINE "${tagline}" should be SIMPLE DARK GREY or BLACK text — NO 3D rendering, NO iridescent effects. Plain, clean, readable body text in ${typography.bodyFont}. Must be clearly legible.` : ""}
-- Background: clean ${colors.background} (white or light) with very subtle gradient if any
+  * Subtle 3D/glass treatment is OK but CONTRAST and READABILITY come first
+${tagline ? `- The TAGLINE "${tagline}" should be ${mode === "dark" ? "WHITE or LIGHT GREY" : "DARK GREY or BLACK"} text — NO 3D rendering, NO iridescent effects. Plain, clean, readable body text in ${typography.bodyFont}. Must be clearly legible.` : ""}
+- Background: ${mode === "dark" ? `dark (${colors.background} or darker) with subtle gradient` : `clean ${colors.background} (white or light) with very subtle gradient`}
 
-⚠️ CONTRAST CHECK: Before finalizing, verify the wordmark is clearly readable against the background. If not, darken the wordmark.
+⚠️ CONTRAST CHECK: Before finalizing, verify the wordmark is clearly readable against the background. ${mode === "dark" ? "If not, lighten the wordmark." : "If not, darken the wordmark."}
 - Professional, premium brand aesthetic — CENTERED with breathing room on all sides
 
 COLORS: Primary ${colors.primary}, Secondary ${colors.secondary}

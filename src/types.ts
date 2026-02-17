@@ -103,6 +103,7 @@ export interface BrandSystem {
   colors: ColorPalette;
   typography: Typography;
   renderStyle: RenderStyle;
+  mode: "dark" | "light";  // Dark = dark bg/light text; Light = light bg/dark text
   version: string;
   generatedAt: string;
 }
@@ -126,6 +127,7 @@ export interface StyleGuideAnalysis {
   renderStyle: RenderStyle;
   colors: ColorPalette;
   typography: Typography;
+  mode: "dark" | "light";  // Dark mode = dark bg, light text; Light mode = light bg, dark text
   reasoning: string;
 }
 

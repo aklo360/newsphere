@@ -223,10 +223,18 @@ export const RENDER_STYLE_PROMPTS: Record<string, string> = {
 export const ICON_STYLE_PROMPT = `
 DESIGN DIRECTION: Senior brand designer at Pentagram creating a premium icon.
 
+⚠️ COMPLEXITY BALANCE — CRITICAL:
+- NOT too simple (avoid basic geometric shapes, single lines)
+- NOT too complex (avoid intricate details that disappear at small sizes)
+- TARGET: 75% complexity on a scale where 100% is hyper-detailed
+- Think: recognizable at 32x32 pixels, beautiful at 1024x1024
+- The icon should have CHARACTER but remain CLEAN
+- Aim for Apple SF Symbols level — detailed but not cluttered
+
 FIDELITY:
 - HIGH FIDELITY — detailed, recognizable, professional
 - If emoji referenced, icon must be IMMEDIATELY RECOGNIZABLE as that object
-- Think Apple SF Symbols — detailed but clean
+- Must work at small sizes (favicons, profile pictures)
 
 RENDERING:
 - Solid black (#000000) on pure white (#FFFFFF)
@@ -240,6 +248,8 @@ FORBIDDEN:
 - NO borders, frames, or outlines around the icon
 - NO box or container
 - ONLY the icon itself on pure white
+- NO intricate line work that disappears at small sizes
+- NO overly detailed textures or patterns
 `;
 
 export const WORDMARK_STYLE_PROMPT = `
