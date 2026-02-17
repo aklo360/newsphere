@@ -839,3 +839,72 @@ OUTPUT: A single image at approximately ${targetWidth}x${targetHeight} with the 
   
   throw new Error(`Failed to adapt banner aspect ratio`);
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// BRAND NAME GENERATION
+// ═══════════════════════════════════════════════════════════════════
+
+export interface GeneratedBrandName {
+  name: string;
+  rationale: string;
+  alternatives: string[];
+}
+
+/**
+ * Generate a brand name from a concept description
+ * Used when user provides concept but no name
+ */
+export async function generateBrandName(concept: string): Promise<GeneratedBrandName> {
+  const prompt = `You are a world-class brand naming expert. Generate a powerful, memorable brand name for this concept:
+
+CONCEPT: ${concept}
+
+NAMING PRINCIPLES:
+1. SHORT — 1-2 words max, ideally 6-10 characters
+2. MEMORABLE — easy to spell, pronounce, and recall
+3. DISTINCTIVE — stands out, not generic
+4. AVAILABLE — avoid obvious trademark conflicts
+5. SCALABLE — works for a startup that could become huge
+
+NAMING STRATEGIES TO CONSIDER:
+- Invented words (Spotify, Kodak, Xerox)
+- Compound words (Facebook, YouTube, Airbnb)
+- Evocative real words (Apple, Amazon, Slack)
+- Modified spellings (Lyft, Tumblr, Flickr)
+- Portmanteaus (Pinterest, Instagram, Groupon)
+- Abstract sounds (Hulu, Skype, TikTok)
+
+RESPOND WITH EXACTLY THIS JSON (no markdown, no explanation):
+{
+  "name": "TheBrandName",
+  "rationale": "Brief 1-sentence explanation of why this name works",
+  "alternatives": ["Alt1", "Alt2", "Alt3"]
+}
+
+Choose the BEST possible name. Be bold. Be creative. Make it iconic.`;
+
+  const response = await ai.models.generateContent({
+    model: TEXT_MODEL,
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+  });
+
+  const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+  
+  try {
+    const result = JSON.parse(cleaned);
+    return {
+      name: result.name || "Brand",
+      rationale: result.rationale || "",
+      alternatives: result.alternatives || [],
+    };
+  } catch (e) {
+    // Fallback: extract name from response
+    const match = text.match(/"name":\s*"([^"]+)"/);
+    return {
+      name: match?.[1] || "Brand",
+      rationale: "",
+      alternatives: [],
+    };
+  }
+}
