@@ -635,26 +635,27 @@ COMPOSITION & LAYOUT:
 BRAND MODE: ${mode.toUpperCase()}
 ${mode === "dark" ? `
 - DARK BACKGROUND: Use dark/black background (${colors.background} or darker)
-- LIGHT WORDMARK: "${brandName}" must be WHITE or very light colored for contrast
-- LIGHT TAGLINE: "${tagline || ""}" should be white or light grey
+- WORDMARK WITH RENDER STYLE: "${brandName}" should have the SAME render treatment as the icon (gradient, glass, glow, etc.) but ensure it contrasts against the dark background
+- PLAIN TAGLINE: "${tagline || ""}" should be plain WHITE or light grey (simple, no effects)
 - The icon should pop against the dark background
 ` : `
 - LIGHT BACKGROUND: Use white or light background (${colors.background} or lighter)  
-- DARK WORDMARK: "${brandName}" must be DARK (charcoal, deep teal, near-black) for contrast
-- DARK TAGLINE: "${tagline || ""}" should be dark grey or black
+- WORDMARK WITH RENDER STYLE: "${brandName}" should have the SAME render treatment as the icon but DARKER tones for contrast
+- PLAIN TAGLINE: "${tagline || ""}" should be plain DARK GREY or BLACK (simple, no effects)
 - The icon should pop against the light background
 `}
 
 ELEMENTS:
 - Icon and wordmark side-by-side (icon left, wordmark right) OR stacked — but CENTERED as a group
-- The WORDMARK "${brandName}" MUST have HIGH CONTRAST against the background:
-  * ${mode === "dark" ? "Use LIGHT tones (white, cream) on dark backgrounds" : "Use DARK tones (deep teal, charcoal, dark slate) on light backgrounds"}
-  * The wordmark must be instantly readable — if you squint and can't read it, it's too low contrast
-  * Subtle 3D/glass treatment is OK but CONTRAST and READABILITY come first
-${tagline ? `- The TAGLINE "${tagline}" should be ${mode === "dark" ? "WHITE or LIGHT GREY" : "DARK GREY or BLACK"} text — NO 3D rendering, NO iridescent effects. Plain, clean, readable body text in ${typography.bodyFont}. Must be clearly legible.` : ""}
+- The WORDMARK "${brandName}" MUST:
+  * Have a SIMILAR RENDER STYLE to the icon (gradient, glass, metallic, glow — match the icon's aesthetic)
+  * NOT be plain white or plain black — it should have visual treatment
+  * Still maintain HIGH CONTRAST against the background for readability
+  * ${mode === "dark" ? "Use light/bright render tones that pop on dark backgrounds" : "Use darker render tones that contrast on light backgrounds"}
+${tagline ? `- The TAGLINE "${tagline}" should be PLAIN ${mode === "dark" ? "WHITE or LIGHT GREY" : "DARK GREY or BLACK"} text — NO 3D rendering, NO gradients, NO effects. Simple, clean, readable body text in ${typography.bodyFont}. Only the tagline is plain.` : ""}
 - Background: ${mode === "dark" ? `dark (${colors.background} or darker) with subtle gradient` : `clean ${colors.background} (white or light) with very subtle gradient`}
 
-⚠️ CONTRAST CHECK: Before finalizing, verify the wordmark is clearly readable against the background. ${mode === "dark" ? "If not, lighten the wordmark." : "If not, darken the wordmark."}
+⚠️ CONTRAST CHECK: The wordmark must be readable. The render style should enhance, not hurt legibility.
 - Professional, premium brand aesthetic — CENTERED with breathing room on all sides
 
 COLORS: Primary ${colors.primary}, Secondary ${colors.secondary}
