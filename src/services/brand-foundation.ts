@@ -179,7 +179,7 @@ async function compositeHorizontal(outputDir: string, brandName: string): Promis
   
   let wmTop: number;
   if (hasDescenders(brandName)) {
-    const descenderOffset = Math.round(wmHeight * 0.04);
+    const descenderOffset = Math.round(wmHeight * 0.025);
     wmTop = wmCenterY - descenderOffset;
     console.log(`      [align] descenders detected, offset -${descenderOffset}px`);
   } else {
