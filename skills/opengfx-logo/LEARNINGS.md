@@ -303,8 +303,11 @@ When user provides emoji as reference:
 
 Without these, Gemini outputs feel low-res.
 
-### CYBERPUNK CITY FORMULA
-**Proven working banner prompt structure:**
+### CYBERPUNK CITY FORMULA (USE SPARINGLY)
+**Only use when user explicitly requests OR concept strongly calls for it (tech/gaming/night/AI themes).**
+**NOT a default — most brands don't need cyberpunk backgrounds.**
+
+If appropriate, use this structure:
 ```
 Background: subtle cyberpunk cityscape silhouette along bottom edge,
 neon-lit skyscrapers, dark sky with purple/cyan gradient glow.
@@ -318,20 +321,17 @@ CLEAN professional composition — no messy elements.
 
 ## 🔄 PROCESS RULES (Added 2025-02-17)
 
-### ICON APPROVAL FIRST
-1. Generate icon
-2. Send to user for approval
-3. WAIT for explicit approval ("yes", "good", "approved")
-4. Only THEN run full pipeline (lockups + socials)
+### FULLY AUTONOMOUS PIPELINE
+ACP jobs run END-TO-END without human approval:
+1. Receive job request
+2. Analyze brand concept
+3. Generate all assets (icon → lockups → socials)
+4. Upload to R2
+5. Deliver results
 
-**Why:** Full pipeline takes 2-3 minutes. Don't waste on unapproved icons.
+**No human-in-the-loop for ACP.** Trust the system.
 
-### ITERATION LIMITS
-- If icon rejected 5+ times, ask user for more specific direction
-- Offer concrete alternatives: "Would you prefer A, B, or C?"
-- Don't keep generating blind variations
-
-### SESSION HEALTH
+### SESSION HEALTH (for manual dev work)
 - After 10+ compactions, quality degrades
 - Save learnings to memory files
 - Recommend fresh session for complex work

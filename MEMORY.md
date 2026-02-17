@@ -53,10 +53,10 @@ flat, gradient, glass, gavin (iridescent), chrome, gold, silver, neon, 3d, holog
 - **CONTRAST:** Icon MUST be BRIGHT (white/cyan/neon) on dark backgrounds
 - **MATCHING:** Avatar background should match banner background style
 - **QUALITY:** Always prompt with "ULTRA PREMIUM", "4K", "SHARP, CRISP"
-- **CYBERPUNK FORMULA:** City silhouette bottom, purple/cyan gradient sky, glowing icon
+- **CYBERPUNK:** Only if user requests OR concept strongly calls for it (tech/gaming/night themes) — NOT default
 
 ## Process Rules
-- **ICON FIRST:** Get icon approval BEFORE running full pipeline
+- **FULLY AUTONOMOUS:** ACP pipeline runs end-to-end without human approval
 - **REASONING ON:** Use `/reasoning on` for complex design work
 - **FRESH SESSIONS:** After 10+ compactions, quality degrades — restart
 
