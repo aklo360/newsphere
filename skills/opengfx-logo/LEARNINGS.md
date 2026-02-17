@@ -272,3 +272,67 @@ When user provides emoji as reference:
   }
 }
 ```
+
+---
+
+## 🎨 BANNER & AVATAR RULES (Added 2025-02-17)
+
+### CONTRAST IS KING
+**Dark backgrounds require BRIGHT icons:**
+- Icon must be white, cyan, neon, or glowing
+- NEVER place dark icon on dark background
+- Test: Can you see the icon clearly at a glance?
+
+❌ WRONG: Dark gray icon on dark purple background
+✅ RIGHT: Glowing cyan/white icon on dark purple background
+
+### AVATAR-BANNER MATCHING
+**Backgrounds must feel cohesive:**
+- If banner has cyberpunk city, avatar should too
+- Same color palette across all social assets
+- Icon render style should be consistent
+
+### QUALITY PROMPTING
+**Always include quality keywords:**
+```
+"ULTRA PREMIUM 4K QUALITY"
+"SHARP, CRISP, HIGH-FIDELITY"
+"No blur, no artifacts"
+"Luxury tech aesthetic"
+```
+
+Without these, Gemini outputs feel low-res.
+
+### CYBERPUNK CITY FORMULA
+**Proven working banner prompt structure:**
+```
+Background: subtle cyberpunk cityscape silhouette along bottom edge,
+neon-lit skyscrapers, dark sky with purple/cyan gradient glow.
+Icon: BRIGHT GLOWING neon (cyan/purple/white).
+Wordmark: crisp white with subtle glow.
+Tagline: subtle, below wordmark.
+CLEAN professional composition — no messy elements.
+```
+
+---
+
+## 🔄 PROCESS RULES (Added 2025-02-17)
+
+### ICON APPROVAL FIRST
+1. Generate icon
+2. Send to user for approval
+3. WAIT for explicit approval ("yes", "good", "approved")
+4. Only THEN run full pipeline (lockups + socials)
+
+**Why:** Full pipeline takes 2-3 minutes. Don't waste on unapproved icons.
+
+### ITERATION LIMITS
+- If icon rejected 5+ times, ask user for more specific direction
+- Offer concrete alternatives: "Would you prefer A, B, or C?"
+- Don't keep generating blind variations
+
+### SESSION HEALTH
+- After 10+ compactions, quality degrades
+- Save learnings to memory files
+- Recommend fresh session for complex work
+- Use `/reasoning on` for design decisions
