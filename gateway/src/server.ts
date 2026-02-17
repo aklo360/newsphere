@@ -685,61 +685,10 @@ async function uploadOutputs(
   brandSlug: string,
   type: "logo" | "socials"
 ): Promise<Record<string, string>> {
-  // Use the existing storage module to upload
   return new Promise((resolve, reject) => {
-    const uploadScript = `
-      import { uploadWithWrangler, generateJobId } from "./src/storage.ts";
-      import * as fs from "fs";
-      import * as path from "path";
-      
-      const outputDir = "${outputDir.replace(/"/g, '\\"')}";
-      const prefix = "jobs/${jobId}/${brandSlug}";
-      const type = "${type}";
-      
-      async function upload() {
-        const urls = {};
-        
-        if (type === "logo") {
-          const logoDir = path.join(outputDir, "..", "logo");
-          const files = ["icon.png", "wordmark.png", "stacked.png", "horizontal.png"];
-          for (const file of files) {
-            const fp = path.join(logoDir, file);
-            if (fs.existsSync(fp)) {
-              urls[file.replace(".png", "")] = await uploadWithWrangler(fp, prefix + "/logo/" + file);
-            }
-          }
-          const bsPath = path.join(outputDir, "..", "brand-system.json");
-          if (fs.existsSync(bsPath)) {
-            urls["brandSystem"] = await uploadWithWrangler(bsPath, prefix + "/brand-system.json");
-          }
-        } else {
-          const avatarsDir = path.join(outputDir, "avatars");
-          const bannersDir = path.join(outputDir, "banners");
-          
-          if (fs.existsSync(path.join(avatarsDir, "avatar-master.png"))) {
-            urls["avatarMaster"] = await uploadWithWrangler(path.join(avatarsDir, "avatar-master.png"), prefix + "/socials/avatar-master.png");
-          }
-          if (fs.existsSync(path.join(avatarsDir, "avatar-acp.jpg"))) {
-            urls["avatarAcp"] = await uploadWithWrangler(path.join(avatarsDir, "avatar-acp.jpg"), prefix + "/socials/avatar-acp.jpg");
-          }
-          if (fs.existsSync(path.join(bannersDir, "twitter-banner.png"))) {
-            urls["twitterBanner"] = await uploadWithWrangler(path.join(bannersDir, "twitter-banner.png"), prefix + "/socials/twitter-banner.png");
-          }
-          if (fs.existsSync(path.join(bannersDir, "og-card.png"))) {
-            urls["ogCard"] = await uploadWithWrangler(path.join(bannersDir, "og-card.png"), prefix + "/socials/og-card.png");
-          }
-          if (fs.existsSync(path.join(bannersDir, "community-banner.png"))) {
-            urls["communityBanner"] = await uploadWithWrangler(path.join(bannersDir, "community-banner.png"), prefix + "/socials/community-banner.png");
-          }
-        }
-        
-        console.log("UPLOAD_RESULT:" + JSON.stringify(urls));
-      }
-      
-      upload().catch(e => { console.error(e); process.exit(1); });
-    `;
+    console.log(`[upload] Running scripts/upload-job.ts ${type} ${brandSlug} ${jobId}`);
     
-    const proc = spawn("npx", ["tsx", "-e", uploadScript], {
+    const proc = spawn("npx", ["tsx", "scripts/upload-job.ts", type, brandSlug, jobId], {
       cwd: opengfxDir,
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -747,23 +696,35 @@ async function uploadOutputs(
     let stdout = "";
     let stderr = "";
     
-    proc.stdout.on("data", (data) => { stdout += data.toString(); });
+    proc.stdout.on("data", (data) => { 
+      const text = data.toString();
+      stdout += text;
+      // Log upload progress
+      for (const line of text.split("\n").filter((l: string) => l.trim())) {
+        console.log(`  ${line}`);
+      }
+    });
     proc.stderr.on("data", (data) => { stderr += data.toString(); });
     
     proc.on("close", (code) => {
       if (code !== 0) {
+        console.error(`[upload] Failed: ${stderr}`);
         reject(new Error(`Upload failed: ${stderr}`));
         return;
       }
       
       const match = stdout.match(/UPLOAD_RESULT:(\{.*\})/);
       if (!match) {
+        console.error(`[upload] Could not parse result from: ${stdout}`);
         reject(new Error("Could not parse upload result"));
         return;
       }
       
       try {
-        resolve(JSON.parse(match[1]));
+        const result = JSON.parse(match[1]);
+        // Extract the inner object (logo or socials)
+        const urls = result.logo || result.socials || result;
+        resolve(urls);
       } catch (err) {
         reject(new Error(`Failed to parse upload result: ${err}`));
       }
