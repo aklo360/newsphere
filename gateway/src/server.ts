@@ -13,7 +13,6 @@
  * Pricing (matches ACP):
  * - Logo System: $5 (icon, wordmark, lockups, brand-system.json)
  * - Social Assets: $5 (avatar, banners)
- * - Full Brand: $5 (logo + socials)
  */
 
 import express from "express";
@@ -74,7 +73,6 @@ console.log(`
 const PRICING: Record<JobType, number> = {
   logo: 5,
   socials: 5,
-  brand: 5,
 };
 
 // ============================================================
@@ -89,7 +87,6 @@ app.get("/", (req, res) => {
     pricing: {
       logo: "$5 - Logo system (icon, wordmark, lockups)",
       socials: "$5 - Social assets (avatar, banners)",
-      brand: "$5 - Full brand (logo + socials)",
     },
     supportedChains: [
       {
@@ -114,12 +111,11 @@ app.get("/", (req, res) => {
       "GET /v1/pricing": "Pricing tiers",
       "POST /v1/logo": "Generate logo system (x402 payment required)",
       "POST /v1/socials": "Generate social assets (x402 payment required)",
-      "POST /v1/brand": "Generate full brand (x402 payment required)",
       "GET /v1/jobs/:id": "Check job status",
       "GET /v1/jobs": "List jobs (filter by wallet)",
     },
     flow: [
-      "1. POST /v1/logo (or /socials, /brand) → 402 with payment options",
+      "1. POST /v1/logo or /v1/socials → 402 with payment options",
       "2. Choose your chain (Base or Solana), sign payment",
       "3. Retry with X-Payment header → get {jobId, status: 'processing'}",
       "4. Poll GET /v1/jobs/:jobId until completed",
@@ -442,25 +438,6 @@ app.post("/v1/socials", async (req, res) => {
   }
 });
 
-app.post("/v1/brand", async (req, res) => {
-  try {
-    const { brand_name, concept, tagline, render_style } = req.body;
-
-    if (!brand_name || !concept) {
-      res.status(400).json({ error: "Missing required fields: brand_name, concept" });
-      return;
-    }
-
-    await handlePaymentRequest(req, res, "brand", brand_name, concept, { 
-      tagline, 
-      renderStyle: render_style,
-    });
-  } catch (err) {
-    console.error(`[gateway] Error:`, err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 // ============================================================
 // Background Generation
 // ============================================================
@@ -478,17 +455,10 @@ async function generateAsync(
   try {
     let result: any;
     
-    if (job.type === "logo" || job.type === "brand") {
+    if (job.type === "logo") {
       // Run logo pipeline
       await updateJob(job.id, { step: "analyzing" });
       result = await runBrandPipeline(job);
-      
-      // If full brand, also run socials
-      if (job.type === "brand") {
-        await updateJob(job.id, { step: "avatar" });
-        const socialsResult = await runSocialsPipeline(job, result.brandSystemPath);
-        result.socials = socialsResult;
-      }
     } else if (job.type === "socials") {
       // Run socials pipeline (requires brand-system.json)
       await updateJob(job.id, { step: "avatar" });
@@ -811,7 +781,7 @@ async function start() {
   app.listen(PORT, () => {
     console.log(`[gateway] Listening on http://localhost:${PORT}`);
     console.log(`[gateway] Chains: Base USDC, Solana SOL`);
-    console.log(`[gateway] Services: /v1/logo ($5), /v1/socials ($5), /v1/brand ($5)`);
+    console.log(`[gateway] Services: /v1/logo ($5), /v1/socials ($5)`);
   });
 }
 

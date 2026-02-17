@@ -7,7 +7,7 @@
 
 const API_BASE = process.env.API_BASE_URL || "https://api.opengfx.app";
 
-export type JobType = "logo" | "socials" | "brand";
+export type JobType = "logo" | "socials";
 export type JobStatus = "pending" | "processing" | "completed" | "failed";
 
 export interface LogoOutput {
