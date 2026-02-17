@@ -18,7 +18,8 @@ Generates rendered social media assets (avatar + banner) from brand-system.json.
 ```
 output/{brand}/socials/
 ├── avatars/
-│   └── avatar-master.png    # 1024x1024 rendered icon
+│   ├── avatar-master.png    # 1024x1024 rendered icon
+│   └── avatar-acp.jpg       # 200x200 JPEG (<50KB) for ACP/Virtuals
 └── banners/
     └── twitter-banner.png   # 3000x1000 (3:1 aspect ratio)
 ```
