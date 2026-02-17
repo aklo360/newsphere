@@ -418,9 +418,13 @@ function createIconStyleBlock(
   renderStyle: RenderStyle,
   colors: ColorPalette
 ): string {
-  const stylePrompt = renderStyle.preset === "custom" && renderStyle.customPrompt
-    ? renderStyle.customPrompt
-    : RENDER_STYLE_PROMPTS[renderStyle.preset] || RENDER_STYLE_PROMPTS.gradient;
+  // Handle both string and object render styles
+  const preset = typeof renderStyle === "string" ? renderStyle : renderStyle.preset;
+  const isChrome = preset === "chrome" || preset === "silver";
+  
+  const stylePrompt = preset === "custom" && (renderStyle as RenderStyle).customPrompt
+    ? (renderStyle as RenderStyle).customPrompt
+    : RENDER_STYLE_PROMPTS[preset] || RENDER_STYLE_PROMPTS.gradient;
 
   // Create a HIGHLY DETAILED style block that pins down exact visual characteristics
   return `ICON RENDER STYLE (use EXACTLY for all icon appearances):
@@ -432,20 +436,20 @@ EXACT COLOR MAPPING:
 - Primary gradient start: ${colors.primary}
 - Primary gradient end: ${colors.secondary}
 - Accent highlights: ${colors.accent}
-- The icon should have iridescent/holographic color shifts if the style calls for it
+${isChrome ? `- PURE METALLIC: Only silver, grey, white, black tones — NO color hues, NO rainbow, NO iridescent` : `- The icon should have iridescent/holographic color shifts if the style calls for it`}
 - Color flow direction: top-left to bottom-right diagonal
 
 MATERIAL & LIGHTING:
-- Material: ${renderStyle.parameters?.material || "glass"}
-- Surface finish: ${renderStyle.parameters?.finish || "glossy"}
+- Material: ${isChrome ? "polished chrome metal" : ((renderStyle as RenderStyle).parameters?.material || "glass")}
+- Surface finish: ${isChrome ? "mirror-like chrome" : ((renderStyle as RenderStyle).parameters?.finish || "glossy")}
 - Lighting angle: 45 degrees from top-left
 - Highlight intensity: prominent on upper-left edges
 - Shadow/depth: subtle ambient occlusion on lower-right
 
 SPECIFIC VISUAL DETAILS:
-- Edge treatment: smooth anti-aliased edges with subtle glow
-- Reflection: soft environmental reflection on surface
-- Transparency: if glass-like, show subtle internal refraction
+- Edge treatment: smooth anti-aliased edges ${isChrome ? "with sharp metallic definition" : "with subtle glow"}
+- Reflection: ${isChrome ? "sharp chrome mirror reflections, environment reflection" : "soft environmental reflection on surface"}
+- ${isChrome ? "Surface: solid opaque metal — NO transparency, NO glass effects" : "Transparency: if glass-like, show subtle internal refraction"}
 
 BACKGROUND (use EXACTLY for consistency across PFP and banner):
 ⚠️ NEVER use plain white or solid flat backgrounds — ALWAYS use a gradient!

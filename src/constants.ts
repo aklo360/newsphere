@@ -162,12 +162,19 @@ export const RENDER_STYLE_PROMPTS: Record<string, string> = {
   `,
   
   chrome: `
-    Render this logo in CHROME/METALLIC style:
-    - Highly reflective chrome metal surface
-    - Sharp reflections and highlights
-    - 3D metallic depth
-    - Cool silver/steel tones with environment reflections
-    - Premium, futuristic tech feel
+    Render this logo in PURE CHROME / POLISHED SILVER METAL style:
+    - Polished stainless steel, liquid mercury, chrome car badge finish
+    - ONLY silver, grey, white, and black tones
+    - ABSOLUTELY NO color hues - no purple, no blue, no orange, no rainbow
+    - NO iridescent effects, NO holographic, NO glass, NO transparency
+    - Sharp metallic highlights with deep black shadows
+    - Mirror-like reflective chrome surface
+    - Cool neutral white lighting ONLY
+    - Ultra premium luxury metal badge aesthetic
+    - Think: Tesla logo, Apple logo in chrome, Mercedes badge
+    - ALL parts of the logo should be chrome - including any eyes, glasses, or white areas
+    - Fill white areas with reflective silver chrome, not white
+    - ULTRA CLEAN, SIMPLE, LEGIBLE design
   `,
   
   gold: `

@@ -1,6 +1,8 @@
 ---
 name: opengfx-logo
 description: Generate complete logo systems with icon + wordmark + lockups. Creates production-ready SVG vector logos from natural language prompts. Use when a user requests a logo, brand mark, icon design, or visual identity foundation.
+version: 1.3.0
+note: This is the INTERNAL implementation skill for OpenGFX. For the external SERVICE documentation (ACP/x402 API), see clawhub.com/skills/opengfx.
 ---
 
 # OpenGFX Logo System
