@@ -221,35 +221,50 @@ export const RENDER_STYLE_PROMPTS: Record<string, string> = {
 // ═══════════════════════════════════════════════════════════════════
 
 export const ICON_STYLE_PROMPT = `
-DESIGN DIRECTION: Senior brand designer at Pentagram creating a premium icon.
+DESIGN DIRECTION: Senior brand designer at Pentagram creating a PREMIUM MINIMAL icon.
 
-⚠️ COMPLEXITY BALANCE — CRITICAL:
-- NOT too simple (avoid basic geometric shapes, single lines)
-- NOT too complex (avoid intricate details that disappear at small sizes)
-- TARGET: 75% complexity on a scale where 100% is hyper-detailed
-- Think: recognizable at 32x32 pixels, beautiful at 1024x1024
-- The icon should have CHARACTER but remain CLEAN
-- Aim for Apple SF Symbols level — detailed but not cluttered
+⚠️ SIMPLICITY IS PARAMOUNT — GOLDEN RULE:
+- THE RULE OF ONE: Pick ONE interesting visual element, not many
+- TARGET: 40-50% complexity — SIMPLE, CLEAN, LUXURY
+- Think Apple, Stripe, Linear — minimalist tech elegance
+- If it looks busy, you've gone too far
+- Every element must EARN its place
+
+⚠️ COMPLEXITY SCALE:
+- 0-30%: Too basic (circle, square, single line)
+- 40-50%: IDEAL — clean, distinctive, memorable ✓
+- 60-70%: Acceptable only if meaning requires it
+- 80%+: TOO COMPLEX — never go here
+
+SIMPLICITY CHECKLIST:
+- Can a child draw this from memory? (should be yes)
+- Does it read clearly at 32x32px? (must be yes)
+- Count the visual elements — if more than 2-3, simplify
+- Remove detail until it breaks, then add one thing back
 
 FIDELITY:
-- HIGH FIDELITY — detailed, recognizable, professional
-- If emoji referenced, icon must be IMMEDIATELY RECOGNIZABLE as that object
-- Must work at small sizes (favicons, profile pictures)
+- HIGH FIDELITY rendering, but SIMPLE forms
+- If emoji referenced, capture its ESSENCE not every detail
+- Bold, confident shapes over intricate line work
 
 RENDERING:
 - Solid black (#000000) on pure white (#FFFFFF)
 - Clean vector-quality edges
+- Generous negative space
 
 SPECS:
 - Square 1:1, 1024x1024 pixels
-- Icon fills ~85% of canvas, centered
+- Icon fills ~80% of canvas, centered
+- Breathing room around the icon
 
 FORBIDDEN:
 - NO borders, frames, or outlines around the icon
 - NO box or container
+- NO intricate patterns or textures
+- NO circuit boards, complex machinery details
+- NO combining 5+ symbols into one icon
+- NO detailed line work that disappears at small sizes
 - ONLY the icon itself on pure white
-- NO intricate line work that disappears at small sizes
-- NO overly detailed textures or patterns
 `;
 
 export const WORDMARK_STYLE_PROMPT = `

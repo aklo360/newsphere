@@ -39,10 +39,14 @@ flat, gradient, glass, gavin (iridescent), chrome, gold, silver, neon, 3d, holog
 - Tagline always plain (white for dark, black for light)
 - Mode detected in style guide analysis, stored in `brand-system.json`
 
-## Icon Complexity
-- Target: 75% max complexity
+## Icon Complexity (UPDATED 2025-02-17)
+- **TARGET: 40-50% complexity** — SIMPLE, CLEAN, LUXURY
+- **THE RULE OF ONE:** One interesting visual element, not many
 - Must be recognizable at 32x32px
-- No intricate details that disappear at small sizes
+- Think Apple, Stripe, Linear — minimalist tech elegance
+- If combining 3+ concepts, simplify
+- Can a child draw it from memory? Should be yes
+- SIMPLEX > COMPLEX — always
 
 ## ACP Avatar
 - `avatar-acp.jpg` — 400x400, JPEG q85, <50KB

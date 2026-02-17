@@ -9,6 +9,36 @@ Last updated: 2026-02-16
 
 ## ⚠️ HARD REQUIREMENTS (NEVER VIOLATE)
 
+### 0. SIMPLICITY IS THE ULTIMATE SOPHISTICATION
+**The Rule of One Interesting Thing:**
+- Every icon has ONE distinctive visual element
+- If you're combining 3+ concepts, you've failed
+- SIMPLEX > COMPLEX — always
+- Luxury high-tech aesthetic = minimal forms, maximum impact
+
+**Complexity Scale (target 40-50%):**
+- 0-30%: Too basic (circle, dot, line)
+- 40-50%: IDEAL — clean, distinctive, memorable ✓
+- 60-70%: Only if meaning absolutely requires it
+- 80%+: NEVER GO HERE — too busy, too cluttered
+
+**The Child Test:**
+- Can a child draw this from memory? → Should be YES
+- Can you describe it in one sentence? → Must be YES
+- Count visual elements: if >3, simplify
+
+**Examples of RIGHT complexity:**
+- Apple: One apple, one bite
+- Nike: One swoosh
+- Twitter/X: One bird / one X
+- Stripe: Two diagonal lines
+- Linear: One angled bracket
+
+**Examples of WRONG complexity:**
+- Circuit boards with 10 nodes
+- Owls with moons, stars, flames, coins, AND spades
+- Detailed machinery or intricate patterns
+
 ### 1. ICON MUST WORK IN SOLID BLACK
 **Before any color is applied:**
 - Test icon in #000000 only
