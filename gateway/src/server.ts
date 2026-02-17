@@ -38,7 +38,7 @@ const SOLANA_WALLET = process.env.SOLANA_WALLET_ADDRESS!;
 const NETWORK_MODE = process.env.NETWORK_MODE || "mainnet";
 const OPENGFX_PATH = process.env.OPENGFX_PATH || "..";
 
-// Chain configurations
+// Chain configurations (Base USDC + Solana SOL only)
 const CHAINS = {
   base: {
     networkId: NETWORK_MODE === "mainnet" ? "eip155:8453" : "eip155:84532",
@@ -49,14 +49,6 @@ const CHAINS = {
     assetSymbol: "USDC",
     decimals: 6,
     wallet: EVM_WALLET,
-  },
-  solanaUsdc: {
-    networkId: NETWORK_MODE === "mainnet" ? "solana:mainnet" : "solana:devnet",
-    name: "Solana",
-    asset: "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v", // USDC mint
-    assetSymbol: "USDC",
-    decimals: 6,
-    wallet: SOLANA_WALLET,
   },
   solanaSol: {
     networkId: NETWORK_MODE === "mainnet" ? "solana:mainnet" : "solana:devnet",
@@ -106,13 +98,6 @@ app.get("/", (req, res) => {
         asset: "USDC",
         assetAddress: CHAINS.base.asset,
         payTo: CHAINS.base.wallet,
-      },
-      {
-        chain: "Solana",
-        network: CHAINS.solanaUsdc.networkId,
-        asset: "USDC",
-        assetMint: CHAINS.solanaUsdc.asset,
-        payTo: CHAINS.solanaUsdc.wallet,
       },
       {
         chain: "Solana",
@@ -175,13 +160,6 @@ app.get("/v1/pricing", async (req, res) => {
         asset: "USDC",
         assetAddress: CHAINS.base.asset,
         payTo: CHAINS.base.wallet,
-        decimals: 6,
-      },
-      solanaUsdc: {
-        network: CHAINS.solanaUsdc.networkId,
-        asset: "USDC",
-        assetMint: CHAINS.solanaUsdc.asset,
-        payTo: CHAINS.solanaUsdc.wallet,
         decimals: 6,
       },
       solanaSol: {
@@ -308,18 +286,6 @@ async function handlePaymentRequest(
           maxTimeoutSeconds: 600,
           asset: CHAINS.base.asset,
         },
-        // Solana USDC
-        {
-          scheme: "exact",
-          network: CHAINS.solanaUsdc.networkId,
-          maxAmountRequired: amountRaw,
-          resource: `https://gateway.opengfx.app/v1/${jobType}`,
-          description: `Generate ${jobType} for "${brandName}"`,
-          mimeType: "application/json",
-          payTo: CHAINS.solanaUsdc.wallet,
-          maxTimeoutSeconds: 600,
-          asset: CHAINS.solanaUsdc.asset,
-        },
         // Solana SOL
         {
           scheme: "exact",
@@ -354,13 +320,6 @@ async function handlePaymentRequest(
             amountFormatted: `${priceUsd} USDC`,
             payTo: CHAINS.base.wallet,
           },
-          solanaUsdc: {
-            network: CHAINS.solanaUsdc.networkId,
-            asset: "USDC",
-            amount: amountRaw,
-            amountFormatted: `${priceUsd} USDC`,
-            payTo: CHAINS.solanaUsdc.wallet,
-          },
           solanaSol: {
             network: CHAINS.solanaSol.networkId,
             asset: "SOL",
@@ -386,12 +345,10 @@ async function handlePaymentRequest(
     return;
   }
 
-  // Detect chain and asset
+  // Detect chain (Base USDC or Solana SOL)
   const network = paymentPayload.network || paymentPayload.payload?.network;
-  const asset = paymentPayload.payload?.authorization?.asset || paymentPayload.asset;
   const isSolana = network?.includes("solana");
-  const isSol = asset === "native" || asset === "SOL";
-  const chain = isSolana ? (isSol ? "solanaSol" : "solanaUsdc") : "base";
+  const chain = isSolana ? "solanaSol" : "base";
   
   const payerAddress = paymentPayload.payload?.authorization?.from;
 
@@ -399,7 +356,7 @@ async function handlePaymentRequest(
 
   // For Solana: settle immediately (blockhash expires in ~60s)
   let earlySettlement: { success: boolean; txHash?: string; error?: string } | null = null;
-  if (chain === "solanaSol" || chain === "solanaUsdc") {
+  if (chain === "solanaSol") {
     console.log(`[gateway] Settling Solana payment immediately...`);
     earlySettlement = await settleSolanaPayment(paymentPayload, NETWORK_MODE as any);
     
@@ -511,7 +468,7 @@ app.post("/v1/brand", async (req, res) => {
 async function generateAsync(
   job: Job, 
   paymentPayload: any, 
-  chain: "base" | "solanaSol" | "solanaUsdc",
+  chain: "base" | "solanaSol",
   earlySettlement?: { success: boolean; txHash?: string; error?: string } | null
 ) {
   const startTime = Date.now();
@@ -853,7 +810,7 @@ async function start() {
   
   app.listen(PORT, () => {
     console.log(`[gateway] Listening on http://localhost:${PORT}`);
-    console.log(`[gateway] Chains: Base USDC, Solana USDC, Solana SOL`);
+    console.log(`[gateway] Chains: Base USDC, Solana SOL`);
     console.log(`[gateway] Services: /v1/logo ($15), /v1/socials ($10), /v1/brand ($20)`);
   });
 }
