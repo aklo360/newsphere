@@ -132,9 +132,8 @@ Located in `gateway/` — cloned from OpenVid architecture.
 ### Endpoints
 | Endpoint | Service | Price |
 |----------|---------|-------|
-| `POST /v1/logo` | Logo System | $15 |
-| `POST /v1/socials` | Social Assets | $10 |
-| `POST /v1/brand` | Full Brand | $20 |
+| `POST /v1/logo` | Logo System | $5 |
+| `POST /v1/socials` | Social Assets | $5 |
 
 ### Supported Chains
 - Base USDC (EIP-3009 transferWithAuthorization)
