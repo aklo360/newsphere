@@ -62,6 +62,7 @@ export async function generateSocials(
   const tagline = taglineOverride || brandSystem.brand.tagline;
   const iconPath = path.join(brandDir, brandSystem.logo.icon);
   const horizontalPath = path.join(brandDir, brandSystem.logo.horizontal);
+  const wordmarkPath = path.join(brandDir, brandSystem.logo.wordmark);
 
   // Determine which platforms to generate
   const targetPlatforms = platforms || Object.keys(SOCIAL_PLATFORMS);
@@ -114,7 +115,8 @@ export async function generateSocials(
       width,
       height,
       outputPath,
-      masterAvatarPath  // Pass rendered icon as reference
+      masterAvatarPath,  // Pass rendered icon as reference
+      wordmarkPath       // Pass wordmark for exact typography match
     );
     
     bannerPaths[platform] = `socials/banners/${platform}-banner.png`;

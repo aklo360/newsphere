@@ -524,7 +524,8 @@ export async function generateBannerWithStyle(
   width: number,
   height: number,
   outputPath: string,
-  renderedIconPath?: string
+  renderedIconPath?: string,
+  wordmarkPath?: string
 ): Promise<string> {
   const logoData = fs.readFileSync(logoPath);
   const base64Logo = logoData.toString("base64");
@@ -534,7 +535,7 @@ export async function generateBannerWithStyle(
     ? renderStyle.customPrompt
     : RENDER_STYLE_PROMPTS[renderStyle.preset] || RENDER_STYLE_PROMPTS.gradient;
 
-  // Build image parts - RENDERED ICON MUST BE FIRST
+  // Build image parts - RENDERED ICON FIRST, THEN WORDMARK
   const imageParts: Array<{ inlineData: { mimeType: string; data: string } }> = [];
   
   if (renderedIconPath && fs.existsSync(renderedIconPath)) {
@@ -543,12 +544,19 @@ export async function generateBannerWithStyle(
     imageParts.push({ inlineData: { mimeType: "image/png", data: base64RenderedIcon } });
   }
   
+  if (wordmarkPath && fs.existsSync(wordmarkPath)) {
+    const wordmarkData = fs.readFileSync(wordmarkPath);
+    const base64Wordmark = wordmarkData.toString("base64");
+    imageParts.push({ inlineData: { mimeType: "image/png", data: base64Wordmark } });
+  }
+  
   imageParts.push({ inlineData: { mimeType: "image/png", data: base64Logo } });
 
   // Calculate aspect ratio
   const aspectRatio = `${width}:${height}`;
   const aspectDecimal = width / height;
 
+  const hasWordmark = wordmarkPath && fs.existsSync(wordmarkPath);
   const prompt = `${renderedIconPath ? `⚠️ CRITICAL INSTRUCTIONS — READ FIRST ⚠️
 
 1. ICON PRESERVATION:
@@ -559,7 +567,14 @@ The FIRST IMAGE provided is the RENDERED LOGO ICON. You MUST preserve this icon 
 - EXACT same style — maintain the iridescent/glass/metallic treatment pixel-perfect
 DO NOT regenerate or reinterpret the icon. Place it in the banner AS-IS.
 
-2. LAYOUT — EXTREMELY IMPORTANT:
+2. WORDMARK PRESERVATION:
+${hasWordmark ? `The SECOND IMAGE is the EXACT WORDMARK to use. You MUST:
+- Use this EXACT wordmark — same font, same letter shapes, same spacing
+- Apply a subtle render treatment (darker 3D glass) but preserve the typography exactly
+- DO NOT substitute a different font or regenerate the text
+- The wordmark letterforms must match the reference image PERFECTLY` : `Generate "${brandName}" as the wordmark.`}
+
+3. LAYOUT — EXTREMELY IMPORTANT:
 - CENTER all content HORIZONTALLY and VERTICALLY in the frame
 - Leave AT LEAST 15-20% PADDING on ALL sides (left, right, top, bottom)
 - Content must NOT touch or approach the edges
@@ -573,8 +588,9 @@ ASPECT RATIO: ${aspectRatio} (${aspectDecimal.toFixed(2)}:1 ultrawide)
 OUTPUT DIMENSIONS: ${width}x${height} pixels
 This is a wide banner format — compose horizontally.
 
-${renderedIconPath ? "IMAGE 1 (FIRST): RENDERED ICON — preserve EXACTLY as provided" : ""}
-${renderedIconPath ? "IMAGE 2: Black logo silhouette for reference" : ""}
+${renderedIconPath ? "IMAGE 1: RENDERED ICON — preserve EXACTLY as provided" : ""}
+${hasWordmark ? "IMAGE 2: EXACT WORDMARK — use this typography precisely" : ""}
+${renderedIconPath ? `IMAGE ${hasWordmark ? "3" : "2"}: Black logo silhouette for reference` : ""}
 
 BRAND:
 - Name: "${brandName}"
