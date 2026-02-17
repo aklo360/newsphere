@@ -24,7 +24,7 @@ if (!apiKey) {
 }
 
 export const ai = new GoogleGenAI({ apiKey });
-export const IMAGE_MODEL = "gemini-2.0-flash-exp-image-generation";
+export const IMAGE_MODEL = "gemini-3-pro-image-preview";
 export const TEXT_MODEL = "gemini-2.0-flash";
 export const UPSCALE_MODEL = "imagen-4.0-upscale-preview";
 
@@ -377,8 +377,7 @@ export async function generateImage(prompt: string, outputPath: string): Promise
     contents: prompt,
     config: { 
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-      // Note: gemini-2.0-flash-exp-image-generation has limited config options
-      // imageConfig with aspectRatio/imageSize may not be supported
+      imageConfig: { imageSize: '2K' }
     },
   });
 
@@ -484,7 +483,7 @@ Create a premium, polished render that looks like it belongs to a top-tier brand
     ],
     config: { 
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-      // Note: gemini-2.0-flash-exp-image-generation has limited config options
+      imageConfig: { imageSize: '2K' }
     },
   });
 
@@ -614,8 +613,7 @@ Remember: The icon from IMAGE 1 must appear EXACTLY as provided — same colors,
     ],
     config: { 
       responseModalities: [Modality.TEXT, Modality.IMAGE],
-      // Note: gemini-2.0-flash-exp-image-generation has limited config options
-      // imageConfig with aspectRatio/imageSize may not be supported
+      imageConfig: { imageSize: '2K' }
     },
   });
 
