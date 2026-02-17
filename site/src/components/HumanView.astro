@@ -145,31 +145,43 @@ const exampleOutputs = [
       </div>
     </div>
 
-    <!-- Pay with Crypto - x402 Coming Soon -->
+    <!-- Pay with Crypto - x402 -->
     <div class="pb-20 md:pb-28 text-center">
-      <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-amber-50 text-sm font-medium text-amber-600 mb-6">
-        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-        Coming Soon
+      <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-green-50 text-sm font-medium text-green-600 mb-6">
+        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+        Live Now
       </div>
       <h2 class="text-2xl md:text-3xl font-bold tracking-tight mb-3">Pay with Crypto</h2>
       <p class="text-gray-500 max-w-lg mx-auto leading-relaxed mb-8">
-        Instant payments via <a href="https://x402.org" target="_blank" rel="noopener" class="text-cyan-500 hover:underline">x402</a> — the internet-native payment standard. 
-        Web app launching soon.
+        Instant payments via <a href="https://x402.org" target="_blank" rel="noopener" class="text-cyan-500 hover:underline">x402</a> — the internet-native payment standard.
+        Connect your wallet and pay with USDC on Base or SOL on Solana.
       </p>
       
-      <!-- Payment methods preview -->
-      <div class="flex items-center justify-center gap-3 mb-8 opacity-50">
-        <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-50 border border-gray-200 text-sm font-medium text-gray-400">
+      <!-- Payment methods -->
+      <div class="flex items-center justify-center gap-3 mb-8">
+        <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-50 border border-gray-200 text-sm font-medium text-gray-700">
           <span class="text-base">🔵</span>
           USDC
-          <span class="text-gray-300 text-xs">on Base</span>
+          <span class="text-gray-400 text-xs">on Base</span>
         </span>
-        <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-50 border border-gray-200 text-sm font-medium text-gray-400">
+        <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-50 border border-gray-200 text-sm font-medium text-gray-700">
           <span class="text-base">🟣</span>
           SOL
-          <span class="text-gray-300 text-xs">on Solana</span>
+          <span class="text-gray-400 text-xs">on Solana</span>
         </span>
       </div>
+
+      <a 
+        href="https://gateway.opengfx.app" 
+        target="_blank"
+        rel="noopener"
+        class="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-gradient-to-r from-cyan-500 to-sky-500 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-105"
+      >
+        View API Docs
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
     </div>
 
     <!-- Pricing -->
