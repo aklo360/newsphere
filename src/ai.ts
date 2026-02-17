@@ -281,40 +281,73 @@ export async function generateImage(prompt: string, outputPath: string): Promise
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// RENDERED AVATAR GENERATION
+// RENDERED AVATAR GENERATION (with style block for consistency)
 // ═══════════════════════════════════════════════════════════════════
 
-export async function generateRenderedAvatar(
-  iconPath: string,
+/**
+ * Generate a detailed, reusable style block for the icon render.
+ * This block will be used identically in avatar and banner generation.
+ */
+function createIconStyleBlock(
   renderStyle: RenderStyle,
-  colors: ColorPalette,
-  outputPath: string
-): Promise<string> {
-  // Read the black icon as reference
-  const iconData = fs.readFileSync(iconPath);
-  const base64Icon = iconData.toString("base64");
-  
-  // Get the render style prompt
+  colors: ColorPalette
+): string {
   const stylePrompt = renderStyle.preset === "custom" && renderStyle.customPrompt
     ? renderStyle.customPrompt
     : RENDER_STYLE_PROMPTS[renderStyle.preset] || RENDER_STYLE_PROMPTS.gradient;
 
-  const prompt = `Transform this black logo icon into a stunning rendered version.
+  // Create a HIGHLY DETAILED style block that pins down exact visual characteristics
+  return `ICON RENDER STYLE (use EXACTLY for all icon appearances):
 
-STYLE INSTRUCTIONS:
+RENDER TECHNIQUE:
 ${stylePrompt}
 
-BRAND COLORS:
-- Primary: ${colors.primary}
-- Secondary: ${colors.secondary}
-- Accent: ${colors.accent}
+EXACT COLOR MAPPING:
+- Primary gradient start: ${colors.primary}
+- Primary gradient end: ${colors.secondary}
+- Accent highlights: ${colors.accent}
+- The icon should have iridescent/holographic color shifts if the style calls for it
+- Color flow direction: top-left to bottom-right diagonal
+
+MATERIAL & LIGHTING:
+- Material: ${renderStyle.parameters?.material || "glass"}
+- Surface finish: ${renderStyle.parameters?.finish || "glossy"}
+- Lighting angle: 45 degrees from top-left
+- Highlight intensity: prominent on upper-left edges
+- Shadow/depth: subtle ambient occlusion on lower-right
+
+SPECIFIC VISUAL DETAILS:
+- Edge treatment: smooth anti-aliased edges with subtle glow
+- Reflection: soft environmental reflection on surface
+- Transparency: if glass-like, show subtle internal refraction
+- Background: complementary gradient using brand colors at 10-20% opacity
+
+This style block MUST be replicated EXACTLY across all brand assets.`;
+}
+
+export async function generateRenderedAvatarWithStyle(
+  iconPath: string,
+  renderStyle: RenderStyle,
+  colors: ColorPalette,
+  outputPath: string
+): Promise<{ path: string; styleBlock: string }> {
+  // Read the black icon as reference
+  const iconData = fs.readFileSync(iconPath);
+  const base64Icon = iconData.toString("base64");
+  
+  // Create the reusable style block
+  const styleBlock = createIconStyleBlock(renderStyle, colors);
+
+  const prompt = `Transform this black logo icon into a stunning rendered version.
+
+${styleBlock}
 
 REQUIREMENTS:
 - Maintain the EXACT shape of the original icon
 - Apply the render style while keeping it recognizable
 - Output should be 1024x1024 pixels
-- Icon should be centered with some padding
-- Background should complement the render style (can be transparent, solid, or gradient)
+- Icon should be centered with appropriate padding
+- This is the MASTER render — all other brand assets will match this exact style
 
 Create a premium, polished render that looks like it belongs to a top-tier brand.`;
 
@@ -337,16 +370,130 @@ Create a premium, polished render that looks like it belongs to a top-tier brand
     if (part.inlineData?.data) {
       const buffer = Buffer.from(part.inlineData.data, "base64");
       fs.writeFileSync(outputPath, buffer);
-      return outputPath;
+      return { path: outputPath, styleBlock };
     }
   }
   throw new Error(`Failed to generate rendered avatar`);
 }
 
+// Keep legacy function for backwards compatibility
+export async function generateRenderedAvatar(
+  iconPath: string,
+  renderStyle: RenderStyle,
+  colors: ColorPalette,
+  outputPath: string
+): Promise<string> {
+  const result = await generateRenderedAvatarWithStyle(iconPath, renderStyle, colors, outputPath);
+  return result.path;
+}
+
 // ═══════════════════════════════════════════════════════════════════
-// BANNER GENERATION
+// BANNER GENERATION (with shared style block for consistency)
 // ═══════════════════════════════════════════════════════════════════
 
+export async function generateBannerWithStyle(
+  logoPath: string,
+  brandName: string,
+  tagline: string | undefined,
+  renderStyle: RenderStyle,
+  colors: ColorPalette,
+  typography: Typography,
+  iconStyleBlock: string,
+  width: number,
+  height: number,
+  outputPath: string,
+  renderedIconPath?: string
+): Promise<string> {
+  const logoData = fs.readFileSync(logoPath);
+  const base64Logo = logoData.toString("base64");
+
+  // Get the render style prompt for overall aesthetic
+  const stylePrompt = renderStyle.preset === "custom" && renderStyle.customPrompt
+    ? renderStyle.customPrompt
+    : RENDER_STYLE_PROMPTS[renderStyle.preset] || RENDER_STYLE_PROMPTS.gradient;
+
+  // Build image parts - RENDERED ICON MUST BE FIRST
+  const imageParts: Array<{ inlineData: { mimeType: string; data: string } }> = [];
+  
+  if (renderedIconPath && fs.existsSync(renderedIconPath)) {
+    const renderedIconData = fs.readFileSync(renderedIconPath);
+    const base64RenderedIcon = renderedIconData.toString("base64");
+    imageParts.push({ inlineData: { mimeType: "image/png", data: base64RenderedIcon } });
+  }
+  
+  imageParts.push({ inlineData: { mimeType: "image/png", data: base64Logo } });
+
+  // Calculate aspect ratio
+  const aspectRatio = `${width}:${height}`;
+  const aspectDecimal = width / height;
+
+  const prompt = `${renderedIconPath ? `⚠️ CRITICAL INSTRUCTION — READ FIRST ⚠️
+The FIRST IMAGE provided is the RENDERED LOGO ICON. You MUST preserve this icon EXACTLY:
+- EXACT same shape — do not modify, distort, or reinterpret
+- EXACT same colors — preserve every color, gradient, and hue precisely  
+- EXACT same lighting — keep highlights, reflections, and shadows identical
+- EXACT same style — maintain the iridescent/glass/metallic treatment pixel-perfect
+DO NOT regenerate or reinterpret the icon. Place it in the banner AS-IS.
+
+` : ""}Create a professional social media banner.
+
+ASPECT RATIO: ${aspectRatio} (${aspectDecimal.toFixed(2)}:1 ultrawide)
+OUTPUT DIMENSIONS: ${width}x${height} pixels
+This is a wide banner format — compose horizontally.
+
+${renderedIconPath ? "IMAGE 1 (FIRST): RENDERED ICON — preserve EXACTLY as provided" : ""}
+${renderedIconPath ? "IMAGE 2: Black logo silhouette for reference" : ""}
+
+BRAND:
+- Name: "${brandName}"
+${tagline ? `- Tagline: "${tagline}"` : ""}
+
+RENDER STYLE FOR WORDMARK & TAGLINE (match the icon's style):
+${stylePrompt}
+
+${iconStyleBlock}
+
+COMPOSITION:
+- Place the rendered icon prominently (left side or integrated with text)
+- The WORDMARK "${brandName}" must have gorgeous 3D/metallic/iridescent text treatment matching the icon
+${tagline ? `- The TAGLINE "${tagline}" should also have matching rendered style` : ""}
+- Background: subtle gradient using ${colors.background} → ${colors.primary} at low opacity
+- Professional, premium brand aesthetic
+
+COLORS: Primary ${colors.primary}, Secondary ${colors.secondary}
+
+Remember: The icon from IMAGE 1 must appear EXACTLY as provided — same colors, same gradients, same everything.`;
+
+  const response = await ai.models.generateContent({
+    model: IMAGE_MODEL,
+    contents: [
+      {
+        role: "user",
+        parts: [...imageParts, { text: prompt }]
+      }
+    ],
+    config: { responseModalities: [Modality.TEXT, Modality.IMAGE] },
+  });
+
+  const parts = response.candidates?.[0]?.content?.parts || [];
+  for (const part of parts) {
+    if (part.inlineData?.data) {
+      const buffer = Buffer.from(part.inlineData.data, "base64");
+      
+      // Post-process to ensure exact dimensions (Gemini may not output exact custom sizes)
+      const sharp = (await import("sharp")).default;
+      await sharp(buffer)
+        .resize(width, height, { fit: "cover", position: "center" })
+        .png()
+        .toFile(outputPath);
+      
+      return outputPath;
+    }
+  }
+  throw new Error(`Failed to generate banner`);
+}
+
+// Legacy function without style block (generates its own)
 export async function generateBanner(
   logoPath: string,
   brandName: string,
@@ -358,63 +505,11 @@ export async function generateBanner(
   height: number,
   outputPath: string
 ): Promise<string> {
-  const logoData = fs.readFileSync(logoPath);
-  const base64Logo = logoData.toString("base64");
-
-  const stylePrompt = renderStyle.preset === "custom" && renderStyle.customPrompt
-    ? renderStyle.customPrompt
-    : RENDER_STYLE_PROMPTS[renderStyle.preset] || RENDER_STYLE_PROMPTS.gradient;
-
-  const prompt = `Create a professional social media banner featuring this logo.
-
-BANNER SPECIFICATIONS:
-- Dimensions: ${width}x${height} pixels
-- Aspect ratio: ${width}:${height}
-
-BRAND DETAILS:
-- Brand name: ${brandName}
-${tagline ? `- Tagline: "${tagline}"` : ""}
-- Header font: ${typography.headerFont}
-- Body font: ${typography.bodyFont}
-
-STYLE:
-${stylePrompt}
-
-COLORS:
-- Primary: ${colors.primary}
-- Secondary: ${colors.secondary}
-- Background: ${colors.background}
-
-LAYOUT REQUIREMENTS:
-- Logo/wordmark should be prominently featured
-- Clean, professional composition
-- ${tagline ? "Include the tagline in body font" : "Focus on logo only"}
-- Leave appropriate padding/margins
-- Make it look like a premium brand banner
-
-Create a stunning banner that matches the brand's visual identity.`;
-
-  const response = await ai.models.generateContent({
-    model: IMAGE_MODEL,
-    contents: [
-      {
-        role: "user",
-        parts: [
-          { inlineData: { mimeType: "image/png", data: base64Logo } },
-          { text: prompt }
-        ]
-      }
-    ],
-    config: { responseModalities: [Modality.TEXT, Modality.IMAGE] },
-  });
-
-  const parts = response.candidates?.[0]?.content?.parts || [];
-  for (const part of parts) {
-    if (part.inlineData?.data) {
-      const buffer = Buffer.from(part.inlineData.data, "base64");
-      fs.writeFileSync(outputPath, buffer);
-      return outputPath;
-    }
-  }
-  throw new Error(`Failed to generate banner`);
+  const styleBlock = `RENDER STYLE: ${RENDER_STYLE_PROMPTS[renderStyle.preset] || RENDER_STYLE_PROMPTS.gradient}
+COLORS: Primary ${colors.primary}, Secondary ${colors.secondary}, Accent ${colors.accent}`;
+  
+  return generateBannerWithStyle(
+    logoPath, brandName, tagline, renderStyle, colors, typography,
+    styleBlock, width, height, outputPath
+  );
 }
