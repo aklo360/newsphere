@@ -31,7 +31,6 @@ const PRESET_DIMENSIONS: Record<string, { width: number; height: number }> = {
   // Announcement formats
   "announcement-wide": { width: 1920, height: 1080 },
   "announcement-square": { width: 1200, height: 1200 },
-  "marcomms-square": { width: 1200, height: 1200 },
   
   // Web formats
   "og-image": { width: 1200, height: 630 },
