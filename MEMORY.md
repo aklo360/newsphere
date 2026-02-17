@@ -126,5 +126,35 @@ flat, gradient, glass, gavin (iridescent), chrome, gold, silver, neon, 3d, holog
 - Preserves icon, wordmark, and composition while adding vertical space
 - Always uses master as input to avoid generation loss
 
+## x402 Payment Gateway (NEW 2025-02-17)
+Located in `gateway/` — cloned from OpenVid architecture.
+
+### Endpoints
+| Endpoint | Service | Price |
+|----------|---------|-------|
+| `POST /v1/logo` | Logo System | $15 |
+| `POST /v1/socials` | Social Assets | $10 |
+| `POST /v1/brand` | Full Brand | $20 |
+
+### Supported Chains
+- Base USDC (EIP-3009 transferWithAuthorization)
+- Solana USDC
+- Solana SOL (Pyth price feed)
+
+### Flow
+1. POST request → 402 with payment options
+2. Client signs payment, retries with X-Payment header
+3. Server returns jobId immediately
+4. Client polls `/v1/jobs/:id` for completion
+5. Response contains CDN URLs for all assets
+
+### Running
+```bash
+cd gateway
+cp .env.example .env  # Configure wallets
+npm run dev           # Development (port 4022)
+npm start             # Production
+```
+
 ## GitHub
 https://github.com/aklo360/openGFX.git
