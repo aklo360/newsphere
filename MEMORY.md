@@ -166,12 +166,13 @@ https://github.com/aklo360/openGFX.git
 ## External Skill (ClawHub)
 - **Repo:** https://github.com/aklo360/opengfx-skill
 - **ClawHub:** https://clawhub.com/skills/opengfx
-- **Current Version:** 1.3.0 (2025-02-17)
+- **Current Version:** 1.4.0 (2025-02-17)
 - **Install:** `clawhub install opengfx`
 
 ### Version History
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.4.0 | 2025-02-17 | Added On-Brand GFX service ($2/graphic) |
 | 1.3.0 | 2025-02-17 | Added x402 direct API integration alongside ACP |
 | 1.2.1 | 2025-02-17 | BYOL mode, AI brand naming |
 | 1.0.0 | 2025-02-16 | Initial release (ACP only)
