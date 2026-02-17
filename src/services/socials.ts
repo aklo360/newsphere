@@ -12,7 +12,7 @@ import { fileURLToPath } from "url";
 
 import type { BrandSystem, SocialsManifest, SocialsOptions } from "../types.js";
 import { SOCIAL_PLATFORMS } from "../constants.js";
-import { generateRenderedAvatarWithStyle, generateBannerWithStyle } from "../ai.js";
+import { generateRenderedAvatarWithStyle, generateBannerWithStyle, adaptBannerAspectRatio } from "../ai.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -131,6 +131,39 @@ export async function generateSocials(
     
     bannerPaths[platform] = `socials/banners/${platform}-banner.png`;
     console.log(`      ✓ ${platform}-banner.png`);
+  }
+
+  // ─── STEP 3: GENERATE BANNER VARIANTS (OG Card + Community) ───
+  const masterBannerPath = path.join(bannersDir, "twitter-banner.png");
+  
+  if (fs.existsSync(masterBannerPath)) {
+    console.log(`\n[3/3] Generating banner variants from master...`);
+    
+    // OG Card: 1200x628 (1.91:1) - for social media link previews
+    const ogCardPath = path.join(bannersDir, "og-card.png");
+    console.log(`      Generating OG card (1200x628)...`);
+    await adaptBannerAspectRatio(
+      masterBannerPath,
+      1200,
+      628,
+      ogCardPath,
+      brandSystem.brand.name
+    );
+    bannerPaths["og-card"] = "socials/banners/og-card.png";
+    console.log(`      ✓ og-card.png`);
+    
+    // Community Banner: 1200x480 (2.5:1) - for Twitter communities
+    const communityBannerPath = path.join(bannersDir, "community-banner.png");
+    console.log(`      Generating community banner (1200x480)...`);
+    await adaptBannerAspectRatio(
+      masterBannerPath,
+      1200,
+      480,
+      communityBannerPath,
+      brandSystem.brand.name
+    );
+    bannerPaths["community"] = "socials/banners/community-banner.png";
+    console.log(`      ✓ community-banner.png`);
   }
 
   // ─── STEP 4: CREATE MANIFEST ───

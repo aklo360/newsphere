@@ -1,0 +1,77 @@
+---
+---
+
+<div class="flex justify-center py-10 md:py-14">
+  <div class="toggle-pill" id="persona-toggle">
+    <div class="toggle-slider" id="toggle-slider"></div>
+    <button
+      class="toggle-option"
+      data-persona="human"
+      data-active="true"
+      type="button"
+    >
+      I'm a Human
+    </button>
+    <button
+      class="toggle-option"
+      data-persona="agent"
+      data-active="false"
+      type="button"
+    >
+      I'm an Agent
+    </button>
+  </div>
+</div>
+
+<script>
+  function initToggle() {
+    const toggle = document.getElementById('persona-toggle');
+    const slider = document.getElementById('toggle-slider');
+    const buttons = toggle?.querySelectorAll('.toggle-option') as NodeListOf<HTMLButtonElement>;
+    const humanView = document.getElementById('human-view');
+    const agentView = document.getElementById('agent-view');
+
+    if (!toggle || !slider || !buttons.length || !humanView || !agentView) return;
+
+    function positionSlider(activeBtn: HTMLButtonElement) {
+      slider!.style.left = activeBtn.offsetLeft + 'px';
+      slider!.style.width = activeBtn.offsetWidth + 'px';
+    }
+
+    function setPersona(persona: string) {
+      buttons.forEach(btn => {
+        const isActive = btn.dataset.persona === persona;
+        btn.dataset.active = String(isActive);
+        if (isActive) positionSlider(btn);
+      });
+
+      if (persona === 'human') {
+        humanView!.dataset.visible = 'true';
+        agentView!.dataset.visible = 'false';
+      } else {
+        humanView!.dataset.visible = 'false';
+        agentView!.dataset.visible = 'true';
+      }
+    }
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        setPersona(btn.dataset.persona!);
+      });
+    });
+
+    // Initial positioning
+    const activeBtn = toggle.querySelector('[data-active="true"]') as HTMLButtonElement;
+    if (activeBtn) positionSlider(activeBtn);
+
+    // Reposition on resize
+    window.addEventListener('resize', () => {
+      const active = toggle.querySelector('[data-active="true"]') as HTMLButtonElement;
+      if (active) positionSlider(active);
+    });
+  }
+
+  // Run on load and on Astro page transitions
+  initToggle();
+  document.addEventListener('astro:after-swap', initToggle);
+</script>

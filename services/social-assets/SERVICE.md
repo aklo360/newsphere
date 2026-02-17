@@ -19,10 +19,15 @@ Generates rendered social media assets (avatar + banner) from brand-system.json.
 output/{brand}/socials/
 ├── avatars/
 │   ├── avatar-master.png    # 1024x1024 rendered icon
-│   └── avatar-acp.jpg       # 200x200 JPEG (<50KB) for ACP/Virtuals
+│   └── avatar-acp.jpg       # 400x400 JPEG (<50KB) for ACP/Virtuals
 └── banners/
-    └── twitter-banner.png   # 3000x1000 (3:1 aspect ratio)
+    ├── twitter-banner.png   # 3000x1000 (3:1) - Master banner
+    ├── og-card.png          # 1200x628 (1.91:1) - Social link previews
+    └── community-banner.png # 1200x480 (2.5:1) - Twitter communities
 ```
+
+## Banner Variants
+All banner variants are generated from the master Twitter banner using AI-powered aspect ratio adaptation. This preserves the exact composition (icon, wordmark, colors) while extending the background to fit each format.
 
 ## Standard Pipeline
 1. **Avatar Generation**

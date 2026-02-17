@@ -742,3 +742,100 @@ COLORS: Primary ${colors.primary}, Secondary ${colors.secondary}, Accent ${color
     styleBlock, width, height, outputPath
   );
 }
+
+/**
+ * Adapt a banner to a different aspect ratio using Gemini
+ * Uses the master banner as input and asks Gemini to recompose for the new dimensions
+ * This avoids cropping and preserves the key composition elements
+ */
+export async function adaptBannerAspectRatio(
+  masterBannerPath: string,
+  targetWidth: number,
+  targetHeight: number,
+  outputPath: string,
+  brandName: string
+): Promise<string> {
+  const sharp = (await import("sharp")).default;
+  
+  // Read master banner
+  const masterBuffer = fs.readFileSync(masterBannerPath);
+  const masterBase64 = masterBuffer.toString("base64");
+  const masterMetadata = await sharp(masterBuffer).metadata();
+  
+  const masterAspect = (masterMetadata.width || 3000) / (masterMetadata.height || 1000);
+  const targetAspect = targetWidth / targetHeight;
+  
+  console.log(`      [Adapting ${masterAspect.toFixed(2)}:1 → ${targetAspect.toFixed(2)}:1]`);
+  
+  // Determine if we need more vertical or horizontal space
+  const needsMoreVertical = targetAspect < masterAspect;
+  
+  const prompt = `You are given a banner image (IMAGE 1). Your task is to recreate this EXACT banner but adapted for a different aspect ratio.
+
+CURRENT BANNER: ${masterMetadata.width}x${masterMetadata.height} (${masterAspect.toFixed(2)}:1)
+TARGET: ${targetWidth}x${targetHeight} (${targetAspect.toFixed(2)}:1)
+
+${needsMoreVertical ? `
+The target is TALLER (more vertical space). You need to:
+- Keep ALL elements from the original (icon, wordmark, any tagline) at the SAME SIZE
+- Extend the background VERTICALLY (top and bottom)
+- CENTER the main content group vertically
+- Match the background style/gradient EXACTLY
+- DO NOT crop or cut off any elements
+` : `
+The target is WIDER (more horizontal space). You need to:
+- Keep ALL elements from the original at the SAME SIZE
+- Extend the background HORIZONTALLY
+- CENTER the main content group
+- Match the background style/gradient EXACTLY
+`}
+
+CRITICAL RULES:
+1. The icon, wordmark "${brandName}", and any text must be IDENTICAL to the input
+2. The colors, gradients, and style must match EXACTLY
+3. Only the background area should change to accommodate the new aspect ratio
+4. This is NOT a crop - it's an EXTENSION of the canvas
+
+OUTPUT: A single image at approximately ${targetWidth}x${targetHeight} with the exact same content, just recomposed for the new aspect ratio.`;
+
+  const response = await ai.models.generateContent({
+    model: IMAGE_MODEL,
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { inlineData: { mimeType: "image/png", data: masterBase64 } },
+          { text: prompt }
+        ]
+      }
+    ],
+    config: { 
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+      imageConfig: { imageSize: '2K' }
+    },
+  });
+
+  const parts = response.candidates?.[0]?.content?.parts || [];
+  for (const part of parts) {
+    if (part.inlineData?.data) {
+      const buffer = Buffer.from(part.inlineData.data, "base64");
+      const metadata = await sharp(buffer).metadata();
+      console.log(`      [Gemini output: ${metadata.width}x${metadata.height}]`);
+      
+      // Resize to exact target dimensions
+      await sharp(buffer)
+        .resize(targetWidth, targetHeight, { 
+          fit: "cover", 
+          position: "center",
+          kernel: "lanczos3"
+        })
+        .png()
+        .toFile(outputPath);
+        
+      console.log(`      [Resized to ${targetWidth}x${targetHeight}]`);
+      return outputPath;
+    }
+  }
+  
+  throw new Error(`Failed to adapt banner aspect ratio`);
+}

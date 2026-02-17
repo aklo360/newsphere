@@ -1,0 +1,84 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Hero from '../components/Hero.astro';
+import PersonaToggle from '../components/PersonaToggle.astro';
+import HumanView from '../components/HumanView.astro';
+import AgentView from '../components/AgentView.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="OpenGFX — AI-Powered Brand Design">
+  <main>
+    <Hero />
+    <PersonaToggle />
+
+    <!-- Content panels wrapper -->
+    <div class="relative">
+      <HumanView />
+      <AgentView />
+    </div>
+  </main>
+
+  <Footer />
+
+  <!-- Scroll animations -->
+  <script>
+    function initScrollAnimations() {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+      );
+
+      document.querySelectorAll('.fade-in-up').forEach((el) => {
+        observer.observe(el);
+      });
+    }
+
+    initScrollAnimations();
+    document.addEventListener('astro:after-swap', initScrollAnimations);
+  </script>
+
+  <!-- Copy buttons -->
+  <script>
+    function initCopyButtons() {
+      document.querySelectorAll('[data-code] .copy-btn').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const codeBlock = btn.closest('[data-code]');
+          const code = codeBlock?.querySelector('code')?.textContent || '';
+
+          try {
+            await navigator.clipboard.writeText(code);
+            btn.classList.add('copied');
+            const copyIcon = btn.querySelector('.copy-icon') as HTMLElement;
+            const checkIcon = btn.querySelector('.check-icon') as HTMLElement;
+            if (copyIcon) copyIcon.classList.add('hidden');
+            if (checkIcon) checkIcon.classList.remove('hidden');
+
+            setTimeout(() => {
+              btn.classList.remove('copied');
+              if (copyIcon) copyIcon.classList.remove('hidden');
+              if (checkIcon) checkIcon.classList.add('hidden');
+            }, 2000);
+          } catch {
+            const range = document.createRange();
+            const code_el = codeBlock?.querySelector('code');
+            if (code_el) {
+              range.selectNodeContents(code_el);
+              window.getSelection()?.removeAllRanges();
+              window.getSelection()?.addRange(range);
+            }
+          }
+        });
+      });
+    }
+
+    initCopyButtons();
+    document.addEventListener('astro:after-swap', initCopyButtons);
+  </script>
+</Layout>

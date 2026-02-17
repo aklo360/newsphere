@@ -1,0 +1,148 @@
+---
+const steps = [
+  {
+    icon: '/icon1.png?v=2',
+    title: 'Describe your brand',
+    description: "Tell us your brand name, concept, and vibe. Include your industry, target audience, and any style preferences.",
+  },
+  {
+    icon: '/logo.png?v=2',
+    title: 'AI designs your system',
+    description: 'OpenGFX generates a complete logo system with icon, wordmark, and lockups. Plus colors, typography, and style guide.',
+  },
+  {
+    icon: '/icon3.png?v=2',
+    title: 'Get your assets',
+    description: 'Receive production-ready PNGs, social avatars, and Twitter banners. All delivered via CDN links.',
+  },
+];
+
+const pricing = [
+  { service: 'Logo System', price: '$5', desc: 'Icon, wordmark, stacked & horizontal lockups' },
+  { service: 'Social Assets', price: '$5', desc: 'Avatar (1K) + Twitter banner' },
+  { service: 'Full Package', price: '$10', desc: 'Logo system + social assets combined' },
+];
+---
+
+<div id="human-view" class="persona-content" data-visible="true">
+  <div class="max-w-4xl mx-auto px-6">
+    <!-- How it works -->
+    <div class="pb-20 md:pb-28">
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-16 tracking-tight">How it works</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12 stagger">
+        {steps.map((step, i) => (
+          <div class="fade-in-up text-center">
+            <div class="mb-4 flex justify-center">
+              <img src={step.icon} alt={step.title} class="w-16 h-16 object-contain" width="64" height="64" />
+            </div>
+            <div class="text-xs font-semibold text-cyan-500 uppercase tracking-widest mb-2">Step {i + 1}</div>
+            <h3 class="text-lg font-semibold mb-2">{step.title}</h3>
+            <p class="text-gray-500 text-sm leading-relaxed">{step.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- What You Get -->
+    <div class="pb-20 md:pb-28">
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-4 tracking-tight">What you get</h2>
+      <p class="text-center text-gray-500 mb-12">A complete brand system, production-ready.</p>
+      
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-2xl mb-2">🎨</div>
+          <div class="font-semibold text-sm">Icon</div>
+          <div class="text-xs text-gray-400">1024×1024</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-2xl mb-2">✏️</div>
+          <div class="font-semibold text-sm">Wordmark</div>
+          <div class="text-xs text-gray-400">AI typography</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-2xl mb-2">📐</div>
+          <div class="font-semibold text-sm">Stacked</div>
+          <div class="text-xs text-gray-400">Square lockup</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-2xl mb-2">↔️</div>
+          <div class="font-semibold text-sm">Horizontal</div>
+          <div class="text-xs text-gray-400">Wide lockup</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-2xl mb-2">👤</div>
+          <div class="font-semibold text-sm">Avatar</div>
+          <div class="text-xs text-gray-400">Rendered 1K</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-2xl mb-2">🖼️</div>
+          <div class="font-semibold text-sm">Banner</div>
+          <div class="text-xs text-gray-400">Twitter 3:1</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-2xl mb-2">🎨</div>
+          <div class="font-semibold text-sm">Colors</div>
+          <div class="text-xs text-gray-400">Primary & secondary</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4 text-center">
+          <div class="text-2xl mb-2">📝</div>
+          <div class="font-semibold text-sm">Typography</div>
+          <div class="text-xs text-gray-400">Fonts & weights</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pay with Crypto - x402 Coming Soon -->
+    <div class="pb-20 md:pb-28 text-center">
+      <div class="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-amber-50 text-sm font-medium text-amber-600 mb-6">
+        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+        Coming Soon
+      </div>
+      <h2 class="text-2xl md:text-3xl font-bold tracking-tight mb-3">Pay with Crypto</h2>
+      <p class="text-gray-500 max-w-lg mx-auto leading-relaxed mb-8">
+        Instant payments via <a href="https://x402.org" target="_blank" rel="noopener" class="text-cyan-500 hover:underline">x402</a> — the internet-native payment standard. 
+        Web app launching soon.
+      </p>
+      
+      <!-- Payment methods preview -->
+      <div class="flex items-center justify-center gap-3 mb-8 opacity-50">
+        <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-50 border border-gray-200 text-sm font-medium text-gray-400">
+          <span class="text-base">🔵</span>
+          USDC
+          <span class="text-gray-300 text-xs">on Base</span>
+        </span>
+        <span class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-50 border border-gray-200 text-sm font-medium text-gray-400">
+          <span class="text-base">🟣</span>
+          SOL
+          <span class="text-gray-300 text-xs">on Solana</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Pricing -->
+    <div class="pb-10 md:pb-14">
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-4 tracking-tight">Simple pricing</h2>
+      <p class="text-center text-gray-500 mb-12">Pay per service. No subscriptions, no hidden fees.</p>
+      <div class="max-w-md mx-auto">
+        <div class="rounded-2xl border border-gray-200 overflow-hidden">
+          <div class="grid grid-cols-3 text-xs font-semibold uppercase tracking-wider text-gray-400 px-6 py-3 border-b border-gray-100">
+            <span>Service</span>
+            <span class="text-center">Price</span>
+            <span class="text-right">Includes</span>
+          </div>
+          {pricing.map((row, i) => (
+            <div class:list={[
+              'grid grid-cols-3 px-6 py-4 text-sm items-center',
+              i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50',
+              i < pricing.length - 1 ? 'border-b border-gray-100' : '',
+            ]}>
+              <span class="text-gray-700 font-medium">{row.service}</span>
+              <span class="text-center font-semibold text-gray-900">{row.price}</span>
+              <span class="text-right text-xs text-gray-400">{row.desc}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
