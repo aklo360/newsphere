@@ -594,9 +594,9 @@ COMPOSITION & LAYOUT:
 
 ELEMENTS:
 - Icon and wordmark side-by-side (icon left, wordmark right) OR stacked — but CENTERED as a group
-- The WORDMARK "${brandName}" must have gorgeous 3D/metallic/iridescent HEADER text treatment matching the icon
-${tagline ? `- The TAGLINE "${tagline}" should use BODY FONT STYLE (${typography.bodyFont}, weight ${typography.bodyWeight}) — elegant but simpler than the header, complementary but not competing` : ""}
-- Background: subtle gradient using ${colors.background} → ${colors.primary} at low opacity
+- The WORDMARK "${brandName}" should have a DARKER, more subtle 3D treatment — NOT too bright or washed out. Use deeper tones that contrast well against the background.
+${tagline ? `- The TAGLINE "${tagline}" should be SIMPLE DARK GREY or BLACK text — NO 3D rendering, NO iridescent effects. Plain, clean, readable body text in ${typography.bodyFont}.` : ""}
+- Background: clean ${colors.background} (white or light) with very subtle gradient if any
 - Professional, premium brand aesthetic — CENTERED with breathing room on all sides
 
 COLORS: Primary ${colors.primary}, Secondary ${colors.secondary}

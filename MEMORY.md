@@ -5,11 +5,23 @@
 - It should output machine-readable brand systems and human deliverables.
 - It should interoperate directly with OpenVid for style-consistent video generation.
 
-## Services (implemented 2025-02-16)
-1. **Brand Foundation** — Logo system + style guide → `brand-system.json`
-2. **Socials** — Rendered avatars + banners for all platforms
-3. **On-Brand GFX** — Per-request marketing graphics
-4. Splash page generator (future)
+## Services (LOCKED IN 2025-02-16)
+
+### Service 1: Logo Designer
+- **Input:** Brand name + concept + optional tagline
+- **Output:** Icon, wordmark, stacked, horizontal + brand-system.json
+- **Docs:** `services/logo-designer/SERVICE.md`
+- **CLI:** `npm run brand -- "Name" "concept" --tagline "text"`
+
+### Service 2: Social Asset Generator  
+- **Input:** brand-system.json (+ optional custom banner prompt)
+- **Output:** Avatar (1K) + Twitter banner (3:1)
+- **Docs:** `services/social-assets/SERVICE.md`
+- **CLI:** `npm run socials -- ./output/brand/brand-system.json`
+
+### Service 3: On-Brand GFX (TODO)
+- Per-request marketing graphics
+- Uses brand-system.json for consistency
 
 ## Architecture
 - `brand-system.json` is the master manifest that chains all services

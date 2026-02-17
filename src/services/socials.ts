@@ -69,8 +69,8 @@ export async function generateSocials(
   const avatarPaths: Record<string, string> = {};
   const bannerPaths: Record<string, string> = {};
 
-  // ─── STEP 1: GENERATE MASTER AVATAR + CAPTURE STYLE BLOCK ───
-  console.log(`\n[1/3] Generating master avatar (rendered style)...`);
+  // ─── STEP 1: GENERATE AVATAR + CAPTURE STYLE BLOCK ───
+  console.log(`\n[1/2] Generating avatar (1K rendered style)...`);
   const masterAvatarPath = path.join(avatarsDir, "avatar-master.png");
   
   // Generate avatar and get the detailed style block for reuse
@@ -87,23 +87,11 @@ export async function generateSocials(
   console.log(`      ✓ avatar-master.png (1024x1024)`);
   console.log(`      ✓ icon-style-block.txt (for banner consistency)`);
 
-  // ─── STEP 2: RESIZE AVATARS FOR ALL PLATFORMS ───
-  console.log(`\n[2/3] Generating platform-specific avatars...`);
-  
-  for (const platform of targetPlatforms) {
-    const config = SOCIAL_PLATFORMS[platform];
-    if (!config) continue;
+  // Avatar is ready - no platform-specific resizes needed (1K master covers all)
+  avatarPaths["master"] = "socials/avatars/avatar-master.png";
 
-    const { width, height } = config.profile;
-    const outputPath = path.join(avatarsDir, `${platform}-profile.png`);
-    
-    await resizeImage(masterAvatarPath, outputPath, width, height);
-    avatarPaths[platform] = `socials/avatars/${platform}-profile.png`;
-    console.log(`      ✓ ${platform}-profile.png (${width}x${height})`);
-  }
-
-  // ─── STEP 3: GENERATE BANNERS (using SAME style block for consistency) ───
-  console.log(`\n[3/3] Generating platform-specific banners...`);
+  // ─── STEP 2: GENERATE BANNER ───
+  console.log(`\n[2/2] Generating banner...`);
   console.log(`      Using shared icon style block for color consistency`);
   
   for (const platform of targetPlatforms) {
@@ -131,32 +119,6 @@ export async function generateSocials(
     
     bannerPaths[platform] = `socials/banners/${platform}-banner.png`;
     console.log(`      ✓ ${platform}-banner.png`);
-
-    // Generate alternate banner sizes if available
-    if (config.bannerAlt) {
-      const altWidth = config.bannerAlt.width;
-      const altHeight = config.bannerAlt.height;
-      const altOutputPath = path.join(bannersDir, `${platform}-banner-alt.png`);
-      
-      console.log(`      Generating ${platform} alt banner (${altWidth}x${altHeight})...`);
-      
-      await generateBannerWithStyle(
-        horizontalPath,
-        brandSystem.brand.name,
-        includeTagline ? tagline : undefined,
-        brandSystem.renderStyle,
-        brandSystem.colors,
-        brandSystem.typography,
-        styleBlock,
-        altWidth,
-        altHeight,
-        altOutputPath,
-        masterAvatarPath  // Pass rendered icon as reference
-      );
-      
-      bannerPaths[`${platform}-alt`] = `socials/banners/${platform}-banner-alt.png`;
-      console.log(`      ✓ ${platform}-banner-alt.png`);
-    }
   }
 
   // ─── STEP 4: CREATE MANIFEST ───
