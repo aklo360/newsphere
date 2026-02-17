@@ -559,6 +559,14 @@ export async function generateBannerWithStyle(
   const hasWordmark = wordmarkPath && fs.existsSync(wordmarkPath);
   const prompt = `${renderedIconPath ? `⚠️ CRITICAL INSTRUCTIONS — READ FIRST ⚠️
 
+🔴 GOLDEN RULE #1: LEGIBILITY & CONTRAST 🔴
+The wordmark MUST be HIGHLY READABLE against the background. This is NON-NEGOTIABLE.
+- If the background is light → wordmark must be DARK (deep teal, charcoal, near-black)
+- If the background is dark → wordmark must be LIGHT
+- NEVER let the wordmark blend into the background
+- When in doubt, make the wordmark DARKER for better contrast
+- Legibility trumps style — a beautiful unreadable wordmark is a failure
+
 1. ICON PRESERVATION:
 The FIRST IMAGE provided is the RENDERED LOGO ICON. You MUST preserve this icon EXACTLY:
 - EXACT same shape — do not modify, distort, or reinterpret
@@ -567,12 +575,13 @@ The FIRST IMAGE provided is the RENDERED LOGO ICON. You MUST preserve this icon 
 - EXACT same style — maintain the iridescent/glass/metallic treatment pixel-perfect
 DO NOT regenerate or reinterpret the icon. Place it in the banner AS-IS.
 
-2. WORDMARK PRESERVATION:
+2. WORDMARK PRESERVATION + CONTRAST:
 ${hasWordmark ? `The SECOND IMAGE is the EXACT WORDMARK to use. You MUST:
 - Use this EXACT wordmark — same font, same letter shapes, same spacing
-- Apply a subtle render treatment (darker 3D glass) but preserve the typography exactly
+- Apply a DARK render treatment that CONTRASTS strongly with the background
+- The wordmark must be easily readable at a glance
 - DO NOT substitute a different font or regenerate the text
-- The wordmark letterforms must match the reference image PERFECTLY` : `Generate "${brandName}" as the wordmark.`}
+- The wordmark letterforms must match the reference image PERFECTLY` : `Generate "${brandName}" as the wordmark with HIGH CONTRAST against the background.`}
 
 3. LAYOUT — EXTREMELY IMPORTANT:
 - CENTER all content HORIZONTALLY and VERTICALLY in the frame
@@ -610,9 +619,14 @@ COMPOSITION & LAYOUT:
 
 ELEMENTS:
 - Icon and wordmark side-by-side (icon left, wordmark right) OR stacked — but CENTERED as a group
-- The WORDMARK "${brandName}" should have a DARKER, more subtle 3D treatment — NOT too bright or washed out. Use deeper tones that contrast well against the background.
-${tagline ? `- The TAGLINE "${tagline}" should be SIMPLE DARK GREY or BLACK text — NO 3D rendering, NO iridescent effects. Plain, clean, readable body text in ${typography.bodyFont}.` : ""}
+- The WORDMARK "${brandName}" MUST have HIGH CONTRAST against the background:
+  * Use DARK tones (deep teal, charcoal, dark slate) on light backgrounds
+  * The wordmark must be instantly readable — if you squint and can't read it, it's too low contrast
+  * Subtle 3D/glass treatment is OK but DARKNESS and READABILITY come first
+${tagline ? `- The TAGLINE "${tagline}" should be SIMPLE DARK GREY or BLACK text — NO 3D rendering, NO iridescent effects. Plain, clean, readable body text in ${typography.bodyFont}. Must be clearly legible.` : ""}
 - Background: clean ${colors.background} (white or light) with very subtle gradient if any
+
+⚠️ CONTRAST CHECK: Before finalizing, verify the wordmark is clearly readable against the background. If not, darken the wordmark.
 - Professional, premium brand aesthetic — CENTERED with breathing room on all sides
 
 COLORS: Primary ${colors.primary}, Secondary ${colors.secondary}
