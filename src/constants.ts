@@ -254,8 +254,8 @@ RENDERING:
 
 SPECS:
 - Square 1:1, 1024x1024 pixels
-- Icon fills ~80% of canvas, centered
-- Breathing room around the icon
+- Icon fills 60-70% of canvas, centered (substantial but not cramped)
+- ~15% padding on each side — breathing room without floating
 
 FORBIDDEN:
 - NO borders, frames, or outlines around the icon

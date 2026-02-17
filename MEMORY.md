@@ -41,6 +41,7 @@ flat, gradient, glass, gavin (iridescent), chrome, gold, silver, neon, 3d, holog
 
 ## Icon Complexity (UPDATED 2025-02-17)
 - **TARGET: 40-50% complexity** — SIMPLE, CLEAN, LUXURY
+- **FRAME FILL: 60-70%** — substantial but not cramped (~15% padding each side)
 - **THE RULE OF ONE:** One interesting visual element, not many
 - Must be recognizable at 32x32px
 - Think Apple, Stripe, Linear — minimalist tech elegance
