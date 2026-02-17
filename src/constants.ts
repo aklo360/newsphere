@@ -56,65 +56,65 @@ export const INSTALLED_FONTS: Record<string, string> = Object.fromEntries(
 // ═══════════════════════════════════════════════════════════════════
 
 export const SOCIAL_PLATFORMS: SocialPlatforms = {
-  // ─── TWITTER/X ───
+  // ─── TWITTER/X ─── (2x for crisp Retina display)
   twitter: {
-    profile: { width: 400, height: 400, ratio: "1:1" },
-    banner: { width: 1500, height: 500, ratio: "3:1" },
+    profile: { width: 800, height: 800, ratio: "1:1" },
+    banner: { width: 3000, height: 1000, ratio: "3:1" },
   },
   
-  // ─── FACEBOOK ───
+  // ─── FACEBOOK ─── (2x)
   facebook: {
-    profile: { width: 320, height: 320, ratio: "1:1" },
-    banner: { width: 851, height: 315, ratio: "2.7:1" },
+    profile: { width: 640, height: 640, ratio: "1:1" },
+    banner: { width: 1702, height: 630, ratio: "2.7:1" },
   },
   
-  // ─── INSTAGRAM ───
+  // ─── INSTAGRAM ─── (2x)
   instagram: {
-    profile: { width: 320, height: 320, ratio: "1:1" },
+    profile: { width: 640, height: 640, ratio: "1:1" },
     // No banner on IG
   },
   
-  // ─── YOUTUBE ───
+  // ─── YOUTUBE ─── (already high-res)
   youtube: {
     profile: { width: 800, height: 800, ratio: "1:1" },
     banner: { width: 2560, height: 1440, ratio: "16:9" },
-    bannerAlt: { width: 1546, height: 423, ratio: "3.65:1" },  // Safe zone
+    bannerAlt: { width: 2048, height: 560, ratio: "3.65:1" },  // Safe zone (2x)
   },
   
-  // ─── TIKTOK ───
+  // ─── TIKTOK ─── (2x)
   tiktok: {
-    profile: { width: 200, height: 200, ratio: "1:1" },
+    profile: { width: 400, height: 400, ratio: "1:1" },
     // No traditional banner
   },
   
-  // ─── LINKEDIN ───
+  // ─── LINKEDIN ─── (2x)
   linkedin: {
-    profile: { width: 400, height: 400, ratio: "1:1" },
-    banner: { width: 1584, height: 396, ratio: "4:1" },
-    bannerAlt: { width: 1128, height: 191, ratio: "5.9:1" },  // Company page
+    profile: { width: 800, height: 800, ratio: "1:1" },
+    banner: { width: 3168, height: 792, ratio: "4:1" },
+    bannerAlt: { width: 2256, height: 382, ratio: "5.9:1" },  // Company page
   },
   
-  // ─── DISCORD ───
+  // ─── DISCORD ─── (2x)
   discord: {
-    profile: { width: 512, height: 512, ratio: "1:1" },
-    banner: { width: 960, height: 540, ratio: "16:9" },
+    profile: { width: 1024, height: 1024, ratio: "1:1" },
+    banner: { width: 1920, height: 1080, ratio: "16:9" },
   },
   
-  // ─── TWITCH ───
+  // ─── TWITCH ─── (2x)
   twitch: {
-    profile: { width: 512, height: 512, ratio: "1:1" },
-    banner: { width: 1200, height: 480, ratio: "2.5:1" },
+    profile: { width: 1024, height: 1024, ratio: "1:1" },
+    banner: { width: 2400, height: 960, ratio: "2.5:1" },
   },
   
-  // ─── GITHUB ───
+  // ─── GITHUB ─── (2x)
   github: {
-    profile: { width: 500, height: 500, ratio: "1:1" },
+    profile: { width: 1000, height: 1000, ratio: "1:1" },
     // No banner
   },
   
-  // ─── TELEGRAM ───
+  // ─── TELEGRAM ─── (2x)
   telegram: {
-    profile: { width: 512, height: 512, ratio: "1:1" },
+    profile: { width: 1024, height: 1024, ratio: "1:1" },
     // No banner (channel photo same as profile)
   },
 };

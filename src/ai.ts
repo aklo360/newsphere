@@ -320,9 +320,16 @@ SPECIFIC VISUAL DETAILS:
 - Edge treatment: smooth anti-aliased edges with subtle glow
 - Reflection: soft environmental reflection on surface
 - Transparency: if glass-like, show subtle internal refraction
-- Background: complementary gradient using brand colors at 10-20% opacity
 
-This style block MUST be replicated EXACTLY across all brand assets.`;
+BACKGROUND (use EXACTLY for consistency across PFP and banner):
+⚠️ NEVER use plain white or solid flat backgrounds — ALWAYS use a gradient!
+- Base color: ${colors.background}
+- Gradient: visible but soft transition from ${colors.background} toward ${colors.primary} at 15-25% blend
+- Direction: top-left to bottom-right diagonal (or center-out radial gradient)
+- The background should have NOTICEABLE color variation, not appear flat/plain
+- Keep it soft and professional, but with clear gradient presence
+
+This style block MUST be replicated EXACTLY across all brand assets — including the gradient background.`;
 }
 
 export async function generateRenderedAvatarWithStyle(
@@ -427,7 +434,9 @@ export async function generateBannerWithStyle(
   const aspectRatio = `${width}:${height}`;
   const aspectDecimal = width / height;
 
-  const prompt = `${renderedIconPath ? `⚠️ CRITICAL INSTRUCTION — READ FIRST ⚠️
+  const prompt = `${renderedIconPath ? `⚠️ CRITICAL INSTRUCTIONS — READ FIRST ⚠️
+
+1. ICON PRESERVATION:
 The FIRST IMAGE provided is the RENDERED LOGO ICON. You MUST preserve this icon EXACTLY:
 - EXACT same shape — do not modify, distort, or reinterpret
 - EXACT same colors — preserve every color, gradient, and hue precisely  
@@ -435,7 +444,15 @@ The FIRST IMAGE provided is the RENDERED LOGO ICON. You MUST preserve this icon 
 - EXACT same style — maintain the iridescent/glass/metallic treatment pixel-perfect
 DO NOT regenerate or reinterpret the icon. Place it in the banner AS-IS.
 
-` : ""}Create a professional social media banner.
+2. LAYOUT — EXTREMELY IMPORTANT:
+- CENTER all content HORIZONTALLY and VERTICALLY in the frame
+- Leave AT LEAST 15-20% PADDING on ALL sides (left, right, top, bottom)
+- Content must NOT touch or approach the edges
+- The composition (icon + wordmark + tagline) should be CENTERED as a group
+- Think "presentation slide" — content centered with generous margins all around
+- DO NOT push content to the left side — keep it CENTERED
+
+` : ""}Create a professional social media banner with GENEROUS MARGINS.
 
 ASPECT RATIO: ${aspectRatio} (${aspectDecimal.toFixed(2)}:1 ultrawide)
 OUTPUT DIMENSIONS: ${width}x${height} pixels
@@ -453,12 +470,19 @@ ${stylePrompt}
 
 ${iconStyleBlock}
 
-COMPOSITION:
-- Place the rendered icon prominently (left side or integrated with text)
-- The WORDMARK "${brandName}" must have gorgeous 3D/metallic/iridescent text treatment matching the icon
-${tagline ? `- The TAGLINE "${tagline}" should also have matching rendered style` : ""}
+COMPOSITION & LAYOUT:
+- ⚠️ CRITICAL: CENTER the entire composition HORIZONTALLY and VERTICALLY
+- Leave ~15-20% MARGIN on all sides — do NOT fill full bleed
+- The icon + wordmark + tagline should form a CENTERED GROUP in the middle of the banner
+- Safe zone: keep all content within the center area of the frame
+- DO NOT left-align or push content to one side — CENTERED composition only
+
+ELEMENTS:
+- Icon and wordmark side-by-side (icon left, wordmark right) OR stacked — but CENTERED as a group
+- The WORDMARK "${brandName}" must have gorgeous 3D/metallic/iridescent HEADER text treatment matching the icon
+${tagline ? `- The TAGLINE "${tagline}" should use BODY FONT STYLE (${typography.bodyFont}, weight ${typography.bodyWeight}) — elegant but simpler than the header, complementary but not competing` : ""}
 - Background: subtle gradient using ${colors.background} → ${colors.primary} at low opacity
-- Professional, premium brand aesthetic
+- Professional, premium brand aesthetic — CENTERED with breathing room on all sides
 
 COLORS: Primary ${colors.primary}, Secondary ${colors.secondary}
 
