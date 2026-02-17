@@ -1,16 +1,32 @@
 # Social Asset Generator Service
 
 **ACP Offering:** `social`  
-**x402 Endpoint:** `/social`
+**x402 Endpoint:** `/social` (coming soon)
 
 ## Overview
-Generates rendered social media assets (avatar + banner) from brand-system.json.
+Generates rendered social media assets (avatar + banners) in two modes:
+1. **From Logo Service** — Uses brand-system.json output
+2. **BYOL (Bring Your Own Logo)** — Uses your existing logo
 
-## Input
+## Input Modes
+
+### Mode 1: From Logo Service
 ```json
 {
-  "brandSystemPath": "path to brand-system.json (required)",
-  "customBannerPrompt": "string (optional) — for custom banner layouts"
+  "brandSystemUrl": "https://.../brand-system.json"
+}
+```
+
+### Mode 2: BYOL (Bring Your Own Logo)
+```json
+{
+  "logoUrl": "https://example.com/logo.png",
+  "brandName": "Acme",
+  "tagline": "optional tagline",
+  "primaryColor": "#FF5500 (optional - auto-extracted)",
+  "secondaryColor": "#333333 (optional)",
+  "backgroundColor": "#FFFFFF (optional)",
+  "renderStyle": "flat|gradient|glass|chrome|gold|neon|3d (optional)"
 }
 ```
 
@@ -29,10 +45,18 @@ output/{brand}/socials/
 ## Banner Variants
 All banner variants are generated from the master Twitter banner using AI-powered aspect ratio adaptation. This preserves the exact composition (icon, wordmark, colors) while extending the background to fit each format.
 
+## BYOL Mode Details
+When using BYOL mode:
+1. Logo is downloaded from URL
+2. Colors are auto-extracted using AI vision (if not provided)
+3. Temporary brand-system.json is created
+4. Standard pipeline runs with extracted/provided colors
+5. Assets uploaded to R2
+
 ## Standard Pipeline
 1. **Avatar Generation**
-   - Takes black icon from brand-system.json
-   - Applies render style (gavin/glass/etc)
+   - Takes icon (from brand-system or BYOL)
+   - Applies render style
    - Outputs 1K resolution (1024x1024)
    - Saves style block for banner consistency
 
@@ -42,30 +66,25 @@ All banner variants are generated from the master Twitter banner using AI-powere
    - Adds wordmark + optional tagline
    - 3:1 ultrawide format (Twitter)
 
-## Style Guidelines
-- **Background:** White/light with subtle gradient (NOT plain, NOT dark)
-- **Icons:** Cyan-teal-blue-green iridescent holographic glass (gavin style)
-- **NO purple** — focus on cyan, teal, aqua tones
-- **Wordmark:** Glass treatment, but SMALLER than icons (subtle label, not headline)
-- **Tagline:** Simple dark grey/black text, NO 3D effects
-- **Contrast:** Icon must POP against background at small sizes
+3. **Banner Adaptation**
+   - OG card: Extends to 1.91:1 ratio
+   - Community: Extends to 2.5:1 ratio
 
-## Custom Banner Support
-For non-standard banners (like OpenVid pipeline concept):
-- Pass custom prompt describing desired layout
-- Reference existing banner as style guide
-- Only modify specified elements (text style, background)
-- Preserve exact icon shapes and positions
+## CLI Usage
 
-## Learnings
-- Gemini tends to make wordmarks TOO LARGE — use explicit "much smaller" prompts
-- Image-to-image editing works for incremental refinements
-- Reference images help maintain cross-brand consistency
-- Always verify 3:1 aspect ratio output (Gemini sometimes drifts)
-
-## CLI
+### Mode 1: From Brand System
 ```bash
 npm run socials -- ./output/brand/brand-system.json
+```
+
+### Mode 2: BYOL
+```bash
+# AI extracts colors
+npm run socials -- --logo https://example.com/logo.png --name "Acme"
+
+# With colors
+npm run socials -- --logo https://example.com/logo.png --name "Acme" \
+  --primary "#FF5500" --secondary "#333" --style gradient
 ```
 
 ## R2 Delivery
