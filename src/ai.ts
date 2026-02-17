@@ -18,14 +18,123 @@ import { FONT_LIBRARY, RENDER_STYLE_PROMPTS } from "./constants.js";
 // CLIENT SETUP
 // ═══════════════════════════════════════════════════════════════════
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY;
 if (!apiKey) {
-  throw new Error("GEMINI_API_KEY environment variable is required");
+  throw new Error("GEMINI_API_KEY or GOOGLE_AI_API_KEY environment variable is required");
 }
 
 export const ai = new GoogleGenAI({ apiKey });
 export const IMAGE_MODEL = "gemini-2.0-flash-exp-image-generation";
 export const TEXT_MODEL = "gemini-2.0-flash";
+export const UPSCALE_MODEL = "imagen-4.0-upscale-preview";
+
+// ═══════════════════════════════════════════════════════════════════
+// IMAGE UPSCALING (Imagen 4)
+// ═══════════════════════════════════════════════════════════════════
+
+/**
+ * Upscale an image using Imagen 4 upscaler
+ * @param inputPath - Path to input image
+ * @param outputPath - Path to save upscaled image
+ * @param factor - Upscale factor: 'x2' or 'x4'
+ */
+export async function upscaleImage(
+  inputPath: string, 
+  outputPath: string, 
+  factor: 'x2' | 'x4' = 'x2'
+): Promise<string> {
+  const imageData = fs.readFileSync(inputPath);
+  const base64Image = imageData.toString("base64");
+  
+  console.log(`      [Upscaling ${factor} with ${UPSCALE_MODEL}...]`);
+  
+  const response = await ai.models.upscaleImage({
+    model: UPSCALE_MODEL,
+    image: { imageBytes: base64Image },
+    upscaleFactor: factor,
+    config: { includeRaiReason: true },
+  });
+  
+  const generatedImage = response.generatedImages?.[0];
+  if (generatedImage?.image?.imageBytes) {
+    const buffer = Buffer.from(generatedImage.image.imageBytes, "base64");
+    fs.writeFileSync(outputPath, buffer);
+    
+    // Log new dimensions
+    const sharp = (await import("sharp")).default;
+    const metadata = await sharp(buffer).metadata();
+    console.log(`      [Upscaled to ${metadata.width}x${metadata.height}]`);
+    
+    return outputPath;
+  }
+  
+  throw new Error(`Failed to upscale image`);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// HIGH-RES BACKGROUND GENERATION (Imagen 4)
+// ═══════════════════════════════════════════════════════════════════
+
+export const IMAGEN_MODEL = "imagen-4.0-generate-001";
+
+/**
+ * Generate a high-resolution banner background using Imagen 4
+ * Supports 1K, 2K, 4K output sizes
+ */
+export async function generateBannerBackground(
+  brandName: string,
+  colors: ColorPalette,
+  stylePrompt: string,
+  aspectRatio: '16:9' | '21:9' | '3:2',
+  imageSize: '1K' | '2K' | '4K',
+  outputPath: string
+): Promise<string> {
+  const prompt = `Professional abstract banner background for "${brandName}" brand.
+
+STYLE: ${stylePrompt}
+
+COLORS:
+- Primary: ${colors.primary}
+- Secondary: ${colors.secondary}
+- Accent: ${colors.accent}
+- Background base: ${colors.background}
+
+COMPOSITION:
+- Abstract gradient flowing from left to right
+- Subtle organic shapes or geometric elements
+- Premium, luxurious feel
+- NO TEXT, NO LOGOS, NO ICONS — pure background only
+- Leave center area relatively clean for content overlay
+- Soft vignette toward edges
+
+AESTHETIC: Modern, premium, suitable for professional brand banner.`;
+
+  console.log(`      [Generating ${imageSize} background with Imagen 4...]`);
+  
+  const response = await ai.models.generateImages({
+    model: IMAGEN_MODEL,
+    prompt,
+    config: {
+      numberOfImages: 1,
+      imageSize,
+      aspectRatio,
+    }
+  });
+  
+  const generatedImage = response.generatedImages?.[0];
+  if (generatedImage?.image?.imageBytes) {
+    const buffer = Buffer.from(generatedImage.image.imageBytes, "base64");
+    fs.writeFileSync(outputPath, buffer);
+    
+    const sharp = (await import("sharp")).default;
+    const metadata = await sharp(buffer).metadata();
+    console.log(`      [Imagen 4 output: ${metadata.width}x${metadata.height}]`);
+    
+    return outputPath;
+  }
+  
+  throw new Error(`Failed to generate banner background`);
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // FONT LIBRARY DESCRIPTION FOR AI
@@ -266,7 +375,11 @@ export async function generateImage(prompt: string, outputPath: string): Promise
   const response = await ai.models.generateContent({
     model: IMAGE_MODEL,
     contents: prompt,
-    config: { responseModalities: [Modality.TEXT, Modality.IMAGE] },
+    config: { 
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+      // Note: gemini-2.0-flash-exp-image-generation has limited config options
+      // imageConfig with aspectRatio/imageSize may not be supported
+    },
   });
 
   const parts = response.candidates?.[0]?.content?.parts || [];
@@ -369,7 +482,10 @@ Create a premium, polished render that looks like it belongs to a top-tier brand
         ]
       }
     ],
-    config: { responseModalities: [Modality.TEXT, Modality.IMAGE] },
+    config: { 
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+      // Note: gemini-2.0-flash-exp-image-generation has limited config options
+    },
   });
 
   const parts = response.candidates?.[0]?.content?.parts || [];
@@ -496,7 +612,11 @@ Remember: The icon from IMAGE 1 must appear EXACTLY as provided — same colors,
         parts: [...imageParts, { text: prompt }]
       }
     ],
-    config: { responseModalities: [Modality.TEXT, Modality.IMAGE] },
+    config: { 
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+      // Note: gemini-2.0-flash-exp-image-generation has limited config options
+      // imageConfig with aspectRatio/imageSize may not be supported
+    },
   });
 
   const parts = response.candidates?.[0]?.content?.parts || [];
@@ -504,12 +624,40 @@ Remember: The icon from IMAGE 1 must appear EXACTLY as provided — same colors,
     if (part.inlineData?.data) {
       const buffer = Buffer.from(part.inlineData.data, "base64");
       
-      // Post-process to ensure exact dimensions (Gemini may not output exact custom sizes)
+      // Check what Gemini actually generated
       const sharp = (await import("sharp")).default;
-      await sharp(buffer)
-        .resize(width, height, { fit: "cover", position: "center" })
-        .png()
-        .toFile(outputPath);
+      const metadata = await sharp(buffer).metadata();
+      console.log(`      [Gemini output: ${metadata.width}x${metadata.height}]`);
+      
+      if (metadata.width && metadata.height) {
+        // If Gemini output is smaller than target, upscale with high-quality Lanczos
+        if (metadata.width < width || metadata.height < height) {
+          const scaleNeeded = Math.max(width / metadata.width, height / metadata.height);
+          console.log(`      [Upscaling ${scaleNeeded.toFixed(1)}x with Lanczos (kernel: lanczos3)...]`);
+          
+          // Use Lanczos3 for highest quality upscaling
+          await sharp(buffer)
+            .resize(width, height, { 
+              fit: "cover", 
+              position: "center",
+              kernel: "lanczos3"  // Highest quality resampling
+            })
+            .sharpen({ sigma: 0.5 })  // Light sharpening to reduce upscale softness
+            .png()
+            .toFile(outputPath);
+            
+          console.log(`      [Resized to ${width}x${height}]`);
+        } else {
+          // Gemini output is larger - safe to downscale
+          await sharp(buffer)
+            .resize(width, height, { fit: "cover", position: "center" })
+            .png()
+            .toFile(outputPath);
+        }
+      } else {
+        // Fallback - just save as-is
+        await sharp(buffer).png().toFile(outputPath);
+      }
       
       return outputPath;
     }
