@@ -1,0 +1,41 @@
+{
+  "brand": {
+    "name": "LLPhant",
+    "tagline": "Your always-on second brain",
+    "concept": "LLPhant is AKLO's always-on AI second brain and top-level project manager. It triages email and iMessage, manages calendar and tasks, searches and writes to an Obsidian vault, orchestrates OpenClaw automations, and coordinates production across AKLO STUDIO projects. The brand should feel intelligent, dependable, modern, and a little playful, with a clean system-first aesthetic suitable for AI + creative ops."
+  },
+  "logo": {
+    "icon": "logo/icon.png",
+    "wordmark": "logo/wordmark.png",
+    "stacked": "logo/stacked.png",
+    "horizontal": "logo/horizontal.png"
+  },
+  "colors": {
+    "primary": "#6246EA",
+    "secondary": "#3D405B",
+    "accent": "#E07A5F",
+    "background": "#F4F1DE",
+    "foreground": "#22223B"
+  },
+  "typography": {
+    "headerFont": "Inter",
+    "headerWeight": 500,
+    "bodyFont": "Inter",
+    "bodyWeight": 400
+  },
+  "renderStyle": {
+    "preset": "flat",
+    "customPrompt": null,
+    "parameters": {
+      "material": "plastic",
+      "finish": "matte",
+      "lighting": "studio",
+      "colorMode": "brand",
+      "depth": "flat",
+      "effects": []
+    }
+  },
+  "mode": "light",
+  "version": "1.0.0",
+  "generatedAt": "2026-02-17T05:47:51.479Z"
+}
