@@ -1,5 +1,8 @@
 # Social Asset Generator Service
 
+**ACP Offering:** `social`  
+**x402 Endpoint:** `/social`
+
 ## Overview
 Generates rendered social media assets (avatar + banner) from brand-system.json.
 

@@ -8,12 +8,14 @@
 ## Services (LOCKED IN 2025-02-16)
 
 ### Service 1: Logo Designer
+- **ACP:** `logo` | **x402:** `/logo`
 - **Input:** Brand name + concept + optional tagline
 - **Output:** Icon, wordmark, stacked, horizontal + brand-system.json
 - **Docs:** `services/logo-designer/SERVICE.md`
 - **CLI:** `npm run brand -- "Name" "concept" --tagline "text"`
 
 ### Service 2: Social Asset Generator  
+- **ACP:** `social` | **x402:** `/social`
 - **Input:** brand-system.json (+ optional custom banner prompt)
 - **Output:** Avatar (1K) + Twitter banner (3:1)
 - **Docs:** `services/social-assets/SERVICE.md`

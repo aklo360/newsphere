@@ -1,5 +1,8 @@
 # Logo Designer Service
 
+**ACP Offering:** `logo`  
+**x402 Endpoint:** `/logo`
+
 ## Overview
 Generates complete logo systems from brand concept prompts.
 
