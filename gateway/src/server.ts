@@ -259,7 +259,8 @@ async function handlePaymentRequest(
   const priceUsd = PRICING[jobType];
   const amountRaw = (priceUsd * 1_000_000).toString();
 
-  const paymentHeader = req.headers["x-payment"] as string | undefined;
+  // Accept both x-payment (legacy) and payment-signature (x402 v2)
+  const paymentHeader = (req.headers["x-payment"] || req.headers["payment-signature"]) as string | undefined;
 
   if (!paymentHeader) {
     // Return 402 with ALL payment options
@@ -268,25 +269,30 @@ async function handlePaymentRequest(
     console.log(`[gateway] 402: $${priceUsd} for ${jobType} (SOL @ $${solPrice.toFixed(2)} = ${solAmount.toFixed(6)} SOL)`);
 
     const paymentRequirements = {
-      x402Version: 1,
+      x402Version: 2,
       accepts: [
-        // Base USDC
+        // Base USDC (v2 format uses 'amount' not 'maxAmountRequired')
         {
           scheme: "exact",
           network: CHAINS.base.networkId,
-          maxAmountRequired: amountRaw,
+          amount: amountRaw,
           resource: `https://gateway.opengfx.app/v1/${jobType}`,
           description: `Generate ${jobType} for "${brandName}"`,
           mimeType: "application/json",
           payTo: CHAINS.base.wallet,
           maxTimeoutSeconds: 600,
           asset: CHAINS.base.asset,
+          // EIP-712 domain params for USDC on Base
+          extra: {
+            name: "USD Coin",
+            version: "2",
+          },
         },
         // Solana SOL
         {
           scheme: "exact",
           network: CHAINS.solanaSol.networkId,
-          maxAmountRequired: lamports,
+          amount: lamports,
           resource: `https://gateway.opengfx.app/v1/${jobType}`,
           description: `Generate ${jobType} for "${brandName}"`,
           mimeType: "application/json",
@@ -300,9 +306,16 @@ async function handlePaymentRequest(
 
     const headerValue = Buffer.from(JSON.stringify(paymentRequirements)).toString("base64");
 
+    // Return x402-compatible response
+    // Body must have x402Version at root for @x402/fetch compatibility
     res.status(402)
       .set("X-Payment", headerValue)
+      .set("PAYMENT-REQUIRED", headerValue)
       .json({
+        // x402 standard fields (required for @x402/fetch)
+        x402Version: 2,
+        accepts: paymentRequirements.accepts,
+        // Extra info for human-readable clients
         error: "Payment Required",
         service: jobType,
         brandName,
@@ -325,7 +338,6 @@ async function handlePaymentRequest(
             solPriceUsd: solPrice,
           },
         },
-        accepts: paymentRequirements.accepts,
       });
     return;
   }

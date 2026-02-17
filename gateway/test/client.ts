@@ -48,9 +48,15 @@ async function testBasePayment(service: "logo" | "socials", brandName: string, c
     transport: http(),
   });
 
-  // Create x402 client with EVM scheme
+  // Create x402-compatible signer (x402/evm expects .address at top level)
+  const x402Signer = {
+    address: account.address,
+    signTypedData: (args: any) => walletClient.signTypedData(args),
+  };
+
+  // Create x402 client with EVM scheme (v2)
   const client = new x402Client()
-    .register("eip155:8453", new ExactEvmScheme(walletClient));
+    .register("eip155:8453", new ExactEvmScheme(x402Signer as any));
 
   // Wrap fetch with x402 payment handling
   const x402Fetch = wrapFetchWithPayment(fetch, client);
