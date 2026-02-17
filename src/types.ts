@@ -175,6 +175,17 @@ export interface SocialsOptions {
   taglineOverride?: string;
 }
 
+// BYOL (Bring Your Own Logo) mode for social service
+export interface BYOLInput {
+  logoUrl: string;          // URL to existing logo/icon
+  brandName: string;        // Required for BYOL
+  tagline?: string;
+  primaryColor?: string;    // Optional - will auto-extract if not provided
+  secondaryColor?: string;
+  backgroundColor?: string;
+  renderStyle?: RenderStylePreset;  // Optional - will auto-detect if not provided
+}
+
 export interface GfxOptions {
   platform?: string;
   width?: number;

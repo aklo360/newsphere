@@ -3,7 +3,7 @@
  * OpenGFX CLI — Socials Service
  */
 
-import { generateSocials } from "../services/socials.js";
+import { generateSocials, generateSocialsFromLogo } from "../services/socials.js";
 import { SOCIAL_PLATFORMS } from "../constants.js";
 
 function printUsage(): void {
@@ -12,26 +12,36 @@ ${"═".repeat(65)}
   OpenGFX Socials — Platform-Specific Avatars & Banners
 ${"═".repeat(65)}
 
-Usage: npx tsx src/cli/socials.ts <brand-system.json> [options]
+MODE 1: From Brand System (logo service output)
+  npx tsx src/cli/socials.ts <brand-system.json>
 
-Arguments:
-  brand-system.json    Path to brand system manifest (from Brand Foundation)
+MODE 2: BYOL (Bring Your Own Logo)
+  npx tsx src/cli/socials.ts --logo <url> --name "Brand Name" [options]
 
 Options:
-  --platforms    Comma-separated list of platforms (default: all)
-  --no-tagline   Exclude tagline from banners
-  --tagline      Override tagline text
+  --platforms      Comma-separated list of platforms (default: twitter)
+  --no-tagline     Exclude tagline from banners
+  --tagline        Tagline text
+
+BYOL Options:
+  --logo           URL to existing logo image (required for BYOL)
+  --name           Brand name (required for BYOL)
+  --primary        Primary brand color (hex, e.g. #FF5500)
+  --secondary      Secondary color (hex)
+  --background     Background color (hex)
+  --style          Render style: flat, gradient, glass, chrome, gold, neon, 3d
 
 Examples:
 
-  # Generate for all platforms:
+  # From brand system:
   npx tsx src/cli/socials.ts ./output/lumina/brand-system.json
 
-  # Specific platforms only:
-  npx tsx src/cli/socials.ts ./output/lumina/brand-system.json --platforms twitter,instagram,discord
+  # BYOL - AI extracts colors:
+  npx tsx src/cli/socials.ts --logo https://example.com/logo.png --name "Acme Corp"
 
-  # Custom tagline:
-  npx tsx src/cli/socials.ts ./output/lumina/brand-system.json --tagline "Illuminate Your Skin"
+  # BYOL - with colors:
+  npx tsx src/cli/socials.ts --logo https://example.com/logo.png --name "Acme Corp" \\
+    --primary "#FF5500" --secondary "#333333" --style gradient
 
 Supported Platforms:
 `);
@@ -61,7 +71,10 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-if (!brandSystemPath) {
+// Determine mode
+const isBYOL = flags.logo && flags.name;
+
+if (!brandSystemPath && !isBYOL) {
   printUsage();
   process.exit(1);
 }
@@ -71,11 +84,32 @@ const platforms = flags.platforms
   ? (flags.platforms as string).split(",").map(p => p.trim())
   : ["twitter"];
 
-generateSocials(brandSystemPath, {
-  platforms,
-  includeTagline: !flags.noTagline,
-  taglineOverride: typeof flags.tagline === "string" ? flags.tagline : undefined,
-}).catch(err => {
+async function run() {
+  if (isBYOL) {
+    // BYOL mode
+    await generateSocialsFromLogo({
+      logoUrl: flags.logo as string,
+      brandName: flags.name as string,
+      tagline: typeof flags.tagline === "string" ? flags.tagline : undefined,
+      primaryColor: typeof flags.primary === "string" ? flags.primary : undefined,
+      secondaryColor: typeof flags.secondary === "string" ? flags.secondary : undefined,
+      backgroundColor: typeof flags.background === "string" ? flags.background : undefined,
+      renderStyle: typeof flags.style === "string" ? flags.style as any : undefined,
+    }, {
+      platforms,
+      includeTagline: !flags.noTagline,
+    });
+  } else {
+    // Brand system mode
+    await generateSocials(brandSystemPath!, {
+      platforms,
+      includeTagline: !flags.noTagline,
+      taglineOverride: typeof flags.tagline === "string" ? flags.tagline : undefined,
+    });
+  }
+}
+
+run().catch(err => {
   console.error(`✗ ${err instanceof Error ? err.message : "Unknown error"}`);
   process.exit(1);
 });

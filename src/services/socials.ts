@@ -10,7 +10,10 @@ import * as path from "path";
 import sharp from "sharp";
 import { fileURLToPath } from "url";
 
-import type { BrandSystem, SocialsManifest, SocialsOptions } from "../types.js";
+import type { BrandSystem, SocialsManifest, SocialsOptions, BYOLInput, RenderStylePreset } from "../types.js";
+import * as https from "https";
+import * as http from "http";
+import { analyzeLogoColors } from "../ai.js";
 import { SOCIAL_PLATFORMS } from "../constants.js";
 import { generateRenderedAvatarWithStyle, generateBannerWithStyle, adaptBannerAspectRatio } from "../ai.js";
 
@@ -210,5 +213,151 @@ export async function generatePlatformAssets(
   return {
     avatar: manifest.avatars[platform],
     banner: manifest.banners[platform],
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BYOL (BRING YOUR OWN LOGO) MODE
+// ═══════════════════════════════════════════════════════════════════
+
+async function downloadFile(url: string, dest: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(dest);
+    const protocol = url.startsWith("https") ? https : http;
+    protocol.get(url, (response) => {
+      // Handle redirects
+      if (response.statusCode === 301 || response.statusCode === 302) {
+        const redirectUrl = response.headers.location;
+        if (redirectUrl) {
+          file.close();
+          fs.unlinkSync(dest);
+          return downloadFile(redirectUrl, dest).then(resolve).catch(reject);
+        }
+      }
+      response.pipe(file);
+      file.on("finish", () => {
+        file.close();
+        resolve();
+      });
+    }).on("error", (err) => {
+      fs.unlink(dest, () => {});
+      reject(err);
+    });
+  });
+}
+
+/**
+ * Generate social assets from an existing logo (BYOL mode)
+ * Creates a temporary brand system and generates assets
+ */
+export async function generateSocialsFromLogo(
+  input: BYOLInput,
+  options: SocialsOptions = {}
+): Promise<SocialsManifest & { brandSystemPath: string }> {
+  const { logoUrl, brandName, tagline, primaryColor, secondaryColor, backgroundColor, renderStyle } = input;
+  
+  // Create output directory
+  const brandSlug = brandName.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
+  const outputDir = path.join(__dirname, "..", "..", "output", brandSlug);
+  const logoDir = path.join(outputDir, "logo");
+  
+  fs.mkdirSync(logoDir, { recursive: true });
+
+  console.log(`\n${"═".repeat(62)}`);
+  console.log(`  OpenGFX BYOL (Bring Your Own Logo)`);
+  console.log(`  Brand: ${brandName}`);
+  console.log(`${"═".repeat(62)}`);
+
+  // ─── STEP 1: DOWNLOAD LOGO ───
+  console.log(`\n[1/4] Downloading logo...`);
+  const iconPath = path.join(logoDir, "icon.png");
+  await downloadFile(logoUrl, iconPath);
+  console.log(`      ✓ icon.png downloaded`);
+  
+  // ─── STEP 2: ANALYZE COLORS (if not provided) ───
+  let colors = {
+    primary: primaryColor || "#000000",
+    secondary: secondaryColor || "#666666",
+    accent: "#0066FF",
+    background: backgroundColor || "#FFFFFF",
+    foreground: "#000000",
+  };
+  
+  if (!primaryColor || !secondaryColor) {
+    console.log(`[2/4] Analyzing logo colors...`);
+    const analyzed = await analyzeLogoColors(iconPath);
+    colors = {
+      primary: primaryColor || analyzed.primary,
+      secondary: secondaryColor || analyzed.secondary,
+      accent: analyzed.accent || "#0066FF",
+      background: backgroundColor || analyzed.background || "#FFFFFF",
+      foreground: analyzed.foreground || "#000000",
+    };
+    console.log(`      Primary: ${colors.primary}`);
+    console.log(`      Secondary: ${colors.secondary}`);
+  } else {
+    console.log(`[2/4] Using provided colors...`);
+  }
+  
+  // ─── STEP 3: CREATE MINIMAL BRAND SYSTEM ───
+  console.log(`[3/4] Creating brand system...`);
+  
+  // Create a simple wordmark (just text for now - will use icon for avatar)
+  const wordmarkPath = path.join(logoDir, "wordmark.png");
+  const horizontalPath = path.join(logoDir, "horizontal.png");
+  const stackedPath = path.join(logoDir, "stacked.png");
+  
+  // Copy icon as placeholders (avatar generation uses icon anyway)
+  fs.copyFileSync(iconPath, wordmarkPath);
+  fs.copyFileSync(iconPath, horizontalPath);
+  fs.copyFileSync(iconPath, stackedPath);
+  
+  const brandSystem: BrandSystem = {
+    brand: {
+      name: brandName,
+      tagline,
+      concept: `BYOL brand: ${brandName}`,
+    },
+    logo: {
+      icon: "logo/icon.png",
+      wordmark: "logo/wordmark.png",
+      stacked: "logo/stacked.png",
+      horizontal: "logo/horizontal.png",
+    },
+    colors,
+    typography: {
+      headerFont: "Inter",
+      headerWeight: 600,
+      bodyFont: "Inter",
+      bodyWeight: 400,
+    },
+    renderStyle: {
+      preset: (renderStyle as RenderStylePreset) || "flat",
+      customPrompt: undefined,
+      parameters: {
+        material: "plastic",
+        finish: "matte",
+        lighting: "studio",
+        colorMode: "brand",
+        depth: "flat",
+        effects: [],
+      },
+    },
+    mode: "light",
+    version: "1.0.0",
+    generatedAt: new Date().toISOString(),
+  };
+  
+  const brandSystemPath = path.join(outputDir, "brand-system.json");
+  fs.writeFileSync(brandSystemPath, JSON.stringify(brandSystem, null, 2));
+  console.log(`      ✓ brand-system.json created`);
+  
+  // ─── STEP 4: GENERATE SOCIALS ───
+  console.log(`[4/4] Generating social assets...`);
+  const manifest = await generateSocials(brandSystemPath, options);
+  
+  return {
+    ...manifest,
+    brandSystemPath: "brand-system.json",
   };
 }

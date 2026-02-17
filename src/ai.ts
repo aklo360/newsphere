@@ -841,6 +841,75 @@ OUTPUT: A single image at approximately ${targetWidth}x${targetHeight} with the 
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// LOGO COLOR ANALYSIS (BYOL)
+// ═══════════════════════════════════════════════════════════════════
+
+export interface LogoColorAnalysis {
+  primary: string;
+  secondary: string;
+  accent?: string;
+  background?: string;
+  foreground?: string;
+}
+
+/**
+ * Analyze colors from an existing logo image
+ */
+export async function analyzeLogoColors(logoPath: string): Promise<LogoColorAnalysis> {
+  const imageData = fs.readFileSync(logoPath);
+  const base64Image = imageData.toString("base64");
+  
+  const prompt = `Analyze this logo and extract the main colors.
+
+RESPOND WITH EXACTLY THIS JSON (no markdown, no explanation):
+{
+  "primary": "#HEXCODE",
+  "secondary": "#HEXCODE", 
+  "accent": "#HEXCODE",
+  "background": "#HEXCODE",
+  "foreground": "#HEXCODE"
+}
+
+Rules:
+- primary = the dominant brand color
+- secondary = supporting color
+- accent = highlight color (if visible, otherwise derive from primary)
+- background = suggested background color that complements the logo
+- foreground = suggested text color for readability
+
+Return only valid hex codes.`;
+
+  const response = await ai.models.generateContent({
+    model: TEXT_MODEL,
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { inlineData: { mimeType: "image/png", data: base64Image } },
+          { text: prompt }
+        ]
+      }
+    ],
+  });
+
+  const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+  
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // Fallback defaults
+    return {
+      primary: "#000000",
+      secondary: "#666666",
+      accent: "#0066FF",
+      background: "#FFFFFF",
+      foreground: "#000000",
+    };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // BRAND NAME GENERATION
 // ═══════════════════════════════════════════════════════════════════
 
