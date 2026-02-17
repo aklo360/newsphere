@@ -88,13 +88,13 @@ export async function generateSocials(
   console.log(`      ✓ avatar-master.png (1024x1024)`);
   console.log(`      ✓ icon-style-block.txt (for banner consistency)`);
 
-  // Generate ACP-ready avatar (200x200, <50KB JPEG)
+  // Generate ACP-ready avatar (360x360, <50KB JPEG)
   const acpAvatarPath = path.join(avatarsDir, "avatar-acp.jpg");
   await sharp(masterAvatarPath)
-    .resize(200, 200, { fit: "cover" })
+    .resize(360, 360, { fit: "cover" })
     .jpeg({ quality: 85 })
     .toFile(acpAvatarPath);
-  console.log(`      ✓ avatar-acp.jpg (200x200, ACP-ready)`);
+  console.log(`      ✓ avatar-acp.jpg (360x360, ACP-ready)`);
 
   // Avatar is ready - no platform-specific resizes needed (1K master covers all)
   avatarPaths["master"] = "socials/avatars/avatar-master.png";
