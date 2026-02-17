@@ -252,12 +252,19 @@ export const RENDER_STYLE_PROMPTS: Record<string, string> = {
 export const ICON_STYLE_PROMPT = `
 DESIGN DIRECTION: Senior brand designer at Pentagram creating a PREMIUM MINIMAL icon.
 
-🚨 CRITICAL — GRAYSCALE ONLY (NON-NEGOTIABLE):
-- BASE LOGO MUST USE ONLY 3 COLORS: BLACK, WHITE, and GREY
+🚨 CRITICAL — BLACK ON WHITE (NON-NEGOTIABLE):
+- DEFAULT: Pure BLACK (#000000) on WHITE (#FFFFFF) — nothing else
 - NO colors (no blue, no purple, no red, no green, NOTHING)
 - This is the BASE logo — color/effects come LATER at render stage
 - Violating this rule breaks the entire pipeline
-- Think classic Apple logo, Nike swoosh — single color icons
+- Think classic Apple logo, Nike swoosh — pure black silhouettes
+
+⚠️ GREY EXCEPTION (RARE — only when 100% necessary):
+- ALWAYS try pure black on white FIRST
+- Grey (#333-#CCC) ONLY if the icon shape absolutely requires shading to read correctly
+- This is rare (maybe 20% of icons) — most icons work fine as pure black
+- If grey is used, it must be essential for form comprehension, not decoration
+- When in doubt, keep it pure black
 
 ⚠️ SIMPLICITY IS PARAMOUNT — GOLDEN RULE:
 - THE RULE OF ONE: Pick ONE interesting visual element, not many
@@ -283,10 +290,11 @@ FIDELITY:
 - If emoji referenced, capture its ESSENCE not every detail
 - Bold, confident shapes over intricate line work
 
-🎨 RENDERING (GRAYSCALE ONLY):
+🎨 RENDERING (BLACK ON WHITE DEFAULT):
 - Solid black (#000000) on pure white (#FFFFFF) background
-- Grey tones (#333333, #666666, #999999, #CCCCCC) allowed for shading/depth
-- NO COLORS — only black, white, grey
+- DEFAULT: Pure black silhouette — no grey, no shading
+- Grey ONLY if shape absolutely requires it to read correctly (rare)
+- NO COLORS — this is non-negotiable
 - Clean vector-quality edges
 - Generous negative space
 
