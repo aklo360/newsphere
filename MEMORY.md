@@ -27,9 +27,14 @@
 - **Docs:** `services/social-assets/SERVICE.md`
 - **CLI:** `npm run socials -- ./output/brand/brand-system.json`
 
-### Service 3: On-Brand GFX (TODO)
-- Per-request marketing graphics
-- Uses brand-system.json for consistency
+### Service 3: On-Brand GFX (LIVE 2025-02-17)
+- **ACP:** `gfx` | **x402:** `/gfx`
+- **Price:** $2 per graphic
+- **Input:** brand-system.json OR BYOL (logo URL + brand name) + prompt + optional aspect ratio
+- **Output:** Single marketing graphic (default 1:1, supports 16:9, 9:16, 4:5, etc.)
+- **Docs:** `services/gfx/SERVICE.md`
+- **CLI:** `npm run gfx -- --brand-system ./path/brand-system.json --prompt "Launch graphic"`
+- **Use Cases:** Announcements, launches, features, milestones, events, quotes, promos, hiring
 
 ## Architecture
 - `brand-system.json` is the master manifest that chains all services

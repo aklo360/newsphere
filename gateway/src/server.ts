@@ -73,6 +73,7 @@ console.log(`
 const PRICING: Record<JobType, number> = {
   logo: 5,
   socials: 5,
+  gfx: 2,
 };
 
 // ============================================================
@@ -87,6 +88,7 @@ app.get("/", (req, res) => {
     pricing: {
       logo: "$5 - Logo system (icon, wordmark, lockups)",
       socials: "$5 - Social assets (avatar, banners)",
+      gfx: "$2 - On-brand marketing graphic",
     },
     supportedChains: [
       {
@@ -111,6 +113,7 @@ app.get("/", (req, res) => {
       "GET /v1/pricing": "Pricing tiers",
       "POST /v1/logo": "Generate logo system (x402 payment required)",
       "POST /v1/socials": "Generate social assets (x402 payment required)",
+      "POST /v1/gfx": "Generate on-brand marketing graphic (x402 payment required)",
       "GET /v1/jobs/:id": "Check job status",
       "GET /v1/jobs": "List jobs (filter by wallet)",
     },
@@ -205,6 +208,9 @@ app.get("/v1/jobs/:id", async (req, res) => {
     if (job.socialsOutput) {
       response.socials = job.socialsOutput;
     }
+    if (job.gfxOutput) {
+      response.gfx = job.gfxOutput;
+    }
   } else if (job.status === "failed") {
     response.error = job.error;
   }
@@ -234,6 +240,7 @@ app.get("/v1/jobs", async (req, res) => {
       step: j.step,
       logoOutput: j.logoOutput,
       socialsOutput: j.socialsOutput,
+      gfxOutput: j.gfxOutput,
       error: j.error,
     }));
     
@@ -450,6 +457,47 @@ app.post("/v1/socials", async (req, res) => {
   }
 });
 
+app.post("/v1/gfx", async (req, res) => {
+  try {
+    const { 
+      brand_name, 
+      brand_system_url, 
+      logo_url,
+      prompt, 
+      aspect_ratio,
+      primary_color,
+      secondary_color,
+      background_color,
+      render_style,
+    } = req.body;
+
+    if (!prompt) {
+      res.status(400).json({ error: "Missing required field: prompt" });
+      return;
+    }
+
+    if (!brand_system_url && !logo_url) {
+      res.status(400).json({ error: "Either brand_system_url or logo_url is required" });
+      return;
+    }
+
+    // For GFX, brand_name can be derived from brand_system or provided directly
+    const brandName = brand_name || "Brand";
+    const concept = prompt; // Use prompt as concept for job creation
+
+    await handlePaymentRequest(req, res, "gfx", brandName, concept, { 
+      gfxPrompt: prompt,
+      aspectRatio: aspect_ratio || "1:1",
+      brandSystemPath: brand_system_url,
+      logoUrl: logo_url,
+      renderStyle: render_style,
+    });
+  } catch (err) {
+    console.error(`[gateway] Error:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // ============================================================
 // Background Generation
 // ============================================================
@@ -475,6 +523,10 @@ async function generateAsync(
       // Run socials pipeline (requires brand-system.json)
       await updateJob(job.id, { step: "avatar" });
       result = await runSocialsPipeline(job);
+    } else if (job.type === "gfx") {
+      // Run GFX pipeline (single graphic)
+      await updateJob(job.id, { step: "generating" });
+      result = await runGfxPipeline(job);
     }
 
     const elapsed = (Date.now() - startTime) / 1000;
@@ -502,6 +554,7 @@ async function generateAsync(
       status: "completed",
       logoOutput: result.logo,
       socialsOutput: result.socials,
+      gfxOutput: result.gfx,
       generationTimeSeconds: elapsed,
       settlementTxHash: finalSettlement.txHash,
       error: finalSettlement.success ? undefined : `Payment: ${finalSettlement.error}`,
@@ -680,6 +733,101 @@ function runSocialsPipeline(job: Job, brandSystemPath?: string): Promise<Socials
         resolve(uploadResult as unknown as SocialsResult);
       } catch (err) {
         reject(new Error(`Failed to upload outputs: ${err}`));
+      }
+    });
+    
+    proc.on("error", (err) => {
+      clearTimeout(timeout);
+      reject(new Error(`Failed to spawn pipeline: ${err.message}`));
+    });
+  });
+}
+
+interface GfxResult {
+  gfx: {
+    url: string;
+    width: number;
+    height: number;
+    aspectRatio: string;
+  };
+}
+
+function runGfxPipeline(job: Job): Promise<GfxResult> {
+  return new Promise((resolve, reject) => {
+    const opengfxDir = path.resolve(process.cwd(), OPENGFX_PATH);
+    
+    // Build args
+    const args = ["run", "gfx", "--"];
+    
+    if (job.brandSystemPath) {
+      args.push("--brand-system", job.brandSystemPath);
+    } else if (job.logoUrl) {
+      args.push("--logo-url", job.logoUrl);
+      args.push("--brand-name", job.brandName);
+    }
+    
+    args.push("--prompt", job.gfxPrompt || job.concept);
+    args.push("--aspect-ratio", job.aspectRatio || "1:1");
+    args.push("--job-id", job.id);
+    
+    console.log(`[gfx] Running: npm ${args.join(" ")}`);
+    
+    const proc = spawn("npm", args, { 
+      cwd: opengfxDir, 
+      stdio: ["pipe", "pipe", "pipe"],
+      env: { ...process.env, NODE_NO_WARNINGS: "1" },
+    });
+    
+    const timeout = setTimeout(() => {
+      proc.kill("SIGKILL");
+      reject(new Error(`Pipeline timed out after ${PIPELINE_TIMEOUT_MS / 1000}s`));
+    }, PIPELINE_TIMEOUT_MS);
+    
+    let stdout = "";
+    let stderr = "";
+    
+    proc.stdout.on("data", (data) => {
+      const text = data.toString();
+      stdout += text;
+      for (const line of text.split("\n").filter((l: string) => l.trim())) {
+        console.log(`  ${line}`);
+      }
+    });
+    
+    proc.stderr.on("data", (data) => { stderr += data.toString(); });
+    
+    proc.on("close", async (code) => {
+      clearTimeout(timeout);
+      
+      if (code !== 0) {
+        reject(new Error(`GFX pipeline failed: ${stderr.slice(-2000)}`));
+        return;
+      }
+      
+      // Parse result from stdout
+      const resultMatch = stdout.match(/GFX_RESULT:(\{.*\})/);
+      if (!resultMatch) {
+        reject(new Error("Could not parse GFX result"));
+        return;
+      }
+      
+      try {
+        const localResult = JSON.parse(resultMatch[1]);
+        const brandSlug = job.brandName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        
+        // Upload to CDN
+        const uploadResult = await uploadOutputs(opengfxDir, localResult.path, job.id, brandSlug, "gfx");
+        
+        resolve({
+          gfx: {
+            url: uploadResult.url || uploadResult.gfx?.url || `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${brandSlug}/gfx/${job.id}.png`,
+            width: localResult.width,
+            height: localResult.height,
+            aspectRatio: localResult.aspectRatio,
+          }
+        });
+      } catch (err) {
+        reject(new Error(`Failed to process GFX result: ${err}`));
       }
     });
     

@@ -7,7 +7,7 @@
 
 const API_BASE = process.env.API_BASE_URL || "https://api.opengfx.app";
 
-export type JobType = "logo" | "socials";
+export type JobType = "logo" | "socials" | "gfx";
 export type JobStatus = "pending" | "processing" | "completed" | "failed";
 
 export interface LogoOutput {
@@ -26,6 +26,13 @@ export interface SocialsOutput {
   communityBanner: string;
 }
 
+export interface GfxOutput {
+  url: string;
+  width: number;
+  height: number;
+  aspectRatio: string;
+}
+
 export interface Job {
   id: string;
   type: JobType;
@@ -36,6 +43,10 @@ export interface Job {
   tagline?: string;
   renderStyle?: string;
   brandSystemPath?: string; // For socials jobs - path to existing brand-system.json
+  // GFX-specific fields
+  gfxPrompt?: string;
+  aspectRatio?: string;
+  logoUrl?: string; // For BYOL mode
   // Wallet (for indexing)
   walletAddress: string;
   chain: string;
@@ -46,10 +57,11 @@ export interface Job {
   // Payment info
   settlementTxHash?: string;
   // Pipeline progress
-  step?: "analyzing" | "icon" | "wordmark" | "lockups" | "styleguide" | "avatar" | "banner" | "upload";
+  step?: "analyzing" | "icon" | "wordmark" | "lockups" | "styleguide" | "avatar" | "banner" | "upload" | "generating";
   // Results
   logoOutput?: LogoOutput;
   socialsOutput?: SocialsOutput;
+  gfxOutput?: GfxOutput;
   generationTimeSeconds?: number;
   // Error
   error?: string;
@@ -69,6 +81,9 @@ export async function createJob(
     tagline?: string;
     renderStyle?: string;
     brandSystemPath?: string;
+    gfxPrompt?: string;
+    aspectRatio?: string;
+    logoUrl?: string;
   }
 ): Promise<Job> {
   try {
@@ -114,6 +129,9 @@ export async function createJob(
       tagline: options?.tagline,
       renderStyle: options?.renderStyle,
       brandSystemPath: options?.brandSystemPath,
+      gfxPrompt: options?.gfxPrompt,
+      aspectRatio: options?.aspectRatio,
+      logoUrl: options?.logoUrl,
       priceUsd,
       chain,
       walletAddress: walletAddress.toLowerCase(),

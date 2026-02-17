@@ -99,14 +99,16 @@ export interface LogoFiles {
 }
 
 export interface BrandSystem {
-  brand: BrandInfo;
-  logo: LogoFiles;
+  brand?: BrandInfo;
+  brandName?: string;      // Alternative to brand.name
+  tagline?: string;        // Alternative to brand.tagline
+  logo?: LogoFiles;
   colors: ColorPalette;
-  typography: Typography;
-  renderStyle: RenderStyle;
-  mode: "dark" | "light";  // Dark = dark bg/light text; Light = light bg/dark text
-  version: string;
-  generatedAt: string;
+  typography?: Typography;
+  renderStyle?: RenderStyle;
+  mode?: "dark" | "light";  // Dark = dark bg/light text; Light = light bg/dark text
+  version?: string;
+  generatedAt?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -192,4 +194,6 @@ export interface GfxOptions {
   width?: number;
   height?: number;
   format?: "png" | "jpg" | "webp";
+  aspectRatio?: string;  // e.g., "1:1", "16:9", "4:5"
+  jobId?: string;        // For gateway job tracking
 }
