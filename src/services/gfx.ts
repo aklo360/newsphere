@@ -230,8 +230,8 @@ Create a stunning on-brand graphic.`;
     },
   });
 
-  const parts = response.candidates?.[0]?.content?.parts || [];
-  for (const part of parts) {
+  const responseParts = response.candidates?.[0]?.content?.parts || [];
+  for (const part of responseParts) {
     if (part.inlineData?.data) {
       // Generate unique filename
       const timestamp = Date.now();
