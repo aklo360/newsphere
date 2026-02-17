@@ -1,5 +1,11 @@
 # MEMORY.md - OpenGFX
 
+## CRITICAL DELIVERY RULE (NEVER SKIP)
+**EVERY job output MUST include CDN links for all deliverables.**
+- User cannot download/view files without public URLs
+- After ANY job (logo, socials, gfx): upload to S3 and return CDN links
+- NO EXCEPTIONS — this is mandatory for every single job
+
 ## Product Intent
 - OpenGFX is the AKLO Labs brand/design agent.
 - It should output machine-readable brand systems and human deliverables.
@@ -27,11 +33,38 @@
 
 ## Architecture
 - `brand-system.json` is the master manifest that chains all services
-- Black logo system first, render style applied to avatars/banners
+- **BLACK LOGO SYSTEM FIRST** — render style applied ONLY at socials stage
 - User prompt is the bible — AI analyzer detects style cues
 
+## Logo System Rules (CRITICAL — NEVER BREAK)
+- **BASE LOGOS MUST BE GRAYSCALE ONLY**
+  - MAX 3 colors: BLACK, WHITE, GREY
+  - NO colors in icon.png, wordmark.png, stacked.png, horizontal.png
+  - Color/effects come ONLY at the socials/render stage
+  - This is NON-NEGOTIABLE — violating this breaks the entire pipeline
+
 ## Render Styles
-flat, gradient, glass, gavin (iridescent), chrome, gold, silver, neon, 3d, holographic
+flat, gradient, glass, gavin (iridescent), chrome, gold, silver, neon, 3d, holographic, **cyberpunk**
+
+### Cyberpunk Style (NEW 2025-02-17)
+- Neon cityscape background with skyscrapers
+- Holographic billboards, rain-slicked streets
+- Purple/blue/cyan neon palette
+- Synthwave/Blade Runner aesthetic
+- Use sparingly — perfect for gaming/nightlife/tech-dark brands
+
+## Icon Rendering Rules (CRITICAL)
+- **EYES/PUPILS:** If icon has an eye with a pupil/highlight, DO NOT use neon style
+  - Neon = outlines only, but pupils need SOLID WHITE FILL (catchlight)
+  - For eye icons: use `glass`, `gradient`, or `gavin` instead
+  - The white highlight must be a FILL, not an outline
+- **NEON:** Only for icons without solid fill requirements
+
+## Banner/Avatar Rules (CRITICAL)
+- **CONTRAST:** Icon MUST be BRIGHT (white/cyan/neon) on dark backgrounds
+- **MATCHING:** Avatar background should match banner background style
+- **QUALITY:** Always prompt with "ULTRA PREMIUM", "4K", "SHARP, CRISP"
+- **CYBERPUNK:** Only if user requests OR concept strongly calls for it (tech/gaming/night themes) — NOT default
 
 ## Brand Mode (NEW)
 - **DARK:** Tech, gaming, space, nightlife, edgy → dark bg, light wordmark w/ render style
@@ -59,6 +92,14 @@ flat, gradient, glass, gavin (iridescent), chrome, gold, silver, neon, 3d, holog
 - **FULLY AUTONOMOUS:** ACP pipeline runs end-to-end without human approval
 - **REASONING ON:** Use `/reasoning on` for complex design work
 - **FRESH SESSIONS:** After 10+ compactions, quality degrades — restart
+
+## CRITICAL: Development Process (NEVER FORGET)
+**This Telegram thread with @aklo360 is the DEVELOPMENT ENVIRONMENT for OpenGFX.**
+- ALL feedback, corrections, and learnings MUST be embedded into SOURCE CODE (`src/*.ts`)
+- MEMORY.md is for MY context only — it does NOT affect production/ACP
+- When aklo gives notes → UPDATE THE CODE, not just memory
+- The pipeline must EVOLVE and GET BETTER with each iteration
+- If a rule isn't in the code, ACP agents won't follow it
 
 ## ACP Avatar
 - `avatar-acp.jpg` — 400x400, JPEG q85, <50KB

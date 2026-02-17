@@ -34,6 +34,7 @@ export type RenderStylePreset =
   | "neon"           // Glowing edges, cyberpunk
   | "3d"             // Depth, shadows, dimension
   | "holographic"    // Rainbow holographic foil
+  | "cyberpunk"      // Neon cityscape background + neon icon treatment
   | "custom";        // User-defined via prompt
 
 export interface RenderStyleParameters {

@@ -455,6 +455,21 @@ BACKGROUND (use EXACTLY for consistency across PFP and banner):
 - The background should have NOTICEABLE color variation, not appear flat/plain
 - Keep it soft and professional, but with clear gradient presence
 
+🚨 CRITICAL CONTRAST RULES (NON-NEGOTIABLE):
+- The ICON must have MAXIMUM CONTRAST against the background
+- Icon must POP — never blend into or get lost in the background
+- If background is dark → icon should be BRIGHT (white, cyan, neon colors)
+- If background is light → icon should be DARK (deep colors, not pastels)
+- The icon is the HERO — background is supporting atmosphere only
+- Test: squint at the image — icon should still be clearly visible
+
+👁️ EYE/PUPIL SPECIAL HANDLING:
+- If the icon contains an eye with a pupil/catchlight:
+- The white highlight MUST be a SOLID WHITE FILL (#FFFFFF)
+- NOT negative space, NOT an outline — actual white fill
+- Pupils need solid catchlights to look alive
+- For eye icons: prefer glass/gradient styles over pure neon (neon = outlines only)
+
 This style block MUST be replicated EXACTLY across all brand assets — including the gradient background.`;
 }
 

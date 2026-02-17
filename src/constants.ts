@@ -214,6 +214,35 @@ export const RENDER_STYLE_PROMPTS: Record<string, string> = {
     - Shimmering, eye-catching effect
     - Premium collectible feel
   `,
+  
+  cyberpunk: `
+    Render this logo in CYBERPUNK style with CITYSCAPE BACKGROUND:
+    
+    🎨 ICON RENDERING (CRITICAL):
+    - Use GLASS or GRADIENT style for the icon — NOT pure neon outlines
+    - Any solid areas (like eye pupils, highlights) must be SOLID FILLS, not outlines
+    - The icon should have depth, gradients, and iridescent purple/blue/cyan colors
+    - Soft glow and bloom effects around the icon edges
+    - Preserve any WHITE HIGHLIGHTS as solid white fills (e.g., eye catchlights)
+    - Icon must be BRIGHT and HIGH CONTRAST against the background — it must POP
+    
+    🏙️ BACKGROUND (CRITICAL CONTRAST RULES):
+    - Cyberpunk cityscape at night with towering dark skyscrapers
+    - Neon signs and holographic billboards in purple/blue/pink
+    - Rain-slicked streets or wet surfaces reflecting neon lights
+    - Synthwave/Blade Runner aesthetic
+    
+    ⚠️ BACKGROUND MUST BE SUBTLE — NOT OVERPOWERING:
+    - The cityscape should be FADED/DARKENED towards the CENTER
+    - Use a dark vignette or gradient so the center is darker/calmer
+    - Buildings and neon signs should be more prominent at the EDGES
+    - The CENTER where the logo sits must have subdued/muted background
+    - Logo must have MAXIMUM CONTRAST against background — never blend in
+    - Think "logo in spotlight" — background recedes, logo pops forward
+    
+    The logo should DOMINATE the composition, cityscape is atmosphere only.
+    ULTRA PREMIUM 4K quality, cinematic lighting.
+  `,
 };
 
 // ═══════════════════════════════════════════════════════════════════
@@ -222,6 +251,13 @@ export const RENDER_STYLE_PROMPTS: Record<string, string> = {
 
 export const ICON_STYLE_PROMPT = `
 DESIGN DIRECTION: Senior brand designer at Pentagram creating a PREMIUM MINIMAL icon.
+
+🚨 CRITICAL — GRAYSCALE ONLY (NON-NEGOTIABLE):
+- BASE LOGO MUST USE ONLY 3 COLORS: BLACK, WHITE, and GREY
+- NO colors (no blue, no purple, no red, no green, NOTHING)
+- This is the BASE logo — color/effects come LATER at render stage
+- Violating this rule breaks the entire pipeline
+- Think classic Apple logo, Nike swoosh — single color icons
 
 ⚠️ SIMPLICITY IS PARAMOUNT — GOLDEN RULE:
 - THE RULE OF ONE: Pick ONE interesting visual element, not many
@@ -247,10 +283,18 @@ FIDELITY:
 - If emoji referenced, capture its ESSENCE not every detail
 - Bold, confident shapes over intricate line work
 
-RENDERING:
-- Solid black (#000000) on pure white (#FFFFFF)
+🎨 RENDERING (GRAYSCALE ONLY):
+- Solid black (#000000) on pure white (#FFFFFF) background
+- Grey tones (#333333, #666666, #999999, #CCCCCC) allowed for shading/depth
+- NO COLORS — only black, white, grey
 - Clean vector-quality edges
 - Generous negative space
+
+👁️ SPECIAL RULE — EYES/PUPILS:
+- If the icon contains an EYE with a pupil/highlight:
+- The white catchlight/highlight MUST be a SOLID WHITE FILL
+- NOT negative space, NOT transparent — actual white fill
+- This ensures proper rendering at the socials stage
 
 SPECS:
 - Square 1:1, 1024x1024 pixels
@@ -258,6 +302,7 @@ SPECS:
 - ~15% padding on each side — breathing room without floating
 
 FORBIDDEN:
+- NO COLORS — only black, white, grey (this is critical)
 - NO borders, frames, or outlines around the icon
 - NO box or container
 - NO intricate patterns or textures
