@@ -1,0 +1,57 @@
+{
+  "brand": {
+    "name": "OpenGFX",
+    "tagline": "Agentic Brand Design",
+    "concept": "Agentic brand design system by AKLO Labs",
+    "family": "Open Suite"
+  },
+  "logo": {
+    "icon": "socials/avatars/avatar-master.png",
+    "description": "Artist palette with thumb hole (bottom-left) and 6 CMYRGB paint dollops"
+  },
+  "socials": {
+    "avatar": "socials/avatars/avatar-master.png",
+    "twitterBanner": "socials/banners/twitter-banner.png"
+  },
+  "r2": {
+    "bucket": "opengfx-assets",
+    "baseUrl": "https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev",
+    "avatar": "https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/opengfx/avatar.png",
+    "banner": "https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/opengfx/twitter-banner.png"
+  },
+  "colors": {
+    "primary": "#22D3EE",
+    "secondary": "#06B6D4",
+    "tertiary": "#67E8F9",
+    "accent": "#0EA5E9",
+    "background": "#F0FDFA",
+    "foreground": "#134E4A"
+  },
+  "typography": {
+    "headerFont": "Google Sans Flex",
+    "headerWeight": 600,
+    "bodyFont": "Inter",
+    "bodyWeight": 400
+  },
+  "renderStyle": {
+    "preset": "gavin",
+    "description": "Iridescent holographic glass with cyan-teal-blue-green prismatic color shift",
+    "parameters": {
+      "material": "glass",
+      "finish": "iridescent",
+      "lighting": "soft",
+      "colorMode": "prismatic",
+      "depth": "dimensional",
+      "effects": ["glow", "reflection", "prismatic"],
+      "background": "soft cyan-teal gradient (not pure white)"
+    }
+  },
+  "bannerTemplate": {
+    "layout": "pipeline",
+    "icons": ["human-robot", "palette", "jpeg-file"],
+    "arrows": true,
+    "wordmark": "dark teal 3D subtle glass treatment"
+  },
+  "version": "2.0.0",
+  "lockedAt": "2026-02-17T03:38:00.000Z"
+}
