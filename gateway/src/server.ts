@@ -255,6 +255,11 @@ app.get("/v1/jobs", async (req, res) => {
 // Payment Handler (shared by all service endpoints)
 // ============================================================
 
+// Valid API keys for free internal/partner use
+const VALID_API_KEYS = new Set(
+  (process.env.API_KEYS || "").split(",").map(k => k.trim()).filter(Boolean)
+);
+
 async function handlePaymentRequest(
   req: express.Request,
   res: express.Response,
@@ -272,6 +277,39 @@ async function handlePaymentRequest(
 ) {
   const priceUsd = PRICING[jobType];
   const amountRaw = (priceUsd * 1_000_000).toString();
+
+  // Check for API key bypass (free internal/partner use)
+  const apiKey = req.headers["x-api-key"] as string | undefined;
+  if (apiKey && VALID_API_KEYS.has(apiKey)) {
+    console.log(`[gateway] API key authenticated for ${jobType}: "${brandName}"`);
+    
+    // Create job directly without payment
+    const job = await createJob(
+      jobType,
+      brandName,
+      concept,
+      0, // Free
+      "api-key",
+      `apikey:${apiKey.slice(0, 8)}...`,
+      options
+    );
+    await updateJob(job.id, { status: "processing" });
+
+    // Return immediately
+    res.json({
+      jobId: job.id,
+      type: jobType,
+      status: "processing",
+      brandName,
+      chain: "api-key",
+      message: "Generation started (API key). Poll /v1/jobs/:jobId for status.",
+      pollUrl: `https://gateway.opengfx.app/v1/jobs/${job.id}`,
+    });
+
+    // Generate in background
+    generateAsync(job, null, "base", null);
+    return;
+  }
 
   // Accept both x-payment (legacy) and payment-signature (x402 v2)
   const paymentHeader = (req.headers["x-payment"] || req.headers["payment-signature"]) as string | undefined;
