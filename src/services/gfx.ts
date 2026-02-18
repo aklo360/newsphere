@@ -159,13 +159,23 @@ export async function generateGfx(
     ? brandSystem.renderStyle.customPrompt
     : RENDER_STYLE_PROMPTS[brandSystem.renderStyle?.preset || "gradient"] || RENDER_STYLE_PROMPTS.gradient;
 
-  // Load horizontal logo as reference (if available)
+  // Load logo as reference (if available) - check multiple possible paths
   let base64Logo: string | undefined;
-  if (brandSystem.logo?.horizontal) {
-    const logoPath = path.join(brandDir, brandSystem.logo.horizontal);
+  const logoPaths = [
+    brandSystem.logo?.horizontal,
+    brandSystem.logo?.icon,
+    brandSystem.logo?.stacked,
+    "socials/avatars/avatar-master.png",
+    "logo/icon.png",
+  ].filter(Boolean);
+  
+  for (const logoRef of logoPaths) {
+    const logoPath = path.join(brandDir, logoRef as string);
     if (fs.existsSync(logoPath)) {
       const logoData = fs.readFileSync(logoPath);
       base64Logo = logoData.toString("base64");
+      console.log(`[INFO] Using logo reference: ${logoRef}`);
+      break;
     }
   }
 

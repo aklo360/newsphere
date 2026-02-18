@@ -142,8 +142,7 @@ Located in `gateway/` — cloned from OpenVid architecture.
 
 ### Supported Chains
 - Base USDC (EIP-3009 transferWithAuthorization)
-- Solana USDC
-- Solana SOL (Pyth price feed)
+- Solana SOL (native, Pyth price feed for USD conversion)
 
 ### Flow
 1. POST request → 402 with payment options
