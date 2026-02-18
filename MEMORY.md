@@ -49,7 +49,14 @@
   - This is NON-NEGOTIABLE — violating this breaks the entire pipeline
 
 ## Render Styles
-flat, gradient, glass, gavin (iridescent), chrome, gold, silver, neon, 3d, holographic, **cyberpunk**
+**flat-solid** (NEW), flat, gradient, glass, gavin (iridescent), chrome, gold, silver, neon, 3d, holographic, cyberpunk
+
+### flat-solid Style (NEW 2025-02-18)
+- Programmatic render (NO AI) - instant, deterministic
+- Solid single-color background + flat icon silhouette
+- Perfect for Discord/Slack/Notion-style clean branding
+- Uses sharp + canvas, bypasses Gemini for avatar + master banner
+- Set `renderStyle.preset: "flat-solid"` + `colors.background` + `colors.foreground`
 
 ### Cyberpunk Style (NEW 2025-02-17)
 - Neon cityscape background with skyscrapers

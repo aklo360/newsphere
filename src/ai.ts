@@ -523,7 +523,8 @@ export async function generateRenderedAvatarWithStyle(
     const scaledMeta = await sharp(scaledIcon).metadata();
     
     // Composite on solid background
-    const bgColor = colors.background || colors.primary || "#5865F2";
+    // Use brand colors - no hardcoded defaults (brand-system.json must provide these)
+    const bgColor = colors.background || colors.primary || "#1a1a2e";
     await sharp({ create: { width: canvasSize, height: canvasSize, channels: 4, background: bgColor } })
       .composite([{
         input: scaledIcon,
@@ -633,8 +634,9 @@ export async function generateBannerWithStyle(
       registerFont(path.join(fontDir, "Plus-Jakarta-Sans-500.ttf"), { family: "Plus Jakarta Sans", weight: "500" });
     } catch (e) { /* fonts may already be registered */ }
     
-    const bgColor = colors.background || colors.primary || "#5865F2";
-    const fgColor = colors.foreground || "#FFFFFF";
+    // Use brand colors - no hardcoded defaults (brand-system.json must provide these)
+    const bgColor = colors.background || colors.primary || "#1a1a2e";
+    const fgColor = colors.foreground || colors.secondary || "#ffffff";
     
     // For flat-solid, use the ICON from logo/ directory, not the horizontal lockup
     // The logoPath might be the horizontal lockup which includes wordmark already
@@ -705,10 +707,14 @@ export async function generateBannerWithStyle(
     ctx.textBaseline = "top";
     ctx.fillText(brandName, textX, textBlockTop);
     
-    // Draw tagline if present
+    // Draw tagline if present (slightly dimmed from main foreground)
     if (tagline) {
-      ctx.fillStyle = fgColor.replace(")", ", 0.85)").replace("rgb", "rgba").replace("#", "rgba(255,255,255,0.85)") || "rgba(255,255,255,0.85)";
-      ctx.fillStyle = mode === "dark" ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.7)";
+      // Convert hex to rgba with 85% opacity
+      const fgHex2 = fgColor.replace("#", "");
+      const tagR = parseInt(fgHex2.slice(0, 2), 16);
+      const tagG = parseInt(fgHex2.slice(2, 4), 16);
+      const tagB = parseInt(fgHex2.slice(4, 6), 16);
+      ctx.fillStyle = `rgba(${tagR}, ${tagG}, ${tagB}, 0.85)`;
       ctx.font = `500 ${taglineFontSize}px "Plus Jakarta Sans"`;
       ctx.fillText(tagline, textX, textBlockTop + wordmarkFontSize + textGap);
     }
