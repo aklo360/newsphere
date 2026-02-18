@@ -261,7 +261,14 @@ async function handlePaymentRequest(
   jobType: JobType,
   brandName: string,
   concept: string,
-  options?: { tagline?: string; renderStyle?: string; brandSystemPath?: string }
+  options?: { 
+    tagline?: string; 
+    renderStyle?: string; 
+    brandSystemPath?: string;
+    gfxPrompt?: string;
+    aspectRatio?: string;
+    logoUrl?: string;
+  }
 ) {
   const priceUsd = PRICING[jobType];
   const amountRaw = (priceUsd * 1_000_000).toString();
@@ -815,12 +822,23 @@ function runGfxPipeline(job: Job): Promise<GfxResult> {
         const localResult = JSON.parse(resultMatch[1]);
         const brandSlug = job.brandName.toLowerCase().replace(/[^a-z0-9]/g, "-");
         
-        // Upload to CDN
-        const uploadResult = await uploadOutputs(opengfxDir, localResult.path, job.id, brandSlug, "gfx");
+        // Upload to CDN using wrangler directly for GFX
+        const { execSync } = await import("child_process");
+        const gfxKey = `${brandSlug}/gfx/${job.id}.png`;
+        
+        try {
+          execSync(
+            `wrangler r2 object put opengfx-assets/${gfxKey} --file "${localResult.path}" --content-type "image/png" --remote`,
+            { cwd: opengfxDir, stdio: "pipe" }
+          );
+          console.log(`[gfx] Uploaded to CDN: ${gfxKey}`);
+        } catch (uploadErr) {
+          console.error(`[gfx] Upload failed:`, uploadErr);
+        }
         
         resolve({
           gfx: {
-            url: uploadResult.url || uploadResult.gfx?.url || `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${brandSlug}/gfx/${job.id}.png`,
+            url: `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${gfxKey}`,
             width: localResult.width,
             height: localResult.height,
             aspectRatio: localResult.aspectRatio,
@@ -843,7 +861,7 @@ async function uploadOutputs(
   outputDir: string, 
   jobId: string, 
   brandSlug: string,
-  type: "logo" | "socials"
+  type: "logo" | "socials" | "gfx"
 ): Promise<Record<string, string>> {
   return new Promise((resolve, reject) => {
     console.log(`[upload] Running scripts/upload-job.ts ${type} ${brandSlug} ${jobId}`);
