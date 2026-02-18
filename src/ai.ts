@@ -4,6 +4,7 @@
 
 import { GoogleGenAI, Modality } from "@google/genai";
 import * as fs from "fs";
+import sharp from "sharp";
 import type { 
   BrandAnalysis, 
   StyleGuideAnalysis, 
@@ -483,6 +484,57 @@ export async function generateRenderedAvatarWithStyle(
   colors: ColorPalette,
   outputPath: string
 ): Promise<{ path: string; styleBlock: string }> {
+  const preset = typeof renderStyle === "string" ? renderStyle : renderStyle.preset;
+  
+  // FLAT-SOLID MODE: Simple programmatic rendering (no AI)
+  if (preset === "flat-solid") {
+    console.log("      [flat-solid mode: programmatic render]");
+    const styleBlock = `FLAT-SOLID MODE: White icon silhouette on ${colors.background || colors.primary} background`;
+    
+    // Load and process icon to white
+    const iconBuffer = await sharp(iconPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const { data, info } = iconBuffer;
+    const newData = Buffer.alloc(data.length);
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      if (brightness < 128 && data[i + 3] > 128) {
+        // Dark pixel (icon) -> white
+        newData[i] = newData[i + 1] = newData[i + 2] = 255;
+        newData[i + 3] = 255;
+      } else {
+        // Light pixel -> transparent
+        newData[i] = newData[i + 1] = newData[i + 2] = newData[i + 3] = 0;
+      }
+    }
+    
+    const whiteIcon = await sharp(newData, { raw: { width: info.width, height: info.height, channels: 4 } })
+      .png().toBuffer();
+    const trimmedIcon = await sharp(whiteIcon).trim().toBuffer();
+    const iconMeta = await sharp(trimmedIcon).metadata();
+    
+    // Scale icon to ~65% of canvas
+    const canvasSize = 1024;
+    const targetSize = Math.round(canvasSize * 0.65);
+    const scale = targetSize / Math.max(iconMeta.width!, iconMeta.height!);
+    const scaledIcon = await sharp(trimmedIcon)
+      .resize(Math.round(iconMeta.width! * scale), Math.round(iconMeta.height! * scale))
+      .toBuffer();
+    const scaledMeta = await sharp(scaledIcon).metadata();
+    
+    // Composite on solid background
+    const bgColor = colors.background || colors.primary || "#5865F2";
+    await sharp({ create: { width: canvasSize, height: canvasSize, channels: 4, background: bgColor } })
+      .composite([{
+        input: scaledIcon,
+        left: Math.round((canvasSize - scaledMeta.width!) / 2),
+        top: Math.round((canvasSize - scaledMeta.height!) / 2)
+      }])
+      .png().toFile(outputPath);
+    
+    return { path: outputPath, styleBlock };
+  }
+  
   // Read the black icon as reference
   const iconData = fs.readFileSync(iconPath);
   const base64Icon = iconData.toString("base64");
@@ -561,6 +613,117 @@ export async function generateBannerWithStyle(
   wordmarkPath?: string,
   mode: "dark" | "light" = "light"
 ): Promise<string> {
+  const preset = typeof renderStyle === "string" ? renderStyle : renderStyle.preset;
+  
+  // FLAT-SOLID MODE: Simple programmatic banner (no AI)
+  if (preset === "flat-solid") {
+    console.log("      [flat-solid mode: programmatic banner]");
+    
+    // Import canvas dynamically
+    const { createCanvas, registerFont } = await import("canvas");
+    const path = await import("path");
+    const { fileURLToPath } = await import("url");
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    
+    // Register fonts
+    const fontDir = path.join(__dirname, "..", "fonts");
+    try {
+      registerFont(path.join(fontDir, "Plus-Jakarta-Sans-800.ttf"), { family: "Plus Jakarta Sans", weight: "800" });
+      registerFont(path.join(fontDir, "Plus-Jakarta-Sans-500.ttf"), { family: "Plus Jakarta Sans", weight: "500" });
+    } catch (e) { /* fonts may already be registered */ }
+    
+    const bgColor = colors.background || colors.primary || "#5865F2";
+    const fgColor = colors.foreground || "#FFFFFF";
+    
+    // For flat-solid, use the ICON from logo/ directory, not the horizontal lockup
+    // The logoPath might be the horizontal lockup which includes wordmark already
+    const logoDir = path.dirname(logoPath);
+    const iconPath = path.join(logoDir, "icon.png");
+    const iconSourcePath = fs.existsSync(iconPath) ? iconPath : logoPath;
+    
+    // Load and convert icon to foreground color
+    const iconBuffer = await sharp(iconSourcePath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const { data, info } = iconBuffer;
+    const newData = Buffer.alloc(data.length);
+    
+    // Parse foreground color
+    const fgHex = fgColor.replace("#", "");
+    const fgR = parseInt(fgHex.slice(0, 2), 16);
+    const fgG = parseInt(fgHex.slice(2, 4), 16);
+    const fgB = parseInt(fgHex.slice(4, 6), 16);
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      if (brightness < 128 && data[i + 3] > 128) {
+        newData[i] = fgR; newData[i + 1] = fgG; newData[i + 2] = fgB; newData[i + 3] = 255;
+      } else {
+        newData[i] = newData[i + 1] = newData[i + 2] = newData[i + 3] = 0;
+      }
+    }
+    
+    const coloredIcon = await sharp(newData, { raw: { width: info.width, height: info.height, channels: 4 } })
+      .png().toBuffer();
+    const trimmedIcon = await sharp(coloredIcon).trim().toBuffer();
+    const iconMeta = await sharp(trimmedIcon).metadata();
+    
+    // Scale icon for banner
+    const iconTargetHeight = Math.round(height * 0.35);
+    const iconScale = iconTargetHeight / iconMeta.height!;
+    const iconWidth = Math.round(iconMeta.width! * iconScale);
+    const scaledIcon = await sharp(trimmedIcon).resize(iconWidth, iconTargetHeight).png().toBuffer();
+    
+    // Create canvas and draw
+    const canvas = createCanvas(width, height);
+    const ctx = canvas.getContext("2d");
+    
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Measure text
+    const wordmarkFontSize = Math.round(height * 0.12);
+    const taglineFontSize = Math.round(height * 0.036);
+    ctx.font = `800 ${wordmarkFontSize}px "Plus Jakarta Sans"`;
+    const wordmarkWidth = ctx.measureText(brandName).width;
+    
+    const gap = Math.round(width * 0.02);
+    const textGap = Math.round(height * 0.01);
+    const totalWidth = iconWidth + gap + wordmarkWidth;
+    const startX = Math.round((width - totalWidth) / 2);
+    const textX = startX + iconWidth + gap;
+    
+    // Calculate vertical centering
+    const textBlockHeight = wordmarkFontSize + textGap + taglineFontSize;
+    const contentHeight = Math.max(iconTargetHeight, textBlockHeight);
+    const contentTop = Math.round((height - contentHeight) / 2);
+    const textBlockTop = contentTop + Math.round((contentHeight - textBlockHeight) / 2);
+    
+    // Draw wordmark
+    ctx.fillStyle = fgColor;
+    ctx.font = `800 ${wordmarkFontSize}px "Plus Jakarta Sans"`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    ctx.fillText(brandName, textX, textBlockTop);
+    
+    // Draw tagline if present
+    if (tagline) {
+      ctx.fillStyle = fgColor.replace(")", ", 0.85)").replace("rgb", "rgba").replace("#", "rgba(255,255,255,0.85)") || "rgba(255,255,255,0.85)";
+      ctx.fillStyle = mode === "dark" ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.7)";
+      ctx.font = `500 ${taglineFontSize}px "Plus Jakarta Sans"`;
+      ctx.fillText(tagline, textX, textBlockTop + wordmarkFontSize + textGap);
+    }
+    
+    // Composite icon
+    const canvasBuffer = canvas.toBuffer("image/png");
+    const iconY = contentTop + Math.round((contentHeight - iconTargetHeight) / 2);
+    
+    await sharp(canvasBuffer)
+      .composite([{ input: scaledIcon, left: startX, top: iconY }])
+      .png().toFile(outputPath);
+    
+    return outputPath;
+  }
+  
   const logoData = fs.readFileSync(logoPath);
   const base64Logo = logoData.toString("base64");
 

@@ -124,6 +124,17 @@ export const SOCIAL_PLATFORMS: SocialPlatforms = {
 // ═══════════════════════════════════════════════════════════════════
 
 export const RENDER_STYLE_PROMPTS: Record<string, string> = {
+  "flat-solid": `
+    BYPASS_AI_RENDER: This is a programmatic render mode.
+    Create a simple flat solid color graphic:
+    - Solid single-color background (no gradients, no patterns)
+    - Icon as a solid single-color silhouette (typically white on dark, black on light)
+    - No 3D effects, no shadows, no reflections, no glass, no iridescence
+    - Pure flat design like Discord, Slack, or Notion branding
+    - Clean vector-style edges
+    - This mode uses direct compositing, not AI generation
+  `,
+  
   flat: `
     Render this logo in a FLAT style:
     - Solid, single colors with no gradients
