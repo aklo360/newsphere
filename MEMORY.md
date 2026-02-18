@@ -87,11 +87,13 @@ flat, gradient, glass, gavin (iridescent), chrome, gold, silver, neon, 3d, holog
 - Can a child draw it from memory? Should be yes
 - SIMPLEX > COMPLEX — always
 
-## Banner/Avatar Rules (CRITICAL)
-- **CONTRAST:** Icon MUST be BRIGHT (white/cyan/neon) on dark backgrounds
-- **MATCHING:** Avatar background should match banner background style
-- **QUALITY:** Always prompt with "ULTRA PREMIUM", "4K", "SHARP, CRISP"
-- **CYBERPUNK:** Only if user requests OR concept strongly calls for it (tech/gaming/night themes) — NOT default
+## Banner Layout Rules (CRITICAL — NEVER BREAK)
+- **TAGLINE POSITION:** Tagline/slogan MUST sit directly under the WORDMARK, left-aligned to match the first letter
+- **NEVER** center tagline under the full lockup (icon + wordmark) — it looks terrible and unprofessional
+- **LOCKUP STRUCTURE:** Icon | Wordmark + Tagline (stacked) — treat wordmark+tagline as one text block
+- **SPACING:** Tight gap (8-12px) between wordmark and tagline, larger gap (40-60px) between icon and text block
+- **ALIGNMENT:** Tagline X position === Wordmark X position (left edges aligned)
+- **This is NON-NEGOTIABLE — banners must be beautifully designed every single time**
 
 ## Process Rules
 - **FULLY AUTONOMOUS:** ACP pipeline runs end-to-end without human approval
