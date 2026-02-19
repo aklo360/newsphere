@@ -216,42 +216,48 @@ const EXPRESSION_POSES: ExpressionPose[] = ["master", "wave", "happy", "sad", "a
 const EXPRESSION_PROMPTS: Record<ExpressionPose, string> = {
   master: `EXPRESSION: Default friendly face
 • Eyes: Large round eyes with white highlight spots - THIS IS THE CANONICAL EYE COLOR
-• Mouth: Small gentle smile, curved line in DARK BLUE matching linework
+• Mouth: Small gentle smile - SAME BLACK as body outline (NOT blue, NOT different shade)
 • This is the CANONICAL expression - all others derive from this
-• ⚠️ EYE COLOR MUST BE PRESERVED EXACTLY IN ALL OTHER POSES`,
+• ⚠️ EYE COLOR MUST BE PRESERVED EXACTLY IN ALL OTHER POSES
+• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
 
   wave: `EXPRESSION: Friendly welcoming face (BODY UNCHANGED!)
 • Eyes: SAME COLOR AS MASTER - normal round eyes with standard white highlight dots (NO sparkles, NO stars)
-• Mouth: Open happy smile, DARK BLUE outline with hints of PINK inside
+• Mouth: Open happy smile - SAME BLACK as body outline, pink tongue inside if open
 • Blush: Optional light pink circles on cheeks
 • ⚠️ BODY STAYS EXACTLY THE SAME
-• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY`,
+• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY
+• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
 
   happy: `EXPRESSION: Joyful closed-eye smile (^_^)
 • Eyes: Closed in happy curves like ^_^ or >_< anime happy eyes (sparkle stars allowed ONLY here)
-• Mouth: Big wide smile, DARK BLUE outline
+• Mouth: Big wide smile - SAME BLACK as body outline
 • Blush: Pink/magenta circles on cheeks
-• ⚠️ BODY STAYS EXACTLY THE SAME`,
+• ⚠️ BODY STAYS EXACTLY THE SAME
+• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
 
   sad: `EXPRESSION: Sad droopy face
 • Eyes: SAME COLOR AS MASTER - droopy/downturned with sad eyebrows, standard highlight dots
-• Mouth: Small downturned frown, DARK BLUE outline
+• Mouth: Small downturned frown - SAME BLACK as body outline
 • Tear: Single blue tear drop on one cheek
 • ⚠️ BODY STAYS EXACTLY THE SAME
-• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY`,
+• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY
+• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
 
   angry: `EXPRESSION: Angry grumpy face
 • Eyes: SAME COLOR AS MASTER - narrowed with V-shaped angry eyebrows pointing DOWN, standard highlight dots
-• Mouth: Grumpy frown or grimace, DARK BLUE outline
+• Mouth: Grumpy frown or grimace - SAME BLACK as body outline
 • No tears, no blush
 • ⚠️ BODY STAYS EXACTLY THE SAME
-• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY`,
+• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY
+• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
 
   laugh: `EXPRESSION: Laughing hysterically (>o<)
 • Eyes: Squeezed shut in happy curves (>o< style, NOT X eyes)
-• Mouth: Wide open laughing showing tongue, DARK BLUE outline with PINK tongue
+• Mouth: Wide open laughing - SAME BLACK as body outline, PINK tongue inside
 • Tears: Small tears of joy on both sides of face
-• ⚠️ BODY STAYS EXACTLY THE SAME`,
+• ⚠️ BODY STAYS EXACTLY THE SAME
+• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
 };
 
 // ═══════════════════════════════════════════════════════════════════

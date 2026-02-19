@@ -90,6 +90,12 @@ IMAGE FORMAT:
 - Standard highlight dots for all other poses
 - NEVER change eye color between master and expressions
 
+### Linework Consistency (CRITICAL)
+- ALL linework must be the SAME color (typically black)
+- Mouth outline = SAME color as body outline
+- NEVER use dark blue/purple for mouth when outline is black
+- Eyebrows, mouth, details all match the main outline color
+
 ### Frame Composition
 - 70% frame fill (~15% padding each side)
 - Character centered
