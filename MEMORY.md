@@ -187,6 +187,25 @@ DESIGN:
 - **FRESH SESSIONS:** After 10+ compactions, quality degrades — restart
 - **IMAGE MODEL:** ALWAYS use `gemini-3-pro-image-preview` for ALL image generation (defined in `src/ai.ts` as `IMAGE_MODEL`)
 
+## Self-Improvement Architecture (LOCKED 2025-02-19)
+See `SELF-IMPROVEMENT.md` for full documentation.
+
+### The Loop
+```
+Generate asset → Notice issue/success → Update learnings → Next generation improves
+```
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `src/learnings/mascot.ts` | Runtime mascot rules (edit to improve) |
+| `src/services/mascot-v2.ts` | Service that imports learnings |
+| `SELF-IMPROVEMENT.md` | Architecture doc |
+
+### Principle
+**Edit learnings files to change output, NOT service files.**
+Learnings are read at runtime → changes automatically affect next generation.
+
 ## CRITICAL: Development Process (NEVER FORGET)
 **This Telegram thread with @aklo360 is the DEVELOPMENT ENVIRONMENT for OpenGFX.**
 - ALL feedback, corrections, and learnings MUST be embedded into SOURCE CODE (`src/*.ts`)
