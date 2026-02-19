@@ -20,11 +20,19 @@
       "primaryColor": "#66FF99",
       "renderStyle": "flat",
       "createdAt": "2026-02-19"
+    },
+    {
+      "brandName": "Verdant Spire",
+      "iconConcept": "Abstract vertical leaf growth",
+      "primaryColor": "#34A853",
+      "renderStyle": "flat-solid",
+      "createdAt": "2026-02-19"
     }
   ],
   "takenConcepts": [
     "abstract brain muscle form",
     "stylized crescent moon coffee bean",
-    "interlocking quantum circuit glyph"
+    "interlocking quantum circuit glyph",
+    "abstract vertical leaf growth"
   ]
 }

@@ -15,9 +15,13 @@ export const LOGO_RULES = {
   baseLogosGrayscale: true,
   maxBaseColors: 3, // BLACK, WHITE, GREY only
   
+  // Icon MUST be PERFECT 1:1 SQUARE (NON-NEGOTIABLE)
+  iconMustBeSquare: true,
+  iconTargetSize: 1024, // px
+  
   // Icon complexity
   targetComplexity: 0.45, // 40-50% - simple, clean, luxury
-  frameFill: 0.65, // 60-70% of frame
+  frameFill: 0.70, // 70% of frame (~15% padding each side)
   
   // Must be recognizable at small sizes
   minimumRecognizableSize: 32, // px
@@ -28,6 +32,7 @@ export const LOGO_ANTI_PATTERNS = [
   "Never exceed 3 base colors (black, white, grey)",
   "Never make icons too complex → must work at 32x32px",
   "Never combine 3+ concepts → simplify to one visual element",
+  "Never output non-square icons → MUST be 1024x1024 (post-process if Gemini fails)",
 ];
 
 // ============================================================================

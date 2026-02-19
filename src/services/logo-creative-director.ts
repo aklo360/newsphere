@@ -465,6 +465,60 @@ async function uploadToR2(localPath: string, cdnKey: string): Promise<string> {
   return `${CDN_BASE}/${cdnKey}`;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// POST-PROCESSING: Ensure icon is PERFECT 1:1 SQUARE
+// ═══════════════════════════════════════════════════════════════════
+
+async function ensureSquareIcon(iconPath: string, targetSize: number = 1024): Promise<void> {
+  const meta = await sharp(iconPath).metadata();
+  
+  if (!meta.width || !meta.height) {
+    throw new Error("Could not read icon dimensions");
+  }
+  
+  // If already square and correct size, skip
+  if (meta.width === meta.height && meta.width === targetSize) {
+    return;
+  }
+  
+  console.log(`      [post] Normalizing ${meta.width}x${meta.height} → ${targetSize}x${targetSize}`);
+  
+  // Trim whitespace, then fit into square canvas
+  const trimmed = await sharp(iconPath).trim().toBuffer();
+  const trimmedMeta = await sharp(trimmed).metadata();
+  
+  if (!trimmedMeta.width || !trimmedMeta.height) {
+    throw new Error("Could not read trimmed dimensions");
+  }
+  
+  // Calculate scale to fit in target with padding
+  const maxDim = Math.max(trimmedMeta.width, trimmedMeta.height);
+  const scale = (targetSize * 0.70) / maxDim; // 70% fill, 15% padding each side
+  const scaledWidth = Math.round(trimmedMeta.width * scale);
+  const scaledHeight = Math.round(trimmedMeta.height * scale);
+  
+  const scaledIcon = await sharp(trimmed)
+    .resize(scaledWidth, scaledHeight, { fit: "fill" })
+    .toBuffer();
+  
+  // Center on white square canvas
+  await sharp({
+    create: {
+      width: targetSize,
+      height: targetSize,
+      channels: 3,
+      background: { r: 255, g: 255, b: 255 },
+    },
+  })
+    .composite([{
+      input: scaledIcon,
+      top: Math.round((targetSize - scaledHeight) / 2),
+      left: Math.round((targetSize - scaledWidth) / 2),
+    }])
+    .png()
+    .toFile(iconPath);
+}
+
 export async function generateLogo(input: LogoInput): Promise<LogoOutput> {
   const opengfxDir = path.resolve(__dirname, "..", "..");
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
@@ -511,6 +565,9 @@ export async function generateLogo(input: LogoInput): Promise<LogoOutput> {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     await generateImage(brief.iconImagePrompt, iconPath);
+    
+    // CRITICAL: Ensure icon is PERFECT 1:1 SQUARE
+    await ensureSquareIcon(iconPath, 1024);
     
     qcReport = await verifyLogoIcon(iconPath, brief);
     
