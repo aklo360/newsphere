@@ -712,20 +712,24 @@ purple owl, do NOT make another purple owl. Choose a different color
 OR a different creature. No two brands should look similar.
 
 ═══════════════════════════════════════════════════════════════════
-MASCOT RULES (STANDARD FOR ALL MASCOTS)
+MASCOT STYLE GUIDELINES (use your judgment)
 ═══════════════════════════════════════════════════════════════════
 
-Mascots are ANTHROPOMORPHIZED characters, NOT realistic animals:
-• STANDS UPRIGHT on TWO LEGS (like a human)
-• HAS TWO ARMS (can wave, hold things, gesture)
-• EXPRESSIVE FACE (big eyes, can smile/frown/laugh)
-• KAWAII/CUTE STYLE (think Discord Wumpus, Duolingo owl)
-• FRONT-FACING, friendly, approachable
+Mascots are CHARACTER versions of creatures — cute, expressive, friendly.
+Think Discord Wumpus, Duolingo owl, Slack's slackbot.
 
-Even if the creature is normally a 4-legged animal (elephant, dog, cat):
-→ As a MASCOT, it stands on 2 legs and has 2 arms
-→ Keep the creature's IDENTIFYING FEATURES (elephant trunk, cat ears, etc.)
-→ But make it CHARACTER-like, not animal-like
+COMMON PATTERN (for most mammals/humanoids):
+• Stand upright on 2 legs, have 2 arms that can wave/gesture
+• Works great for: elephants, dogs, cats, bears, robots, etc.
+
+BUT USE YOUR JUDGMENT for creatures where this doesn't fit:
+• Crabs → keep their claws and multiple legs, that's their identity
+• Octopus → 8 tentacles is the whole point
+• Snake → no legs is correct
+• Fish → fins, not arms
+
+The goal is a CUTE, EXPRESSIVE, CHARACTER version of the creature.
+Keep what makes the creature recognizable. Add personality.
 
 ═══════════════════════════════════════════════════════════════════
 YOUR CREATIVE DECISIONS
@@ -758,15 +762,15 @@ RESPOND WITH ONLY THIS JSON:
 {
   "creature": "<creature type>",
   "colorName": "<human-readable color name like 'coral', 'teal', 'mint'>",
-  "creatureDescription": "<as a mascot: standing upright on 2 legs, 2 arms, plus identifying features>",
+  "creatureDescription": "<describe the mascot version - anatomy, pose, features based on what fits this creature>",
   "primaryColor": "<#hexcode - UNIQUE, not used by similar mascots>",
   "backgroundColor": "<#hexcode>",
   "outlineColor": "<#hexcode or 'black'>",
-  "mustHaveFeatures": ["stands on 2 legs", "has 2 arms", "<creature-specific feature>", "..."],
+  "mustHaveFeatures": ["<creature's key identifying features>", "expressive face", "..."],
   "styleNotes": "<style guidance>",
   "moodAndVibe": "<emotional feel>",
-  "imagePrompt": "<complete prompt emphasizing mascot standing upright with 2 arms, 2 legs, plus creature features>",
-  "qcCriteria": ["standing upright on 2 legs", "has 2 arms", "<creature-specific check>", "..."]
+  "imagePrompt": "<complete prompt for a cute kawaii mascot version of this creature>",
+  "qcCriteria": ["<what makes this creature recognizable>", "has expressive face", "..."]
 }`;
 
   try {
