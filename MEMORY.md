@@ -47,23 +47,30 @@ cd /Users/navi/.openclaw-opengfx/workspace/gateway && npm run build && node dist
 
 ## CRITICAL MASCOT RULES (NEVER BREAK)
 
-### NO PRESETS — Fully Dynamic AI Interpretation
-- NO hardcoded creature anatomy
-- AI interprets what ANY creature looks like from general knowledge
-- parseInputPrompt returns `creatureDescription` + `keyFeatures` from AI
-- QC verifies output matches the ORIGINAL USER REQUEST
+### CREATIVE DIRECTOR MODE — AI Makes All Decisions Per Job
+The mascot service now works like a real creative director:
 
-### How It Works
-1. User says "cute robotic elephant"
-2. AI interprets: elephant = trunk, big ears, 4 legs, no arms, robotic = mechanical elements
-3. Image model generates based on AI interpretation
-4. QC checks: "does this look like what the user asked for?"
+1. **createCreativeBrief()** — One AI call that makes ALL creative decisions:
+   - What creature/character is this?
+   - What does it look like? (from general knowledge)
+   - What colors fit the brand/vibe?
+   - What are the must-have features?
+   - What's the mood and style?
+   - What should the actual image prompt be?
+   - What QC criteria should we check?
 
-### Trust the Model
-- The AI knows what an elephant looks like
-- The AI knows dogs have paws, not claws
-- The AI knows owls have beaks, not mouths
-- No need for hardcoded rules
+2. **generateMasterImage()** — Uses the brief's `imagePrompt` directly
+
+3. **verifyAnatomy()** — Uses the brief's `qcCriteria` dynamically
+
+### NO Hardcoded Anything
+- No creature presets
+- No color mappings  
+- No anatomy rules
+- No QC checklists
+
+### The Philosophy
+The AI thinks through EACH JOB uniquely, just like a human creative director would. It doesn't follow templates — it interprets the brief and makes creative decisions.
 
 ---
 
