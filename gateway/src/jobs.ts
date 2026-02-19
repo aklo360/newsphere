@@ -7,7 +7,7 @@
 
 const API_BASE = process.env.API_BASE_URL || "https://api.opengfx.app";
 
-export type JobType = "logo" | "socials" | "gfx";
+export type JobType = "logo" | "socials" | "gfx" | "mascot";
 export type JobStatus = "pending" | "processing" | "completed" | "failed";
 
 export interface LogoOutput {
@@ -33,6 +33,13 @@ export interface GfxOutput {
   aspectRatio: string;
 }
 
+export interface MascotOutput {
+  master: string;
+  icon: string;
+  poses: string[];
+  spec: string;
+}
+
 export interface Job {
   id: string;
   type: JobType;
@@ -47,6 +54,14 @@ export interface Job {
   gfxPrompt?: string;
   aspectRatio?: string;
   logoUrl?: string; // For BYOL mode
+  // Mascot-specific fields
+  characterType?: string;
+  mascotStyle?: string;
+  personality?: string;
+  features?: string;
+  poses?: number;
+  primaryColor?: string;
+  secondaryColor?: string;
   // Wallet (for indexing)
   walletAddress: string;
   chain: string;
@@ -57,11 +72,12 @@ export interface Job {
   // Payment info
   settlementTxHash?: string;
   // Pipeline progress
-  step?: "analyzing" | "icon" | "wordmark" | "lockups" | "styleguide" | "avatar" | "banner" | "upload" | "generating";
+  step?: "analyzing" | "icon" | "wordmark" | "lockups" | "styleguide" | "avatar" | "banner" | "upload" | "generating" | "designing" | "poses";
   // Results
   logoOutput?: LogoOutput;
   socialsOutput?: SocialsOutput;
   gfxOutput?: GfxOutput;
+  mascotOutput?: MascotOutput;
   generationTimeSeconds?: number;
   // Error
   error?: string;

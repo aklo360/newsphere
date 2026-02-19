@@ -11,7 +11,8 @@
     "gfx": "tsx src/cli/gfx.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "mascot": "tsx src/cli/mascot.ts"
   },
   "bin": {
     "opengfx-brand": "./dist/cli/brand.js",

@@ -24,6 +24,7 @@ export interface FontLibrary {
 // ═══════════════════════════════════════════════════════════════════
 
 export type RenderStylePreset =
+  | "flat-solid"     // Programmatic solid colors (no AI)
   | "flat"           // Solid colors, minimal, clean
   | "gradient"       // Smooth color transitions
   | "glass"          // Plain frosted glass, subtle
@@ -196,4 +197,32 @@ export interface GfxOptions {
   format?: "png" | "jpg" | "webp";
   aspectRatio?: string;  // e.g., "1:1", "16:9", "4:5"
   jobId?: string;        // For gateway job tracking
+}
+
+export type CharacterType = 
+  | "mascot"      // Brand mascot (friendly, approachable)
+  | "avatar"      // Human-like character
+  | "creature"    // Fantasy/abstract creature
+  | "robot"       // Robot/android
+  | "animal"      // Anthropomorphic animal
+  | "abstract";   // Abstract/geometric character
+
+export type CharacterStyle =
+  | "2d-flat"        // Flat vector style
+  | "2d-illustrated" // Detailed 2D illustration
+  | "3d-rendered"    // 3D rendered look
+  | "pixel"          // Pixel art style
+  | "anime"          // Anime/manga style
+  | "clay"           // Claymation style
+  | "gradient"       // Modern gradient style
+  | "glassmorphic";  // Glass/transparent style
+
+export interface MascotOptions {
+  characterType?: CharacterType;
+  style?: CharacterStyle;
+  personality?: string;
+  features?: string;
+  poses?: number;
+  outputDir?: string;
+  jobId?: string;
 }

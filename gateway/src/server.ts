@@ -74,6 +74,7 @@ const PRICING: Record<JobType, number> = {
   logo: 5,
   socials: 5,
   gfx: 2,
+  mascot: 5,
 };
 
 // ============================================================
@@ -89,6 +90,7 @@ app.get("/", (req, res) => {
       logo: "$5 - Logo system (icon, wordmark, lockups)",
       socials: "$5 - Social assets (avatar, banners)",
       gfx: "$2 - On-brand marketing graphic",
+      mascot: "$5 - Brand mascot/character with poses",
     },
     supportedChains: [
       {
@@ -114,6 +116,7 @@ app.get("/", (req, res) => {
       "POST /v1/logo": "Generate logo system (x402 payment required)",
       "POST /v1/socials": "Generate social assets (x402 payment required)",
       "POST /v1/gfx": "Generate on-brand marketing graphic (x402 payment required)",
+      "POST /v1/mascot": "Generate brand mascot/character (x402 payment required)",
       "GET /v1/jobs/:id": "Check job status",
       "GET /v1/jobs": "List jobs (filter by wallet)",
     },
@@ -211,6 +214,9 @@ app.get("/v1/jobs/:id", async (req, res) => {
     if (job.gfxOutput) {
       response.gfx = job.gfxOutput;
     }
+    if (job.mascotOutput) {
+      response.mascot = job.mascotOutput;
+    }
   } else if (job.status === "failed") {
     response.error = job.error;
   }
@@ -241,6 +247,7 @@ app.get("/v1/jobs", async (req, res) => {
       logoOutput: j.logoOutput,
       socialsOutput: j.socialsOutput,
       gfxOutput: j.gfxOutput,
+      mascotOutput: j.mascotOutput,
       error: j.error,
     }));
     
@@ -543,6 +550,46 @@ app.post("/v1/gfx", async (req, res) => {
   }
 });
 
+app.post("/v1/mascot", async (req, res) => {
+  try {
+    const { 
+      brand_name, 
+      brand_system_url, 
+      logo_url,
+      character_type,
+      style,
+      personality,
+      features,
+      poses,
+      primary_color,
+      secondary_color,
+    } = req.body;
+
+    if (!brand_system_url && !logo_url) {
+      res.status(400).json({ error: "Either brand_system_url or logo_url is required" });
+      return;
+    }
+
+    const brandName = brand_name || "Brand";
+    const concept = `${character_type || "mascot"} character`;
+
+    await handlePaymentRequest(req, res, "mascot", brandName, concept, { 
+      brandSystemPath: brand_system_url,
+      logoUrl: logo_url,
+      characterType: character_type || "mascot",
+      mascotStyle: style || "2d-flat",
+      personality: personality || "friendly, approachable, modern",
+      features: features || "",
+      poses: poses || 3,
+      primaryColor: primary_color,
+      secondaryColor: secondary_color,
+    });
+  } catch (err) {
+    console.error(`[gateway] Error:`, err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // ============================================================
 // Background Generation
 // ============================================================
@@ -572,6 +619,10 @@ async function generateAsync(
       // Run GFX pipeline (single graphic)
       await updateJob(job.id, { step: "generating" });
       result = await runGfxPipeline(job);
+    } else if (job.type === "mascot") {
+      // Run Mascot pipeline (character generation)
+      await updateJob(job.id, { step: "designing" });
+      result = await runMascotPipeline(job);
     }
 
     const elapsed = (Date.now() - startTime) / 1000;
@@ -600,6 +651,7 @@ async function generateAsync(
       logoOutput: result.logo,
       socialsOutput: result.socials,
       gfxOutput: result.gfx,
+      mascotOutput: result.mascot,
       generationTimeSeconds: elapsed,
       settlementTxHash: finalSettlement.txHash,
       error: finalSettlement.success ? undefined : `Payment: ${finalSettlement.error}`,
@@ -894,12 +946,137 @@ function runGfxPipeline(job: Job): Promise<GfxResult> {
   });
 }
 
+interface MascotResult {
+  mascot: {
+    master: string;
+    icon: string;
+    poses: string[];
+    spec: string;
+  };
+}
+
+function runMascotPipeline(job: Job): Promise<MascotResult> {
+  return new Promise((resolve, reject) => {
+    const opengfxDir = path.resolve(process.cwd(), OPENGFX_PATH);
+    
+    // Build args
+    const args = ["run", "mascot", "--"];
+    
+    if (job.brandSystemPath) {
+      args.push(job.brandSystemPath);
+    } else if (job.logoUrl) {
+      args.push("--logo", job.logoUrl);
+      args.push("--name", job.brandName);
+      if (job.primaryColor) args.push("--primary", job.primaryColor);
+      if (job.secondaryColor) args.push("--secondary", job.secondaryColor);
+    }
+    
+    if (job.characterType) args.push("--type", job.characterType);
+    if (job.mascotStyle) args.push("--style", job.mascotStyle);
+    if (job.personality) args.push("--personality", job.personality);
+    if (job.features) args.push("--features", job.features);
+    if (job.poses) args.push("--poses", String(job.poses));
+    
+    console.log(`[mascot] Running: npm ${args.join(" ")}`);
+    
+    const proc = spawn("npm", args, { 
+      cwd: opengfxDir, 
+      stdio: ["pipe", "pipe", "pipe"],
+      env: { ...process.env, NODE_NO_WARNINGS: "1" },
+    });
+    
+    const timeout = setTimeout(() => {
+      proc.kill("SIGKILL");
+      reject(new Error(`Mascot pipeline timed out after ${PIPELINE_TIMEOUT_MS / 1000}s`));
+    }, PIPELINE_TIMEOUT_MS);
+    
+    let stdout = "";
+    let stderr = "";
+    
+    proc.stdout.on("data", (data) => {
+      const text = data.toString();
+      stdout += text;
+      for (const line of text.split("\n").filter((l: string) => l.trim())) {
+        console.log(`  ${line}`);
+      }
+    });
+    
+    proc.stderr.on("data", (data) => { stderr += data.toString(); });
+    
+    proc.on("close", async (code) => {
+      clearTimeout(timeout);
+      
+      if (code !== 0) {
+        reject(new Error(`Mascot pipeline failed: ${stderr.slice(-2000)}`));
+        return;
+      }
+      
+      try {
+        const brandSlug = job.brandName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+        const mascotDir = path.join(opengfxDir, "output", brandSlug, "mascot");
+        const { execSync } = await import("child_process");
+        
+        const cdnBase = `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${brandSlug}/mascot`;
+        const uploads: { master: string; icon: string; poses: string[]; spec: string } = {
+          master: "",
+          icon: "",
+          poses: [],
+          spec: "",
+        };
+        
+        // Upload master
+        const masterPath = path.join(mascotDir, "mascot-master.png");
+        if (fs.existsSync(masterPath)) {
+          execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/mascot-master.png --file "${masterPath}" --content-type "image/png" --remote`, { cwd: opengfxDir, stdio: "pipe" });
+          uploads.master = `${cdnBase}/mascot-master.png`;
+        }
+        
+        // Upload icon
+        const iconPath = path.join(mascotDir, "mascot-icon.png");
+        if (fs.existsSync(iconPath)) {
+          execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/mascot-icon.png --file "${iconPath}" --content-type "image/png" --remote`, { cwd: opengfxDir, stdio: "pipe" });
+          uploads.icon = `${cdnBase}/mascot-icon.png`;
+        }
+        
+        // Upload spec
+        const specPath = path.join(mascotDir, "mascot-spec.json");
+        if (fs.existsSync(specPath)) {
+          execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/mascot-spec.json --file "${specPath}" --content-type "application/json" --remote`, { cwd: opengfxDir, stdio: "pipe" });
+          uploads.spec = `${cdnBase}/mascot-spec.json`;
+        }
+        
+        // Upload poses
+        const posesDir = path.join(mascotDir, "poses");
+        if (fs.existsSync(posesDir)) {
+          const poseFiles = fs.readdirSync(posesDir).filter(f => f.endsWith(".png"));
+          for (const poseFile of poseFiles) {
+            const posePath = path.join(posesDir, poseFile);
+            execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/poses/${poseFile} --file "${posePath}" --content-type "image/png" --remote`, { cwd: opengfxDir, stdio: "pipe" });
+            uploads.poses.push(`${cdnBase}/poses/${poseFile}`);
+          }
+        }
+        
+        console.log(`[mascot] Uploaded ${uploads.poses.length + 3} files to CDN`);
+        
+        resolve({ mascot: uploads });
+      } catch (err) {
+        reject(new Error(`Failed to process mascot result: ${err}`));
+      }
+    });
+    
+    proc.on("error", (err) => {
+      clearTimeout(timeout);
+      reject(new Error(`Failed to spawn pipeline: ${err.message}`));
+    });
+  });
+}
+
 async function uploadOutputs(
   opengfxDir: string, 
   outputDir: string, 
   jobId: string, 
   brandSlug: string,
-  type: "logo" | "socials" | "gfx"
+  type: "logo" | "socials" | "gfx" | "mascot"
 ): Promise<Record<string, string>> {
   return new Promise((resolve, reject) => {
     console.log(`[upload] Running scripts/upload-job.ts ${type} ${brandSlug} ${jobId}`);
