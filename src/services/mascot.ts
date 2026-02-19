@@ -247,75 +247,58 @@ const EXPRESSION_PROMPTS: Record<ExpressionPose, string> = {
 
 /**
  * Generate a unique color palette based on prompt/creature vibe.
- * Called when no primaryColor is provided — NEVER default to the same color.
+ * FULLY DYNAMIC — AI interprets the vibe and suggests a color.
  */
 async function generateColorFromVibe(prompt: string, creature: string): Promise<string> {
-  // Creature-specific color suggestions (but still vary!)
-  const creatureVibes: Record<string, string[]> = {
-    elephant: ["#6B7280", "#9CA3AF", "#4B5563", "#8B5CF6", "#06B6D4"], // grays, purples, teals
-    cat: ["#F97316", "#FBBF24", "#8B5CF6", "#EC4899", "#6366F1"], // orange, gold, purple, pink
-    dog: ["#D97706", "#92400E", "#FBBF24", "#3B82F6", "#10B981"], // browns, gold, blue, green
-    owl: ["#7C3AED", "#8B5CF6", "#6366F1", "#4F46E5", "#312E81"], // purples, indigos
-    bunny: ["#EC4899", "#F472B6", "#FBBF24", "#A78BFA", "#FCA5A1"], // pinks, gold, lavender
-    fox: ["#EA580C", "#F97316", "#DC2626", "#FB923C", "#FBBF24"], // oranges, reds
-    penguin: ["#1E40AF", "#3B82F6", "#0EA5E9", "#06B6D4", "#14B8A6"], // blues, teals
-    bear: ["#78350F", "#92400E", "#B45309", "#D97706", "#65A30D"], // browns, amber
-    robot: ["#3B82F6", "#06B6D4", "#8B5CF6", "#6366F1", "#10B981"], // tech colors
-    crab: ["#DC2626", "#EF4444", "#F97316", "#EA580C", "#B91C1C"], // reds, oranges
-  };
-  
-  // Vibe-based colors from prompt keywords
-  const vibeColors: Record<string, string[]> = {
-    cute: ["#EC4899", "#F472B6", "#FBBF24", "#A78BFA", "#FCA5A1"],
-    tech: ["#3B82F6", "#06B6D4", "#8B5CF6", "#6366F1", "#10B981"],
-    nature: ["#10B981", "#059669", "#65A30D", "#84CC16", "#22C55E"],
-    fire: ["#DC2626", "#EF4444", "#F97316", "#EA580C", "#FBBF24"],
-    water: ["#0EA5E9", "#06B6D4", "#3B82F6", "#0284C7", "#14B8A6"],
-    space: ["#7C3AED", "#8B5CF6", "#4F46E5", "#312E81", "#1E1B4B"],
-    friendly: ["#FBBF24", "#F97316", "#10B981", "#06B6D4", "#EC4899"],
-    professional: ["#3B82F6", "#1E40AF", "#6366F1", "#4F46E5", "#0F172A"],
-    playful: ["#EC4899", "#8B5CF6", "#FBBF24", "#10B981", "#F97316"],
-    dark: ["#4B5563", "#6B7280", "#374151", "#1F2937", "#6366F1"],
-    bright: ["#FBBF24", "#F97316", "#10B981", "#EC4899", "#3B82F6"],
-    music: ["#8B5CF6", "#EC4899", "#FBBF24", "#06B6D4", "#F97316"],
-    gaming: ["#10B981", "#8B5CF6", "#EC4899", "#06B6D4", "#FBBF24"],
-  };
-  
-  // Check for creature-specific colors
-  const creatureLower = creature.toLowerCase();
-  let colorPool: string[] = [];
-  
-  if (creatureVibes[creatureLower]) {
-    colorPool = [...creatureVibes[creatureLower]];
-  }
-  
-  // Check prompt for vibe keywords
-  const promptLower = prompt.toLowerCase();
-  for (const [vibe, colors] of Object.entries(vibeColors)) {
-    if (promptLower.includes(vibe)) {
-      colorPool = [...colorPool, ...colors];
+  const colorPrompt = `You are a brand color expert. Generate a single hex color code for a mascot.
+
+MASCOT REQUEST: "${prompt}"
+CREATURE TYPE: ${creature}
+
+Consider:
+- What colors suit this type of creature/character?
+- What vibe does the request give off? (playful, professional, edgy, cute, etc.)
+- What would make this mascot memorable and unique?
+
+DO NOT use generic defaults. Be creative and specific to this request.
+Avoid overused colors like plain blue (#0000FF) or red (#FF0000).
+
+Respond with ONLY a hex color code, nothing else. Example: #8B5CF6`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: TEXT_MODEL,
+      contents: [{ role: "user", parts: [{ text: colorPrompt }] }],
+    });
+
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const hexMatch = text.match(/#[0-9A-Fa-f]{6}/);
+    
+    if (hexMatch) {
+      return hexMatch[0].toUpperCase();
     }
+  } catch (err) {
+    console.error("[color] Failed to generate color from AI:", err);
   }
   
-  // If no specific colors found, use a diverse default pool
-  if (colorPool.length === 0) {
-    colorPool = [
-      "#8B5CF6", // Purple
-      "#EC4899", // Pink
-      "#3B82F6", // Blue
-      "#10B981", // Green
-      "#F97316", // Orange
-      "#06B6D4", // Cyan
-      "#FBBF24", // Yellow
-      "#EF4444", // Red
-      "#6366F1", // Indigo
-      "#14B8A6", // Teal
-    ];
-  }
-  
-  // Pick a random color from the pool
-  const randomIndex = Math.floor(Math.random() * colorPool.length);
-  return colorPool[randomIndex];
+  // Fallback: generate a random vibrant color
+  const hue = Math.floor(Math.random() * 360);
+  const sat = 70 + Math.floor(Math.random() * 20); // 70-90%
+  const light = 50 + Math.floor(Math.random() * 15); // 50-65%
+  return hslToHex(hue, sat, light);
+}
+
+// Helper: Convert HSL to Hex
+function hslToHex(h: number, s: number, l: number): string {
+  s /= 100;
+  l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
 }
 
 // Compute a soft pastel background from primary color
