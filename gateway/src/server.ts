@@ -283,9 +283,6 @@ async function handlePaymentRequest(
     logoUrl?: string;
     // Mascot-specific
     characterType?: string;
-    mascotStyle?: string;
-    personality?: string;
-    features?: string;
     poses?: number;
     primaryColor?: string;
     secondaryColor?: string;
@@ -562,36 +559,26 @@ app.post("/v1/gfx", async (req, res) => {
 app.post("/v1/mascot", async (req, res) => {
   try {
     const { 
+      prompt,
       brand_name, 
-      brand_system_url, 
-      logo_url,
-      character_type,
-      style,
-      personality,
-      features,
-      poses,
+      master_url,
       primary_color,
-      secondary_color,
+      creature,
+      leg_count,
     } = req.body;
 
-    if (!brand_system_url && !logo_url) {
-      res.status(400).json({ error: "Either brand_system_url or logo_url is required" });
+    if (!prompt) {
+      res.status(400).json({ error: "prompt is required" });
       return;
     }
 
-    const brandName = brand_name || "Brand";
-    const concept = `${character_type || "mascot"} character`;
+    const brandName = brand_name || "mascot";
 
-    await handlePaymentRequest(req, res, "mascot", brandName, concept, { 
-      brandSystemPath: brand_system_url,
-      logoUrl: logo_url,
-      characterType: character_type || "mascot",
-      mascotStyle: style || "2d-flat",
-      personality: personality || "friendly, approachable, modern",
-      features: features || "",
-      poses: poses || 3,
+    await handlePaymentRequest(req, res, "mascot", brandName, prompt, { 
+      logoUrl: master_url, // Pipeline uses logoUrl for master
       primaryColor: primary_color,
-      secondaryColor: secondary_color,
+      characterType: creature, // Pipeline uses characterType
+      poses: leg_count || 2, // Pipeline uses poses for leg count
     });
   } catch (err) {
     console.error(`[gateway] Error:`, err);

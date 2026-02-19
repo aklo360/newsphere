@@ -102,6 +102,11 @@ export async function createJob(
     gfxPrompt?: string;
     aspectRatio?: string;
     logoUrl?: string;
+    // Mascot-specific
+    characterType?: string;
+    poses?: number;
+    primaryColor?: string;
+    secondaryColor?: string;
   }
 ): Promise<Job> {
   try {
@@ -150,6 +155,11 @@ export async function createJob(
       gfxPrompt: options?.gfxPrompt,
       aspectRatio: options?.aspectRatio,
       logoUrl: options?.logoUrl,
+      // Mascot-specific
+      characterType: options?.characterType,
+      poses: options?.poses,
+      primaryColor: options?.primaryColor,
+      secondaryColor: options?.secondaryColor,
       priceUsd,
       chain,
       walletAddress: walletAddress.toLowerCase(),
