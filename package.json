@@ -12,8 +12,7 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "mascot": "tsx src/cli/mascot.ts",
-    "mascot-v2": "tsx src/cli/mascot-v2.ts"
+    "mascot": "tsx src/cli/mascot.ts"
   },
   "bin": {
     "opengfx-brand": "./dist/cli/brand.js",

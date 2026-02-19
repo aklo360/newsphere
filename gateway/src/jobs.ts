@@ -38,7 +38,7 @@ export interface MascotOutput {
   wave: string;
   happy: string;
   sad: string;
-  unhappy: string;
+  angry: string;  // Renamed from unhappy
   laugh: string;
 }
 

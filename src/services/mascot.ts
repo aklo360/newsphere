@@ -1,460 +1,496 @@
 /**
- * OpenGFX Service 4: Mascot/Character Generator
- * Creates brand-aligned mascots and characters
+ * OpenGFX Mascot Service — UNIFIED
+ * 
+ * ARCHITECTURE:
+ * 1. ONE INPUT: Natural language prompt OR brand-system.json
+ * 2. TWO MODES: Generate master from scratch OR expression sheet from locked master
+ * 3. EXPRESSION-ONLY POSES: Body stays identical, only face changes
+ * 4. VISION QC: Verifies anatomy before delivery
+ * 5. CDN UPLOAD: All outputs uploaded with URLs returned
+ * 
+ * This replaces mascot.ts and mascot-v2.ts
  */
 
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import sharp from "sharp";
+import { execSync } from "child_process";
 
-import type { BrandSystem, ColorPalette, RenderStyle } from "../types.js";
-import { ai, IMAGE_MODEL } from "../ai.js";
+import { ai, IMAGE_MODEL, TEXT_MODEL } from "../ai.js";
 import { Modality } from "@google/genai";
-import { RENDER_STYLE_PROMPTS } from "../constants.js";
-import { 
-  buildNanoBananaPrompt, 
-  getEmoteForPose,
-  type EmoteStyle,
-  type AnatomyConfig,
-} from "../prompts/nano-banana.js";
+import type { BrandSystem, ColorPalette } from "../types.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ═══════════════════════════════════════════════════════════════════
+// ANATOMY SYSTEM (inline - no separate file)
+// ═══════════════════════════════════════════════════════════════════
+
+export interface AnatomySchema {
+  creature: string;
+  body: { type: string; description: string };
+  arms: { count: number; type: string; description: string };
+  legs: { count: number; type: string; description: string };
+  face: { eyes: string; mouth: string; extras?: string[] };
+  extras?: string[];
+}
+
+interface PoseAnatomyConfig {
+  showLegs: "full" | "partial" | "hidden";
+  showArms: "full" | "partial" | "one-raised";
+  bodyAngle: "front" | "side" | "three-quarter";
+  expression: string;
+}
+
+const POSE_ANATOMY: Record<string, PoseAnatomyConfig> = {
+  master: { showLegs: "partial", showArms: "full", bodyAngle: "front", expression: "friendly smile" },
+  wave: { showLegs: "full", showArms: "full", bodyAngle: "front", expression: "happy, friendly" },
+  happy: { showLegs: "partial", showArms: "full", bodyAngle: "front", expression: "eyes closed in joy (^_^), big smile" },
+  sad: { showLegs: "partial", showArms: "full", bodyAngle: "front", expression: "droopy eyes, frown, maybe tear" },
+  angry: { showLegs: "partial", showArms: "full", bodyAngle: "front", expression: "V-shaped angry eyebrows, narrowed eyes, grumpy frown" },
+  laugh: { showLegs: "full", showArms: "full", bodyAngle: "front", expression: "open mouth laughing, eyes squeezed shut" },
+};
+
+const ANATOMY_PRESETS: Record<string, AnatomySchema> = {
+  crab: {
+    creature: "crab",
+    body: { type: "dome shell", description: "rounded dome-shaped shell body" },
+    arms: { count: 2, type: "claws", description: "two large pincer claws" },
+    legs: { count: 4, type: "legs", description: "four small walking legs" },
+    face: { eyes: "big round kawaii eyes with white highlight", mouth: "small cute smile" },
+  },
+  octopus: {
+    creature: "octopus",
+    body: { type: "round head", description: "rounded bulbous head" },
+    arms: { count: 8, type: "tentacles", description: "eight wavy tentacles" },
+    legs: { count: 0, type: "none", description: "" },
+    face: { eyes: "big round kawaii eyes", mouth: "small cute beak smile" },
+  },
+  robot: {
+    creature: "robot",
+    body: { type: "boxy torso", description: "rectangular robotic body" },
+    arms: { count: 2, type: "arms", description: "two mechanical arms with gripper hands" },
+    legs: { count: 2, type: "legs", description: "two sturdy robot legs" },
+    face: { eyes: "LED screen eyes", mouth: "pixel smile display" },
+  },
+};
+
+function buildAnatomyPrompt(schema: AnatomySchema, pose: string): string {
+  const poseConfig = POSE_ANATOMY[pose] || POSE_ANATOMY.master;
+  const parts: string[] = [];
+  
+  parts.push(`BODY: ${schema.body.description}`);
+  parts.push(`ARMS: ${schema.arms.description}`);
+  
+  if (schema.legs.count > 0) {
+    const legVisibility = poseConfig.showLegs === "full" 
+      ? `FULLY VISIBLE - show all ${schema.legs.count} legs clearly`
+      : poseConfig.showLegs === "partial"
+        ? `peeking out from under the body - partially visible`
+        : `hidden under body`;
+    parts.push(`LEGS: ${schema.legs.count} tiny ${schema.legs.type} ${legVisibility}`);
+  }
+  
+  parts.push(`EYES: ${schema.face.eyes}`);
+  parts.push(`EXPRESSION: ${poseConfig.expression}`);
+  
+  if (schema.face.extras) parts.push(`HEAD FEATURES: ${schema.face.extras.join(", ")}`);
+  if (schema.extras) parts.push(`SPECIAL FEATURES: ${schema.extras.join(", ")}`);
+  
+  return parts.join("\n");
+}
+
+function createAnatomySchema(creature: string, options: Partial<AnatomySchema>): AnatomySchema {
+  const preset = ANATOMY_PRESETS[creature.toLowerCase()];
+  if (preset) return { ...preset, ...options };
+  
+  return {
+    creature,
+    body: options.body || { type: "body", description: "rounded body" },
+    arms: options.arms || { count: 2, type: "arms", description: "two arms" },
+    legs: options.legs || { count: 2, type: "legs", description: "two legs" },
+    face: options.face || { eyes: "round eyes", mouth: "smile" },
+    extras: options.extras,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════════
 
-export type CharacterType = 
-  | "mascot"      // Brand mascot (friendly, approachable)
-  | "avatar"      // Human-like character
-  | "creature"    // Fantasy/abstract creature
-  | "robot"       // Robot/android
-  | "animal"      // Anthropomorphic animal
-  | "abstract";   // Abstract/geometric character
-
-export type CharacterStyle =
-  | "2d-flat"        // Flat vector style (like Slack/Discord mascots)
-  | "2d-illustrated" // Detailed 2D illustration
-  | "3d-rendered"    // 3D rendered look
-  | "pixel"          // Pixel art style
-  | "anime"          // Anime/manga style
-  | "clay"           // Claymation/3D clay look
-  | "gradient"       // Gradient-rich modern style
-  | "glassmorphic";  // Glass/transparent style
-
-export interface MascotOptions {
-  characterType?: CharacterType;
-  style?: CharacterStyle;
-  personality?: string;
-  features?: string;
-  poses?: number;       // Number of pose variants (1-4, default 3)
+export interface MascotInput {
+  // Mode 1: Natural language prompt (generates everything)
+  prompt?: string;
+  
+  // Mode 2: Locked master (expression sheet only)
+  masterUrl?: string;
+  masterPath?: string;
+  
+  // Required for both modes
+  brandName: string;
+  
+  // Optional overrides
+  creature?: string;           // "crab", "owl", "robot", etc.
+  primaryColor?: string;       // "#5865F2"
+  outlineColor?: string;       // "black" or "#1a1a2e"
+  
+  // Anatomy (auto-detected if not specified)
+  clawCount?: number;          // Default: 2
+  legCount?: number;           // REQUIRED if using locked master
+  hasAntenna?: boolean;        // Default: false
+  
+  // Style
+  style?: "2d-flat" | "2d-illustrated" | "gradient";  // Default: "2d-flat"
+  hasGlossyHighlights?: boolean;  // Default: true
+  
+  // Output
   outputDir?: string;
   jobId?: string;
+  uploadToCdn?: boolean;       // Default: true
 }
 
-export interface MascotResult {
-  masterPath: string;
-  iconPath: string;
-  poses: string[];
-  specPath: string;
-  characterSpec: CharacterSpec;
-}
-
-export interface CharacterSpec {
-  brandName: string;
-  characterType: CharacterType;
-  style: CharacterStyle;
-  personality: string;
-  features: string[];
-  colors: {
-    primary: string;
-    secondary: string;
-    accent: string;
+export interface MascotOutput {
+  // CDN URLs (if uploaded)
+  urls: {
+    master: string;
+    wave: string;
+    happy: string;
+    sad: string;
+    angry: string;
+    laugh: string;
   };
-  description: string;
-  designNotes: string;
+  
+  // Local paths
+  localPaths: {
+    master: string;
+    wave: string;
+    happy: string;
+    sad: string;
+    angry: string;
+    laugh: string;
+  };
+  
+  // Metadata
+  anatomy: AnatomySchema;
+  qcReport: QCReport;
+  brandSlug: string;
+}
+
+export interface QCReport {
+  passed: boolean;
+  poses: Record<string, PoseQC>;
+}
+
+export interface PoseQC {
+  passed: boolean;
+  legCount?: number;
+  clawCount?: number;
+  issues: string[];
+  attempts: number;
+}
+
+// Standard expression poses (LOCKED - these are the ONLY poses)
+export type ExpressionPose = "master" | "wave" | "happy" | "sad" | "angry" | "laugh";
+
+const EXPRESSION_POSES: ExpressionPose[] = ["master", "wave", "happy", "sad", "angry", "laugh"];
+
+// ═══════════════════════════════════════════════════════════════════
+// EXPRESSION DEFINITIONS (FACE ONLY - BODY NEVER CHANGES)
+// ═══════════════════════════════════════════════════════════════════
+
+const EXPRESSION_PROMPTS: Record<ExpressionPose, string> = {
+  master: `EXPRESSION: Default friendly face
+• Eyes: Large round eyes with white highlight spots
+• Mouth: Small gentle smile, curved line in DARK BLUE matching linework
+• This is the CANONICAL expression - all others derive from this`,
+
+  wave: `EXPRESSION: Friendly welcoming face (BODY UNCHANGED!)
+• Eyes: Normal round eyes with highlights, warm friendly sparkle
+• Mouth: Open happy smile, DARK BLUE outline with hints of PINK inside
+• Blush: Optional light pink circles on cheeks
+• ⚠️ BODY STAYS EXACTLY THE SAME - wave is an EXPRESSION, not arm movement`,
+
+  happy: `EXPRESSION: Joyful closed-eye smile (^_^)
+• Eyes: Closed in happy curves like ^_^ or >_< anime happy eyes
+• Mouth: Big wide smile, DARK BLUE outline
+• Blush: Pink/magenta circles on cheeks
+• ⚠️ BODY STAYS EXACTLY THE SAME`,
+
+  sad: `EXPRESSION: Sad droopy face
+• Eyes: Droopy/downturned with sad eyebrows tilted UP in center
+• Mouth: Small downturned frown, DARK BLUE outline
+• Tear: Single blue tear drop on one cheek
+• ⚠️ BODY STAYS EXACTLY THE SAME`,
+
+  angry: `EXPRESSION: Angry grumpy face
+• Eyes: Narrowed eyes with V-shaped angry eyebrows pointing DOWN in center
+• Mouth: Grumpy frown or grimace, DARK BLUE outline
+• No tears, no blush
+• ⚠️ BODY STAYS EXACTLY THE SAME`,
+
+  laugh: `EXPRESSION: Laughing hysterically (>o<)
+• Eyes: Squeezed shut in happy curves (>o< style, NOT X eyes)
+• Mouth: Wide open laughing showing tongue, DARK BLUE outline with PINK tongue
+• Tears: Small tears of joy on both sides of face
+• ⚠️ BODY STAYS EXACTLY THE SAME`,
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// PROMPT BUILDERS
+// ═══════════════════════════════════════════════════════════════════
+
+function buildMasterPrompt(input: MascotInput, anatomy: AnatomySchema): string {
+  const creature = input.creature || anatomy.creature || "mascot";
+  const color = input.primaryColor || "#5865F2";
+  const outline = input.outlineColor || "black";
+  
+  return `Create a 2D FLAT mascot character in Discord Wumpus / Duolingo owl style.
+
+╔══════════════════════════════════════════════════════════════════╗
+║  SIMPLICITY IS PARAMOUNT — GOLDEN RULE                           ║
+╚══════════════════════════════════════════════════════════════════╝
+
+THE RULE OF ONE: Pick ONE interesting visual element, not many.
+- Target: 40-50% complexity — SIMPLE, CLEAN, MEMORABLE
+- Think Apple, Stripe, Discord — minimalist elegance
+- Can a child draw this from memory? (should be yes)
+- Must be recognizable at 32x32px
+
+BRAND: ${input.brandName}
+${input.prompt ? `CONCEPT: ${input.prompt}` : ""}
+
+╔══════════════════════════════════════════════════════════════════╗
+║  LINE WEIGHT CONSISTENCY — #1 PRIORITY                           ║
+║  LINE WEIGHT CONSISTENCY — #1 PRIORITY                           ║
+║  LINE WEIGHT CONSISTENCY — #1 PRIORITY                           ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Every single outline must be the EXACT SAME THICKNESS.
+- NO thin lines anywhere
+- NO thick lines anywhere  
+- UNIFORM stroke width throughout entire character
+- This is NON-NEGOTIABLE
+
+⚠️⚠️⚠️ ANATOMY — EXACT COUNTS ⚠️⚠️⚠️
+
+${buildAnatomyPrompt(anatomy, "master")}
+
+VERIFY BEFORE GENERATING:
+• CLAWS/ARMS: EXACTLY ${anatomy.arms.count} (not ${anatomy.arms.count - 1}, not ${anatomy.arms.count + 1})
+• LEGS: EXACTLY ${anatomy.legs.count} tiny legs
+• COUNT THEM: ${anatomy.legs.count} legs total
+
+🎨 STYLE:
+- 2D FLAT illustration with glossy highlights
+- Solid flat colors (NO gradients in body)
+- YES to white glossy highlight spots for dimension
+- Clean bold outlines in ${outline}
+- Kawaii/cute aesthetic
+- Like Discord's Wumpus or Slack's slackbot
+
+🎨 COLORS:
+• Body: ${color}
+• Outline/linework: ${outline}
+• Highlights: White glossy spots
+• Eyes: Large, round, with white catchlight highlights
+
+👀 FACE (REQUIRED):
+• Large expressive kawaii eyes with white highlight
+• Small friendly smile mouth (DARK BLUE, same as linework)
+• The character MUST have both eyes AND mouth visible
+
+📐 TECHNICAL:
+• Size: 512x512 pixels
+• Background: Pure white (#FFFFFF)
+• Character centered, filling ~65% of frame
+• FRONT-FACING view only
+• Clean vector-quality edges
+
+❌ FORBIDDEN:
+- NO text, wordmarks, or letters
+- NO complex patterns or textures
+- NO realistic style
+- NO busy backgrounds
+- NO gradients in the body fill
+- NO extra limbs beyond specified count`;
+}
+
+function buildExpressionPrompt(
+  input: MascotInput,
+  anatomy: AnatomySchema,
+  pose: ExpressionPose
+): string {
+  const color = input.primaryColor || "#5865F2";
+  const outline = input.outlineColor || "black";
+  
+  return `Transform this character to show a new EXPRESSION. Body stays IDENTICAL.
+
+╔══════════════════════════════════════════════════════════════════╗
+║  LINE WEIGHT CONSISTENCY — #1 PRIORITY                           ║
+║  LINE WEIGHT CONSISTENCY — #1 PRIORITY                           ║
+║  LINE WEIGHT CONSISTENCY — #1 PRIORITY                           ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Every outline must be the EXACT SAME THICKNESS as the reference image.
+Match the reference line weight PERFECTLY.
+
+⚠️⚠️⚠️ ANATOMY LOCK — DO NOT CHANGE ⚠️⚠️⚠️
+
+The following must be IDENTICAL to the reference:
+• CLAWS: EXACTLY ${anatomy.arms.count}
+• LEGS: EXACTLY ${anatomy.legs.count}
+• Body position: IDENTICAL
+• Limb positions: IDENTICAL
+• View angle: FRONT-FACING (same as reference)
+
+ONLY the FACE changes. NOTHING else.
+
+🔒 VIEW LOCK:
+- Do NOT rotate the character
+- Do NOT show from side angle
+- Do NOT tilt the body
+- Keep the EXACT same front-facing pose as reference
+
+${EXPRESSION_PROMPTS[pose]}
+
+🎨 COLORS (MATCH EXACTLY):
+• Body: ${color}
+• Outline: ${outline}
+• All linework must match outline color
+
+📐 TECHNICAL:
+• Size: 512x512 pixels
+• Background: Pure white (#FFFFFF)
+• Character centered
+
+✅ FINAL VERIFICATION:
+☐ Line weight matches reference?
+☐ Claw count = ${anatomy.arms.count}?
+☐ Leg count = ${anatomy.legs.count}?
+☐ Front-facing view?
+☐ Body position identical to reference?
+☐ ONLY face/expression changed?`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// STYLE PROMPTS
+// CORE GENERATION FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════
 
-const CHARACTER_STYLE_PROMPTS: Record<CharacterStyle, string> = {
-  "2d-flat": `
-    FLAT VECTOR STYLE WITH HIGHLIGHTS:
-    - Solid flat colors (NO color gradients or blending)
-    - YES to glossy highlights and shine spots (white reflection marks)
-    - YES to simple gloss effects for dimension
-    - Clean minimal vector shapes
-    - Bold consistent outlines
-    - Like Discord's Wumpus or Duolingo's owl — flat colors WITH highlight accents
-    - Each main color area is ONE solid color, but can have highlight spots on top
-    - Simple, iconic, works at any size
-  `,
-  "2d-illustrated": `
-    ILLUSTRATED 2D STYLE:
-    - Detailed 2D illustration with depth
-    - Soft shadows and highlights
-    - Rich textures and details
-    - Professional character design quality
-    - Like high-end mobile game characters
-  `,
-  "3d-rendered": `
-    3D RENDERED STYLE:
-    - Soft 3D rendered look
-    - Smooth surfaces with realistic lighting
-    - Subtle ambient occlusion
-    - Like Pixar or modern 3D animation
-    - Premium, polished feel
-  `,
-  "pixel": `
-    PIXEL ART STYLE:
-    - Retro pixel art aesthetic
-    - Limited color palette
-    - Crisp pixel edges (no anti-aliasing blur)
-    - Nostalgic gaming feel
-    - Works at 64x64 to 256x256 native resolution
-  `,
-  "anime": `
-    ANIME/MANGA STYLE:
-    - Japanese anime art style
-    - Large expressive eyes
-    - Dynamic poses and expressions
-    - Clean linework with cel shading
-    - Vibrant colors
-  `,
-  "clay": `
-    CLAYMATION STYLE:
-    - 3D clay/plasticine look
-    - Soft, rounded forms
-    - Visible texture like stop-motion animation
-    - Warm, tactile feel
-    - Like Wallace & Gromit or Nintendo characters
-  `,
-  "gradient": `
-    MODERN GRADIENT STYLE:
-    - Rich gradients throughout
-    - Vibrant, modern color transitions
-    - Smooth blending
-    - Contemporary tech aesthetic
-    - Like modern app mascots
-  `,
-  "glassmorphic": `
-    GLASSMORPHIC STYLE:
-    - Translucent glass-like elements
-    - Frosted glass effects
-    - Subtle reflections and refractions
-    - Modern UI aesthetic
-    - Premium, ethereal feel
-  `,
-};
-
-const CHARACTER_TYPE_PROMPTS: Record<CharacterType, string> = {
-  "mascot": `
-    BRAND MASCOT:
-    - Friendly and approachable
-    - Simple, memorable design
-    - Can be used at various sizes
-    - Represents the brand personality
-    - Universal appeal
-  `,
-  "avatar": `
-    HUMAN-LIKE AVATAR:
-    - Stylized human character
-    - Professional or casual based on brand
-    - Relatable and personable
-    - Can represent users or the brand
-  `,
-  "creature": `
-    FANTASY CREATURE:
-    - Unique, imaginative design
-    - Can be cute or majestic
-    - Original species/creature
-    - Memorable and distinctive
-  `,
-  "robot": `
-    ROBOT/ANDROID:
-    - Tech-forward design
-    - Can be cute or sleek
-    - Mechanical elements visible
-    - Modern, innovative feel
-  `,
-  "animal": `
-    ANTHROPOMORPHIC ANIMAL:
-    - Animal with human-like qualities
-    - Expressive and characterful
-    - Based on a specific animal species
-    - Personality through body language
-  `,
-  "abstract": `
-    ABSTRACT CHARACTER:
-    - Geometric or abstract form
-    - Not based on real creatures
-    - Unique silhouette
-    - Modern and artistic
-  `,
-};
-
-// ═══════════════════════════════════════════════════════════════════
-// POSE VARIANTS
-// ═══════════════════════════════════════════════════════════════════
-
-const POSE_VARIANTS = [
-  { name: "hero", prompt: "confident standing pose, looking forward, heroic stance" },
-  { name: "wave", prompt: "friendly waving pose, one hand raised in greeting" },
-  { name: "thinking", prompt: "thoughtful pose, hand on chin, contemplative" },
-  { name: "celebrate", prompt: "celebration pose, arms raised, excited and happy" },
-  { name: "working", prompt: "focused working pose, engaged in activity" },
-  { name: "relaxed", prompt: "casual relaxed pose, comfortable and at ease" },
-];
-
-// ═══════════════════════════════════════════════════════════════════
-// MAIN SERVICE
-// ═══════════════════════════════════════════════════════════════════
-
-export async function generateMascot(
-  brandSystemPath: string,
-  options: MascotOptions = {}
-): Promise<MascotResult> {
-  const {
-    characterType = "mascot",
-    style = "2d-flat",
-    personality = "friendly, approachable, modern",
-    features = "",
-    poses = 3,
-    outputDir,
-    jobId,
-  } = options;
-
-  // Load brand system
-  let brandSystem: BrandSystem;
-  let brandDir: string;
-
-  if (brandSystemPath.startsWith("http")) {
-    const response = await fetch(brandSystemPath);
-    if (!response.ok) throw new Error(`Failed to fetch brand system: ${response.status}`);
-    brandSystem = await response.json();
-    const brandName = brandSystem.brand?.name || brandSystem.brandName || "Brand";
-    brandDir = outputDir || path.join(__dirname, "..", "..", "output", brandName.toLowerCase().replace(/\s+/g, "-"));
-  } else {
-    brandSystem = JSON.parse(fs.readFileSync(brandSystemPath, "utf-8"));
-    brandDir = path.dirname(brandSystemPath);
-  }
-
-  const brandName = brandSystem.brand?.name || brandSystem.brandName || "Brand";
+async function generateMasterImage(
+  input: MascotInput,
+  anatomy: AnatomySchema,
+  outputPath: string
+): Promise<void> {
+  const prompt = buildMasterPrompt(input, anatomy);
   
-  // VERSIONED OUTPUT - never overwrite previous generations
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const mascotBaseDir = path.join(brandDir, "mascot");
-  const mascotDir = outputDir || path.join(mascotBaseDir, `gen-${timestamp}`);
-  const posesDir = path.join(mascotDir, "poses");
-  fs.mkdirSync(posesDir, { recursive: true });
-  
-  // Also create/update a "latest" symlink for convenience
-  const latestLink = path.join(mascotBaseDir, "latest");
-  try {
-    if (fs.existsSync(latestLink)) fs.unlinkSync(latestLink);
-    fs.symlinkSync(mascotDir, latestLink);
-  } catch { /* symlink may fail on some systems */ }
+  const response = await ai.models.generateContent({
+    model: IMAGE_MODEL,
+    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    config: {
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+    },
+  });
 
-  console.log(`\n══════════════════════════════════════════════════════════════`);
-  console.log(`  OpenGFX Mascot Generator`);
-  console.log(`  Brand: ${brandName}`);
-  console.log(`  Type: ${characterType} | Style: ${style}`);
-  console.log(`  Output: gen-${timestamp}`);
-  console.log(`══════════════════════════════════════════════════════════════\n`);
-
-  // Step 1: Generate character concept
-  console.log(`[1/4] Analyzing brand and generating character concept...`);
-  const characterSpec = await generateCharacterSpec(
-    brandSystem,
-    characterType,
-    style,
-    personality,
-    features
-  );
-  
-  const specPath = path.join(mascotDir, "mascot-spec.json");
-  fs.writeFileSync(specPath, JSON.stringify(characterSpec, null, 2));
-  console.log(`      ✓ Character spec generated`);
-
-  // Step 2: Generate master image (hero pose)
-  console.log(`[2/4] Generating master character image...`);
-  const masterPath = path.join(mascotDir, "mascot-master.png");
-  await generateCharacterImage(
-    brandSystem,
-    characterSpec,
-    "hero",
-    "full body character, centered, white/transparent background, high quality",
-    masterPath,
-    1024
-  );
-  console.log(`      ✓ mascot-master.png (1024x1024)`);
-
-  // Step 3: Generate icon (head/bust) - USE MASTER AS REFERENCE
-  console.log(`[3/4] Generating character icon...`);
-  const iconPath = path.join(mascotDir, "mascot-icon.png");
-  await generateCharacterImage(
-    brandSystem,
-    characterSpec,
-    "portrait",
-    "head and shoulders portrait ONLY, centered, friendly expression, icon-ready, white/transparent background, SAME CHARACTER as reference",
-    iconPath,
-    512,
-    masterPath  // Reference master for consistency
-  );
-  console.log(`      ✓ mascot-icon.png (512x512)`);
-
-  // Step 4: Generate pose variants - USE MASTER AS REFERENCE
-  console.log(`[4/4] Generating pose variants...`);
-  const poseFiles: string[] = [];
-  const selectedPoses = POSE_VARIANTS.slice(0, Math.min(poses, POSE_VARIANTS.length));
-  
-  for (const pose of selectedPoses) {
-    const posePath = path.join(posesDir, `${pose.name}.png`);
-    await generateCharacterImage(
-      brandSystem,
-      characterSpec,
-      pose.name,
-      `${pose.prompt}, full body, white/transparent background, EXACT SAME CHARACTER as reference image - only change pose`,
-      posePath,
-      1024,
-      masterPath  // Reference master for consistency
-    );
-    poseFiles.push(posePath);
-    console.log(`      ✓ poses/${pose.name}.png`);
-  }
-
-  // ═══════════════════════════════════════════════════════════════════
-  // STEP 5: QUALITY CONTROL LOOP - Vision verification before delivery
-  // ═══════════════════════════════════════════════════════════════════
-  console.log(`\n[5/5] Running QC verification loop...`);
-  
-  const allAssets = [
-    { path: masterPath, name: "master", type: "full" as const },
-    { path: iconPath, name: "icon", type: "icon" as const },
-    ...poseFiles.map((p, i) => ({ path: p, name: selectedPoses[i].name, type: "pose" as const })),
-  ];
-  
-  const MAX_RETRIES = 2;
-  
-  for (const asset of allAssets) {
-    let passed = false;
-    let attempts = 0;
-    
-    while (!passed && attempts <= MAX_RETRIES) {
-      const qcResult = await runQualityCheck(asset.path, characterSpec, asset.type);
-      
-      if (qcResult.passed) {
-        console.log(`      ✓ QC PASS: ${asset.name}`);
-        passed = true;
-      } else {
-        attempts++;
-        console.log(`      ⚠️ QC FAIL: ${asset.name} — ${qcResult.issues.join(", ")}`);
-        
-        if (attempts <= MAX_RETRIES) {
-          console.log(`         Regenerating (attempt ${attempts}/${MAX_RETRIES})...`);
-          
-          // Regenerate the failed asset
-          if (asset.type === "full") {
-            await generateCharacterImage(brandSystem, characterSpec, "hero", 
-              "full body character, centered, white background", asset.path, 1024);
-          } else if (asset.type === "icon") {
-            await generateCharacterImage(brandSystem, characterSpec, "portrait",
-              "head and shoulders portrait, centered, icon-ready, white background", 
-              asset.path, 512, masterPath);
-          } else {
-            const pose = selectedPoses.find(p => p.name === asset.name);
-            if (pose) {
-              await generateCharacterImage(brandSystem, characterSpec, pose.name,
-                `${pose.prompt}, full body, white background`, asset.path, 1024, masterPath);
-            }
-          }
-        } else {
-          console.log(`         ❌ Max retries reached for ${asset.name} - delivering with warning`);
-          passed = true; // Accept with warning after max retries
-        }
-      }
+  const parts = response.candidates?.[0]?.content?.parts || [];
+  for (const part of parts) {
+    if (part.inlineData?.data) {
+      const buffer = Buffer.from(part.inlineData.data, "base64");
+      await sharp(buffer)
+        .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .png()
+        .toFile(outputPath);
+      return;
     }
   }
   
-  console.log(`\n══════════════════════════════════════════════════════════════`);
-  console.log(`  ✓ MASCOT COMPLETE (QC VERIFIED)`);
-  console.log(`  Master: mascot-master.png`);
-  console.log(`  Icon: mascot-icon.png`);
-  console.log(`  Poses: ${poseFiles.length} variants`);
-  console.log(`  Output: ${mascotDir}`);
-  console.log(`══════════════════════════════════════════════════════════════\n`);
+  throw new Error("Failed to generate master image");
+}
 
-  return {
-    masterPath,
-    iconPath,
-    poses: poseFiles,
-    specPath,
-    characterSpec,
-  };
+async function generateExpressionImage(
+  masterImageData: Buffer,
+  input: MascotInput,
+  anatomy: AnatomySchema,
+  pose: ExpressionPose,
+  outputPath: string
+): Promise<void> {
+  if (pose === "master") {
+    // Just copy the master
+    await sharp(masterImageData)
+      .resize(512, 512)
+      .png()
+      .toFile(outputPath);
+    return;
+  }
+  
+  const prompt = buildExpressionPrompt(input, anatomy, pose);
+  
+  const response = await ai.models.generateContent({
+    model: IMAGE_MODEL,
+    contents: [{
+      role: "user",
+      parts: [
+        { inlineData: { mimeType: "image/png", data: masterImageData.toString("base64") } },
+        { text: prompt }
+      ]
+    }],
+    config: {
+      responseModalities: [Modality.TEXT, Modality.IMAGE],
+    },
+  });
+
+  const parts = response.candidates?.[0]?.content?.parts || [];
+  for (const part of parts) {
+    if (part.inlineData?.data) {
+      const buffer = Buffer.from(part.inlineData.data, "base64");
+      await sharp(buffer)
+        .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .png()
+        .toFile(outputPath);
+      return;
+    }
+  }
+  
+  throw new Error(`Failed to generate expression: ${pose}`);
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// QUALITY CONTROL - Vision-based verification
+// VISION QC - Verify anatomy
 // ═══════════════════════════════════════════════════════════════════
 
-interface QCResult {
-  passed: boolean;
-  issues: string[];
-  armCount?: number;
-  legCount?: number;
-  hasAntenna?: boolean;
-  colorMatch?: boolean;
-}
-
-async function runQualityCheck(
+async function verifyAnatomy(
   imagePath: string,
-  characterSpec: CharacterSpec,
-  imageType: "full" | "icon" | "pose"
-): Promise<QCResult> {
+  anatomy: AnatomySchema
+): Promise<PoseQC> {
   const imageData = fs.readFileSync(imagePath);
   const base64Image = imageData.toString("base64");
   
-  const prompt = `You are a QC inspector for character mascot images. Analyze this image and answer EXACTLY in JSON format.
+  const prompt = `You are a QC inspector verifying mascot anatomy. Count CAREFULLY.
 
-CHARACTER SPECIFICATION:
-${characterSpec.description}
-Features: ${characterSpec.features.join(", ")}
+EXPECTED ANATOMY:
+- Claws/Arms: ${anatomy.arms.count}
+- Legs: ${anatomy.legs.count}
 
-QC CHECKLIST - Answer each carefully:
-1. ARM_COUNT: How many arms/claws does the character have? (Count ALL limbs that look like arms or claws)
-2. LEG_COUNT: How many legs does the character have?
-3. HAS_EYES: Does the character have visible eyes? (true/false)
-4. HAS_MOUTH: Does the character have a visible mouth? (true/false) - CRITICAL: mascots MUST have mouths
-5. HAS_ANTENNA: Does it have an antenna on top? (true/false)
-6. BODY_SHAPE: Is the body shape correct (rounded dome/shell for crabs)? (true/false)
-7. COLOR_CORRECT: Is the primary color close to ${characterSpec.colors.primary}? (true/false)
-8. EXTRA_LIMBS: Are there any unexpected extra appendages near the face/mouth area? (true/false)
+INSTRUCTIONS:
+1. Count ALL claw-like appendages (the big pincers) - should be ${anatomy.arms.count}
+2. Count ALL leg-like appendages (the small walking legs) - should be ${anatomy.legs.count}
+3. Check if it's front-facing view
 
-CRITICAL RULES:
-- MUST have EXACTLY 2 arms/claws (not 1, not 3, not 4)
-- MUST have visible EYES
-- MUST have visible MOUTH (no mouthless mascots!)
-
-Respond with ONLY this JSON:
+Respond with ONLY this JSON (no other text):
 {
-  "arm_count": <number>,
+  "claw_count": <number>,
   "leg_count": <number>,
+  "front_facing": <boolean>,
+  "line_weight_consistent": <boolean>,
   "has_eyes": <boolean>,
   "has_mouth": <boolean>,
-  "has_antenna": <boolean>,
-  "body_shape_correct": <boolean>,
-  "color_correct": <boolean>,
-  "extra_limbs": <boolean>,
-  "issues": ["list of any issues found"]
+  "issues": ["list any problems"]
 }`;
 
   try {
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: TEXT_MODEL,
       contents: [{
         role: "user",
         parts: [
@@ -468,290 +504,365 @@ Respond with ONLY this JSON:
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     
     if (!jsonMatch) {
-      return { passed: false, issues: ["Could not parse QC response"] };
+      return { passed: false, issues: ["Could not parse QC response"], attempts: 1 };
     }
     
     const qc = JSON.parse(jsonMatch[0]);
     const issues: string[] = [];
     
-    // Check arm count - CRITICAL
-    if (qc.arm_count !== 2) {
-      issues.push(`Wrong arm count: ${qc.arm_count} (must be exactly 2)`);
+    // Check claw count
+    if (qc.claw_count !== anatomy.arms.count) {
+      issues.push(`Wrong claw count: ${qc.claw_count} (expected ${anatomy.arms.count})`);
     }
     
-    // Check eyes - CRITICAL for expressions
-    if (qc.has_eyes === false) {
-      issues.push("Missing eyes (mascots MUST have eyes)");
+    // Check leg count - CRITICAL
+    if (qc.leg_count !== anatomy.legs.count) {
+      issues.push(`Wrong leg count: ${qc.leg_count} (expected ${anatomy.legs.count})`);
     }
     
-    // Check mouth - CRITICAL for expressions
-    if (qc.has_mouth === false) {
-      issues.push("Missing mouth (mascots MUST have a visible mouth)");
+    // Check view
+    if (!qc.front_facing) {
+      issues.push("Not front-facing view");
     }
     
-    // Check for extra limbs near face
-    if (qc.extra_limbs === true) {
-      issues.push("Extra limbs detected near face/mouth");
+    // Check line weight
+    if (!qc.line_weight_consistent) {
+      issues.push("Inconsistent line weight");
     }
     
-    // Check antenna (if applicable) - skip if "no antenna" is specified
-    const wantsAntenna = characterSpec.features.some(f => {
-      const lower = f.toLowerCase();
-      return lower.includes("antenna") && !lower.includes("no antenna");
-    });
-    if (wantsAntenna && !qc.has_antenna) {
-      issues.push("Missing antenna");
+    // Check face
+    if (!qc.has_eyes) {
+      issues.push("Missing eyes");
+    }
+    if (!qc.has_mouth) {
+      issues.push("Missing mouth");
     }
     
-    // Check body shape
-    if (!qc.body_shape_correct) {
-      issues.push("Body shape not matching spec (should be dome/shell)");
-    }
-    
-    // Check color
-    if (!qc.color_correct) {
-      issues.push("Color mismatch");
-    }
-    
-    // Add any issues from vision analysis
+    // Add any issues from vision
     if (qc.issues && Array.isArray(qc.issues)) {
       issues.push(...qc.issues.filter((i: string) => i && i.length > 0));
     }
     
     return {
       passed: issues.length === 0,
-      issues,
-      armCount: qc.arm_count,
       legCount: qc.leg_count,
-      hasAntenna: qc.has_antenna,
-      colorMatch: qc.color_correct,
+      clawCount: qc.claw_count,
+      issues,
+      attempts: 1,
     };
   } catch (err) {
-    console.error(`      QC Error:`, err);
-    return { passed: false, issues: [`QC error: ${err}`] };
+    return { passed: false, issues: [`QC error: ${err}`], attempts: 1 };
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// CHARACTER SPEC GENERATION
+// CDN UPLOAD
 // ═══════════════════════════════════════════════════════════════════
 
-async function generateCharacterSpec(
-  brandSystem: BrandSystem,
-  characterType: CharacterType,
-  style: CharacterStyle,
-  personality: string,
-  features: string
-): Promise<CharacterSpec> {
-  const { brand, colors, renderStyle, brandName: altBrandName, tagline: altTagline } = brandSystem;
-  const brandName = brand?.name || altBrandName || "Brand";
-  const tagline = brand?.tagline || altTagline || "";
-
-  const prompt = `You are a character designer creating a brand mascot. Your spec will generate MULTIPLE CONSISTENT images.
-
-BRAND: ${brandName}
-TAGLINE: ${tagline || "N/A"}
-PRIMARY COLOR: ${colors.primary}
-SECONDARY COLOR: ${colors.secondary || colors.accent || "#ffffff"}
-
-CHARACTER TYPE: ${characterType}
-STYLE: ${style}
-PERSONALITY: ${personality}
-USER FEATURES: ${features || "None specified"}
-
-⚠️ CRITICAL ANATOMY RULE ⚠️
-ARMS/CLAWS: EXACTLY 2. Never 3, never 4. TWO ARMS ONLY.
-LEGS: Can be 2, 4, 6, or 8 depending on the creature type (e.g., crab = 6 legs, humanoid = 2 legs).
-
-Generate a character spec JSON:
-{
-  "description": "Start with 'A [creature] with EXACTLY 2 arms/claws and [N] legs...' then describe body shape, shell/skin texture, overall silhouette",
-  "features": [
-    "EXACTLY 2 claws/arms (state this first)",
-    "[N] legs positioned [how]",
-    "body shape description (e.g., 'rounded crab shell', 'oval body')",
-    "eye style and size",
-    "antenna/appendage details if any",
-    "color placement on body parts",
-    "any asymmetric features (which side)"
-  ],
-  "designNotes": "Describe like a character bible: proportions, what makes it recognizable at small sizes, key silhouette elements"
-}
-
-If it's a CRAB/LOBSTER creature:
-- Emphasize the SHELL shape (rounded, dome-like, protective)
-- EXACTLY 2 large front claws
-- Small walking legs underneath (typically 6)
-- The shell is the main visual mass, claws extend from sides
-
-Respond with ONLY valid JSON.`;
-
-  const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-  });
-
-  const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  
-  let parsed: { description: string; features: string[]; designNotes: string };
+function uploadToCdn(
+  localPath: string,
+  cdnKey: string,
+  opengfxDir: string
+): string {
   try {
-    parsed = JSON.parse(jsonMatch?.[0] || "{}");
-  } catch {
-    parsed = {
-      description: `A ${characterType} character for ${brandName}`,
-      features: [personality],
-      designNotes: `Use ${style} style with brand colors`,
-    };
+    execSync(
+      `wrangler r2 object put opengfx-assets/${cdnKey} --file "${localPath}" --content-type "image/png" --remote`,
+      { cwd: opengfxDir, stdio: "pipe" }
+    );
+    return `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${cdnKey}`;
+  } catch (err) {
+    console.error(`[upload] Failed to upload ${cdnKey}:`, err);
+    return "";
   }
-
-  return {
-    brandName,
-    characterType,
-    style,
-    personality,
-    features: parsed.features || [],
-    colors: {
-      primary: colors.primary,
-      secondary: colors.secondary || colors.accent || "#ffffff",
-      accent: colors.accent || colors.primary,
-    },
-    description: parsed.description,
-    designNotes: parsed.designNotes,
-  };
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// CHARACTER IMAGE GENERATION (nano banana prompting)
+// PARSE INPUT PROMPT - Extract creature, color, anatomy from natural language
 // ═══════════════════════════════════════════════════════════════════
 
-async function generateCharacterImage(
-  brandSystem: BrandSystem,
-  characterSpec: CharacterSpec,
-  poseName: string,
-  poseDescription: string,
-  outputPath: string,
-  size: number,
-  referenceImagePath?: string
-): Promise<void> {
-  const stylePrompt = CHARACTER_STYLE_PROMPTS[characterSpec.style];
+async function parseInputPrompt(prompt: string, brandName: string): Promise<{
+  creature: string;
+  primaryColor: string;
+  outlineColor: string;
+  legCount: number;
+  clawCount: number;
+  hasAntenna: boolean;
+}> {
+  const parsePrompt = `Parse this mascot request and extract structured data.
 
-  // ═══════════════════════════════════════════════════════════════════
-  // NANO BANANA PROMPTING v2: Emote management + prompt doubling
-  // ═══════════════════════════════════════════════════════════════════
-  
-  // Detect leg count from features (default 6 for crabs)
-  const legMatch = characterSpec.features.find(f => /(\d+)\s*(legs?|walking)/i.test(f));
-  const legCount = legMatch ? parseInt(legMatch.match(/(\d+)/)?.[1] || "6") : 6;
-  
-  // Get emote for this pose
-  const emote = getEmoteForPose(poseName);
-  
-  // Build anatomy config
-  const anatomy: AnatomyConfig = {
-    armCount: 2,  // Always 2 for mascots unless specified otherwise
-    legCount,
-    hasAntenna: characterSpec.features.some(f => {
-      const lower = f.toLowerCase();
-      return lower.includes("antenna") && !lower.includes("no antenna");
-    }),
-  };
-  
-  // Build the full nano banana prompt (will be doubled internally)
-  const prompt = buildNanoBananaPrompt({
-    anatomy,
-    emote,
-    characterDescription: characterSpec.description,
-    features: characterSpec.features,
-    colors: characterSpec.colors,
-    style: `${stylePrompt}\nLike Discord's Wumpus, Duolingo's owl, or Slack's slackbot — clean, memorable, mascot-quality.`,
-    pose: poseDescription,
-    size,
-    isReferenceMode: !!referenceImagePath,
-  });
+REQUEST: "${prompt}"
+BRAND: "${brandName}"
 
-  // Build content parts - reference image FIRST if provided
-  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
-  
-  if (referenceImagePath && fs.existsSync(referenceImagePath)) {
-    const refData = fs.readFileSync(referenceImagePath);
-    const base64Ref = refData.toString("base64");
-    parts.push({ inlineData: { mimeType: "image/png", data: base64Ref } });
-  }
-  
-  parts.push({ text: prompt });
+Extract:
+1. creature: What type of creature? (crab, owl, robot, cat, etc.)
+2. primaryColor: Main color in hex (look for color names or hex codes)
+3. outlineColor: Outline color in hex (default "black" or dark version of primary)
+4. legCount: How many legs? (crab=4-6, owl/bird=2, robot=2, spider=8)
+5. clawCount: How many claws/arms? (most creatures=2)
+6. hasAntenna: Does it have antenna? (default false)
 
-  const response = await ai.models.generateContent({
-    model: IMAGE_MODEL,
-    contents: [{ role: "user", parts }],
-    config: {
-      responseModalities: [Modality.TEXT, Modality.IMAGE],
-    },
-  });
+RESPOND WITH ONLY THIS JSON:
+{
+  "creature": "string",
+  "primaryColor": "#hexcode",
+  "outlineColor": "#hexcode", 
+  "legCount": number,
+  "clawCount": number,
+  "hasAntenna": boolean
+}`;
 
-  const responseParts = response.candidates?.[0]?.content?.parts || [];
-  for (const part of responseParts) {
-    if (part.inlineData?.data) {
-      const buffer = Buffer.from(part.inlineData.data, "base64");
-      await sharp(buffer)
-        .resize(size, size, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
-        .png()
-        .toFile(outputPath);
-      return;
+  try {
+    const response = await ai.models.generateContent({
+      model: TEXT_MODEL,
+      contents: [{ role: "user", parts: [{ text: parsePrompt }] }],
+    });
+
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        creature: parsed.creature || "mascot",
+        primaryColor: parsed.primaryColor || "#5865F2",
+        outlineColor: parsed.outlineColor || "black",
+        legCount: parsed.legCount || 4,
+        clawCount: parsed.clawCount || 2,
+        hasAntenna: parsed.hasAntenna || false,
+      };
     }
+  } catch (err) {
+    console.error("[parse] Failed to parse prompt:", err);
   }
   
-  throw new Error(`Failed to generate character image for pose: ${poseName}`);
+  // Fallback defaults
+  return {
+    creature: "mascot",
+    primaryColor: "#5865F2",
+    outlineColor: "black",
+    legCount: 4,
+    clawCount: 2,
+    hasAntenna: false,
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// BYOL (Bring Your Own Logo) MODE
+// MAIN ENTRY POINT
 // ═══════════════════════════════════════════════════════════════════
 
-export async function generateMascotFromLogo(
-  logoUrl: string,
-  brandName: string,
-  colors: { primary: string; secondary?: string; accent?: string },
-  options: MascotOptions = {}
-): Promise<MascotResult> {
-  // Create minimal brand system
-  const brandSystem: BrandSystem = {
-    version: "1.0",
-    brand: {
-      name: brandName,
-      concept: `${options.characterType || "mascot"} character`,
-    },
-    colors: {
-      primary: colors.primary,
-      secondary: colors.secondary || "#ffffff",
-      accent: colors.accent || colors.primary,
-      background: colors.primary,
-      foreground: "#ffffff",
-    },
-    typography: {
-      headerFont: "Inter",
-      headerWeight: 700,
-      bodyFont: "Inter",
-      bodyWeight: 400,
-    },
-    renderStyle: {
-      preset: "flat",
-      parameters: {},
-    },
-    logo: {
-      icon: logoUrl,
-      wordmark: "",
-      horizontal: "",
-      stacked: "",
-    },
-  };
-
-  // Create temp brand system file
-  const tempDir = path.join(__dirname, "..", "..", "output", brandName.toLowerCase().replace(/\s+/g, "-"));
-  fs.mkdirSync(tempDir, { recursive: true });
+export async function generateMascot(input: MascotInput): Promise<MascotOutput> {
+  const brandSlug = input.brandName.toLowerCase().replace(/[^a-z0-9]/g, "-");
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const opengfxDir = path.resolve(__dirname, "..", "..");
   
-  const brandSystemPath = path.join(tempDir, "brand-system.json");
-  fs.writeFileSync(brandSystemPath, JSON.stringify(brandSystem, null, 2));
+  // Setup output directory
+  const baseDir = input.outputDir || path.join(opengfxDir, "output", brandSlug, "mascot", `unified-${timestamp}`);
+  fs.mkdirSync(baseDir, { recursive: true });
+  
+  console.log(`\n══════════════════════════════════════════════════════════════`);
+  console.log(`  OpenGFX Mascot Generator (Unified)`);
+  console.log(`  Brand: ${input.brandName}`);
+  console.log(`══════════════════════════════════════════════════════════════\n`);
+  
+  // Determine anatomy
+  let anatomy: AnatomySchema;
+  
+  if (input.prompt && !input.masterUrl && !input.masterPath) {
+    // MODE 1: Generate from prompt - parse to extract creature/anatomy
+    console.log(`[1/6] Parsing input prompt...`);
+    const parsed = await parseInputPrompt(input.prompt, input.brandName);
+    
+    // Override with explicit inputs if provided
+    const creature = input.creature || parsed.creature;
+    const legCount = input.legCount ?? parsed.legCount;
+    const clawCount = input.clawCount ?? parsed.clawCount;
+    const hasAntenna = input.hasAntenna ?? parsed.hasAntenna;
+    input.primaryColor = input.primaryColor || parsed.primaryColor;
+    input.outlineColor = input.outlineColor || parsed.outlineColor;
+    
+    // Create anatomy schema
+    anatomy = createAnatomySchema(creature, {
+      arms: { count: clawCount, type: "claws", description: `${clawCount} claws` },
+      legs: { count: legCount, type: "legs", description: `${legCount} tiny legs` },
+      face: { 
+        eyes: "large kawaii eyes with highlight",
+        mouth: "small friendly smile",
+        extras: hasAntenna ? ["antenna on head"] : undefined,
+      },
+    });
+    
+    console.log(`      Creature: ${creature}`);
+    console.log(`      Anatomy: ${clawCount} claws, ${legCount} legs`);
+    console.log(`      Color: ${input.primaryColor}`);
+  } else {
+    // MODE 2: Expression sheet from locked master - anatomy MUST be provided
+    if (!input.legCount) {
+      throw new Error("legCount is REQUIRED when using locked master (expression sheet mode)");
+    }
+    
+    const creature = input.creature || "mascot";
+    anatomy = createAnatomySchema(creature, {
+      arms: { count: input.clawCount || 2, type: "claws", description: `${input.clawCount || 2} claws` },
+      legs: { count: input.legCount, type: "legs", description: `${input.legCount} tiny legs` },
+      face: { 
+        eyes: "large kawaii eyes with highlight",
+        mouth: "small friendly smile",
+        extras: input.hasAntenna ? ["antenna on head"] : undefined,
+      },
+    });
+    
+    console.log(`[1/6] Using locked master with anatomy:`);
+    console.log(`      Claws: ${anatomy.arms.count}`);
+    console.log(`      Legs: ${anatomy.legs.count}`);
+  }
+  
+  // Save anatomy
+  const anatomyPath = path.join(baseDir, "anatomy.json");
+  fs.writeFileSync(anatomyPath, JSON.stringify(anatomy, null, 2));
+  
+  // Load or generate master
+  let masterImageData: Buffer;
+  const masterPath = path.join(baseDir, "master.png");
+  
+  if (input.masterPath && fs.existsSync(input.masterPath)) {
+    console.log(`[2/6] Loading master from file...`);
+    masterImageData = fs.readFileSync(input.masterPath);
+    await sharp(masterImageData).resize(512, 512).png().toFile(masterPath);
+  } else if (input.masterUrl) {
+    console.log(`[2/6] Fetching master from URL...`);
+    const response = await fetch(input.masterUrl);
+    if (!response.ok) throw new Error(`Failed to fetch master: ${response.status}`);
+    masterImageData = Buffer.from(await response.arrayBuffer());
+    await sharp(masterImageData).resize(512, 512).png().toFile(masterPath);
+  } else {
+    console.log(`[2/6] Generating master image...`);
+    await generateMasterImage(input, anatomy, masterPath);
+    masterImageData = fs.readFileSync(masterPath);
+  }
+  console.log(`      ✓ master.png`);
+  
+  // Generate expression poses
+  const localPaths: Record<string, string> = { master: masterPath };
+  const qcReport: QCReport = { passed: true, poses: {} };
+  const MAX_RETRIES = 2;
+  
+  console.log(`[3/6] Generating expressions...`);
+  for (const pose of EXPRESSION_POSES) {
+    if (pose === "master") continue;
+    
+    const posePath = path.join(baseDir, `${pose}.png`);
+    let attempts = 0;
+    let passed = false;
+    
+    while (!passed && attempts <= MAX_RETRIES) {
+      attempts++;
+      
+      await generateExpressionImage(masterImageData, input, anatomy, pose, posePath);
+      
+      // Run QC
+      const qcResult = await verifyAnatomy(posePath, anatomy);
+      qcResult.attempts = attempts;
+      
+      if (qcResult.passed) {
+        console.log(`      ✓ ${pose}.png (QC PASS)`);
+        passed = true;
+        qcReport.poses[pose] = qcResult;
+      } else {
+        console.log(`      ⚠️ ${pose} QC FAIL (attempt ${attempts}): ${qcResult.issues.join(", ")}`);
+        
+        if (attempts > MAX_RETRIES) {
+          console.log(`      ❌ Max retries — accepting with warning`);
+          qcReport.poses[pose] = qcResult;
+          qcReport.passed = false;
+        }
+      }
+    }
+    
+    localPaths[pose] = posePath;
+  }
+  
+  // QC master too
+  console.log(`[4/6] QC verification on master...`);
+  const masterQc = await verifyAnatomy(masterPath, anatomy);
+  qcReport.poses["master"] = masterQc;
+  if (!masterQc.passed) {
+    console.log(`      ⚠️ Master QC issues: ${masterQc.issues.join(", ")}`);
+    qcReport.passed = false;
+  } else {
+    console.log(`      ✓ Master QC PASS`);
+  }
+  
+  // Upload to CDN
+  const urls: Record<string, string> = {};
+  
+  if (input.uploadToCdn !== false) {
+    console.log(`[5/6] Uploading to CDN...`);
+    for (const pose of EXPRESSION_POSES) {
+      const cdnKey = `${brandSlug}/mascot/FINAL/${pose}.png`;
+      const url = uploadToCdn(localPaths[pose], cdnKey, opengfxDir);
+      urls[pose] = url;
+      if (url) {
+        console.log(`      ✓ ${pose}.png → CDN`);
+      }
+    }
+  } else {
+    console.log(`[5/6] Skipping CDN upload (disabled)`);
+  }
+  
+  // Final summary
+  console.log(`\n══════════════════════════════════════════════════════════════`);
+  console.log(`  ✓ MASCOT COMPLETE`);
+  console.log(`  QC: ${qcReport.passed ? "ALL PASSED" : "SOME WARNINGS"}`);
+  console.log(`  Output: ${baseDir}`);
+  if (urls.master) {
+    console.log(`  CDN: ${urls.master.replace("/master.png", "/")}`);
+  }
+  console.log(`══════════════════════════════════════════════════════════════\n`);
+  
+  // Print result for gateway parsing
+  const resultJson = {
+    urls,
+    localPaths,
+    anatomy,
+    qcPassed: qcReport.passed,
+  };
+  console.log(`MASCOT_RESULT:${JSON.stringify(resultJson)}`);
+  
+  return {
+    urls: urls as MascotOutput["urls"],
+    localPaths: localPaths as MascotOutput["localPaths"],
+    anatomy,
+    qcReport,
+    brandSlug,
+  };
+}
 
-  return generateMascot(brandSystemPath, { ...options, outputDir: path.join(tempDir, "mascot") });
+// ═══════════════════════════════════════════════════════════════════
+// CONVENIENCE: Generate from brand-system.json
+// ═══════════════════════════════════════════════════════════════════
+
+export async function generateMascotFromBrandSystem(
+  brandSystemPath: string,
+  prompt: string,
+  options: Partial<MascotInput> = {}
+): Promise<MascotOutput> {
+  let brandSystem: BrandSystem;
+  
+  if (brandSystemPath.startsWith("http")) {
+    const response = await fetch(brandSystemPath);
+    if (!response.ok) throw new Error(`Failed to fetch brand system: ${response.status}`);
+    brandSystem = await response.json();
+  } else {
+    brandSystem = JSON.parse(fs.readFileSync(brandSystemPath, "utf-8"));
+  }
+  
+  const brandName = brandSystem.brand?.name || brandSystem.brandName || "Brand";
+  const primaryColor = brandSystem.colors?.primary || options.primaryColor;
+  
+  return generateMascot({
+    brandName,
+    prompt,
+    primaryColor,
+    ...options,
+  });
 }

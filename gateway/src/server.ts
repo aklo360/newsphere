@@ -961,27 +961,41 @@ interface MascotResult {
     wave: string;
     happy: string;
     sad: string;
-    unhappy: string;
+    angry: string;  // Renamed from unhappy
     laugh: string;
   };
 }
 
-// Standard mascot poses
-const MASCOT_POSES = ["master", "wave", "happy", "sad", "unhappy", "laugh"];
+// Standard mascot poses (expression sheet)
+const MASCOT_POSES = ["master", "wave", "happy", "sad", "angry", "laugh"];
 
 function runMascotPipeline(job: Job): Promise<MascotResult> {
   return new Promise((resolve, reject) => {
     const opengfxDir = path.resolve(process.cwd(), OPENGFX_PATH);
     
-    // Build args for mascot-v2
-    const args = ["run", "mascot-v2", "--"];
+    // Build args for unified mascot CLI
+    const args = ["run", "mascot", "--"];
     
-    // Required args for mascot-v2
+    // Required args
     args.push("--name", job.brandName);
+    
+    // Check if we have a master URL (expression sheet mode)
+    if (job.logoUrl) {
+      // Expression sheet mode - use locked master
+      args.push("--master-url", job.logoUrl);
+      // Anatomy counts - CRITICAL for QC (using 'poses' field for leg count)
+      const legCount = job.poses || 4;
+      args.push("--leg-count", legCount.toString());
+      if (job.characterType) args.push("--creature", job.characterType);
+    } else if (job.concept) {
+      // Generate from scratch mode - use concept as prompt
+      args.push("--prompt", job.concept);
+      if (job.characterType) args.push("--creature", job.characterType);
+      // If leg count specified via poses field
+      if (job.poses) args.push("--leg-count", job.poses.toString());
+    }
+    
     if (job.primaryColor) args.push("--color", job.primaryColor);
-    if (job.characterType) args.push("--creature", job.characterType);
-    if (job.mascotStyle) args.push("--style", job.mascotStyle);
-    if (job.personality) args.push("--personality", job.personality);
     
     console.log(`[mascot] Running: npm ${args.join(" ")}`);
     
@@ -1004,6 +1018,14 @@ function runMascotPipeline(job: Job): Promise<MascotResult> {
       stdout += text;
       for (const line of text.split("\n").filter((l: string) => l.trim())) {
         console.log(`  ${line}`);
+        // Update step based on progress
+        if (line.includes("Loading master")) {
+          updateJob(job.id, { step: "designing" });
+        } else if (line.includes("Generating")) {
+          updateJob(job.id, { step: "poses" });
+        } else if (line.includes("QC PASS") || line.includes("QC FAIL")) {
+          updateJob(job.id, { step: "upload" });
+        }
       }
     });
     
@@ -1019,20 +1041,37 @@ function runMascotPipeline(job: Job): Promise<MascotResult> {
       
       try {
         const brandSlug = job.brandName.toLowerCase().replace(/[^a-z0-9]/g, "-");
-        // Find latest mascot output dir
+        
+        // Parse MASCOT_RESULT from stdout for CDN URLs
+        const resultMatch = stdout.match(/MASCOT_RESULT:(\{.*\})/);
+        if (resultMatch) {
+          try {
+            const parsedResult = JSON.parse(resultMatch[1]);
+            if (parsedResult.urls) {
+              // CDN URLs already available from unified service
+              resolve({ mascot: parsedResult.urls });
+              return;
+            }
+          } catch { /* Fall through to manual upload */ }
+        }
+        
+        // Fallback: Find latest mascot output dir and upload manually
         const mascotBaseDir = path.join(opengfxDir, "output", brandSlug, "mascot");
-        const dirs = fs.readdirSync(mascotBaseDir).filter(d => d.startsWith("202")).sort().reverse();
+        const dirs = fs.readdirSync(mascotBaseDir)
+          .filter(d => d.startsWith("unified-") || d.startsWith("v2-") || d.startsWith("202"))
+          .sort()
+          .reverse();
         const mascotDir = dirs.length > 0 ? path.join(mascotBaseDir, dirs[0]) : mascotBaseDir;
         
         const { execSync } = await import("child_process");
         
-        const cdnBase = `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${brandSlug}/mascot`;
-        const uploads: { master: string; wave: string; happy: string; sad: string; unhappy: string; laugh: string } = {
+        const cdnBase = `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${brandSlug}/mascot/FINAL`;
+        const uploads: { master: string; wave: string; happy: string; sad: string; angry: string; laugh: string } = {
           master: "",
           wave: "",
           happy: "",
           sad: "",
-          unhappy: "",
+          angry: "",
           laugh: "",
         };
         
@@ -1040,7 +1079,7 @@ function runMascotPipeline(job: Job): Promise<MascotResult> {
         for (const pose of MASCOT_POSES) {
           const posePath = path.join(mascotDir, `${pose}.png`);
           if (fs.existsSync(posePath)) {
-            execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/${pose}.png --file "${posePath}" --content-type "image/png" --remote`, { cwd: opengfxDir, stdio: "pipe" });
+            execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/FINAL/${pose}.png --file "${posePath}" --content-type "image/png" --remote`, { cwd: opengfxDir, stdio: "pipe" });
             (uploads as any)[pose] = `${cdnBase}/${pose}.png`;
             console.log(`  ✓ ${pose}.png`);
           }
