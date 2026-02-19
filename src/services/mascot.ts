@@ -146,6 +146,7 @@ export interface MascotInput {
   // Optional overrides
   creature?: string;           // "crab", "owl", "robot", etc.
   primaryColor?: string;       // "#5865F2"
+  bgColor?: string;            // Background color (default: computed from primary)
   outlineColor?: string;       // "black" or "#1a1a2e"
   
   // Anatomy (auto-detected if not specified)
@@ -253,10 +254,26 @@ const EXPRESSION_PROMPTS: Record<ExpressionPose, string> = {
 // PROMPT BUILDERS
 // ═══════════════════════════════════════════════════════════════════
 
+// Compute a soft pastel background from primary color
+function computeBgColor(primaryColor: string): { hex: string; name: string } {
+  // Simple lightening - take the color and make it 80% lighter
+  const hex = primaryColor.replace("#", "");
+  const r = Math.min(255, Math.floor(parseInt(hex.slice(0, 2), 16) * 0.3 + 200));
+  const g = Math.min(255, Math.floor(parseInt(hex.slice(2, 4), 16) * 0.3 + 200));
+  const b = Math.min(255, Math.floor(parseInt(hex.slice(4, 6), 16) * 0.3 + 200));
+  const newHex = `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+  return { hex: newHex, name: "soft pastel" };
+}
+
 function buildMasterPrompt(input: MascotInput, anatomy: AnatomySchema): string {
   const creature = input.creature || anatomy.creature || "mascot";
   const color = input.primaryColor || "#5865F2";
   const outline = input.outlineColor || "black";
+  
+  // LEARNINGS: Never use white background, compute complementary color
+  const bg = input.bgColor 
+    ? { hex: input.bgColor, name: "custom" }
+    : computeBgColor(color);
   
   return `Create a 2D FLAT mascot character in Discord Wumpus / Duolingo owl style.
 
@@ -313,12 +330,13 @@ VERIFY BEFORE GENERATING:
 • Small friendly smile mouth (DARK BLUE, same as linework)
 • The character MUST have both eyes AND mouth visible
 
-📐 TECHNICAL:
-• Size: 512x512 pixels
-• Background: Pure white (#FFFFFF)
-• Character centered, filling ~65% of frame
+📐 TECHNICAL (CRITICAL):
+• Size: SQUARE 1024x1024 pixels
+• Background: Solid flat ${bg.hex} ${bg.name} background filling the ENTIRE image
+• Character centered, filling 70-80% of frame (~10-15% padding each side)
 • FRONT-FACING view only
 • Clean vector-quality edges
+• NO white background - use the specified colored background
 
 ❌ FORBIDDEN:
 - NO text, wordmarks, or letters
@@ -336,6 +354,9 @@ function buildExpressionPrompt(
 ): string {
   const color = input.primaryColor || "#5865F2";
   const outline = input.outlineColor || "black";
+  const bg = input.bgColor 
+    ? { hex: input.bgColor, name: "custom" }
+    : computeBgColor(color);
   
   return `Transform this character to show a new EXPRESSION. Body stays IDENTICAL.
 
@@ -373,9 +394,9 @@ ${EXPRESSION_PROMPTS[pose]}
 • All linework must match outline color
 
 📐 TECHNICAL:
-• Size: 512x512 pixels
-• Background: Pure white (#FFFFFF)
-• Character centered
+• Size: SQUARE 1024x1024 pixels
+• Background: Solid flat ${bg.hex} ${bg.name} (same as master)
+• Character centered, filling 70-80% of frame
 
 ✅ FINAL VERIFICATION:
 ☐ Line weight matches reference?
@@ -409,8 +430,9 @@ async function generateMasterImage(
   for (const part of parts) {
     if (part.inlineData?.data) {
       const buffer = Buffer.from(part.inlineData.data, "base64");
+      // LEARNINGS: Use cover fit to preserve full frame, 1024x1024
       await sharp(buffer)
-        .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .resize(1024, 1024, { fit: "cover" })
         .png()
         .toFile(outputPath);
       return;
@@ -430,7 +452,7 @@ async function generateExpressionImage(
   if (pose === "master") {
     // Just copy the master
     await sharp(masterImageData)
-      .resize(512, 512)
+      .resize(1024, 1024, { fit: "cover" })
       .png()
       .toFile(outputPath);
     return;
@@ -456,8 +478,9 @@ async function generateExpressionImage(
   for (const part of parts) {
     if (part.inlineData?.data) {
       const buffer = Buffer.from(part.inlineData.data, "base64");
+      // LEARNINGS: Use cover fit to preserve full frame, 1024x1024
       await sharp(buffer)
-        .resize(512, 512, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+        .resize(1024, 1024, { fit: "cover" })
         .png()
         .toFile(outputPath);
       return;
@@ -739,13 +762,13 @@ export async function generateMascot(input: MascotInput): Promise<MascotOutput> 
   if (input.masterPath && fs.existsSync(input.masterPath)) {
     console.log(`[2/6] Loading master from file...`);
     masterImageData = fs.readFileSync(input.masterPath);
-    await sharp(masterImageData).resize(512, 512).png().toFile(masterPath);
+    await sharp(masterImageData).resize(1024, 1024, { fit: "cover" }).png().toFile(masterPath);
   } else if (input.masterUrl) {
     console.log(`[2/6] Fetching master from URL...`);
     const response = await fetch(input.masterUrl);
     if (!response.ok) throw new Error(`Failed to fetch master: ${response.status}`);
     masterImageData = Buffer.from(await response.arrayBuffer());
-    await sharp(masterImageData).resize(512, 512).png().toFile(masterPath);
+    await sharp(masterImageData).resize(1024, 1024, { fit: "cover" }).png().toFile(masterPath);
   } else {
     console.log(`[2/6] Generating master image...`);
     await generateMasterImage(input, anatomy, masterPath);
