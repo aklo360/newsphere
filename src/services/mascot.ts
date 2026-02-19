@@ -515,12 +515,18 @@ async function verifyAnatomy(
   
   // CREATIVE DIRECTOR QC — criteria comes from the brief
   const prompt = checkEyeColor 
-    ? `You are a Creative Director reviewing a mascot expression.
+    ? `You are a Creative Director doing STRICT QC on a mascot expression.
 
 IMAGE 1 (MASTER): Reference image  
 IMAGE 2 (EXPRESSION): Image to verify
 
 THE BRIEF: "${creatureDesc}"
+
+⚠️ CRITICAL ANATOMY CHECKS (REJECT IF WRONG):
+1. MOUTH must be on the FACE (not on the belly/body!)
+2. EYES must be on the FACE (not elsewhere!)
+3. All facial features in correct anatomical positions
+4. Body structure matches master (same character)
 
 MUST-HAVE FEATURES:
 ${mustHaveFeatures.map(f => `• ${f}`).join("\n") || "• (none specified)"}
@@ -530,19 +536,28 @@ ${qcCriteria.map(c => `☐ ${c}`).join("\n")}
 
 Also check:
 ☐ Eye color IDENTICAL to master
-☐ Body position identical to master
-☐ Only face changed
+☐ Body position identical to master (except for pose-specific changes)
+☐ Facial features are ON THE FACE, not misplaced
 
 Respond with ONLY this JSON:
 {
   "matches_brief": <boolean>,
+  "mouth_on_face": <boolean>,
+  "eyes_on_face": <boolean>,
+  "anatomy_correct": <boolean>,
   "eye_color_matches": <boolean>,
   "body_matches_master": <boolean>,
-  "issues": ["list any problems"]
+  "issues": ["list any problems - BE SPECIFIC about anatomy errors"]
 }`
-    : `You are a Creative Director reviewing a mascot design.
+    : `You are a Creative Director doing STRICT QC on a mascot design.
 
 THE BRIEF: "${creatureDesc}"
+
+⚠️ CRITICAL ANATOMY CHECKS (REJECT IF WRONG):
+1. MOUTH must be on the FACE (not on the belly/body!)
+2. EYES must be on the FACE (not elsewhere!)
+3. All facial features in correct anatomical positions
+4. Character looks like what was requested
 
 MUST-HAVE FEATURES:
 ${mustHaveFeatures.map(f => `• ${f}`).join("\n") || "• (none specified)"}
@@ -550,15 +565,18 @@ ${mustHaveFeatures.map(f => `• ${f}`).join("\n") || "• (none specified)"}
 REVIEW CHECKLIST:
 ${qcCriteria.map(c => `☐ ${c}`).join("\n")}
 
-Does this mascot match the brief? Be honest but fair.
+Be STRICT about anatomy. A mouth on the belly is WRONG.
 
 Respond with ONLY this JSON:
 {
   "matches_brief": <boolean>,
+  "mouth_on_face": <boolean>,
+  "eyes_on_face": <boolean>,
+  "anatomy_correct": <boolean>,
   "what_i_see": "<describe what this appears to be>",
   "features_present": ["list features visible"],
   "features_missing": ["list missing features"],
-  "issues": ["list any problems"]
+  "issues": ["list any problems - BE SPECIFIC about anatomy errors"]
 }`;
 
   try {
@@ -585,7 +603,18 @@ Respond with ONLY this JSON:
     const qc = JSON.parse(jsonMatch[0]);
     const issues: string[] = [];
     
-    // BRIEF MATCH CHECK — most important
+    // 🚨 CRITICAL ANATOMY CHECKS — instant fail
+    if (qc.mouth_on_face === false) {
+      issues.push("ANATOMY ERROR: Mouth is NOT on the face (possibly on belly/body)");
+    }
+    if (qc.eyes_on_face === false) {
+      issues.push("ANATOMY ERROR: Eyes are NOT on the face");
+    }
+    if (qc.anatomy_correct === false) {
+      issues.push("ANATOMY ERROR: Facial features misplaced");
+    }
+    
+    // BRIEF MATCH CHECK
     if (qc.matches_brief === false) {
       issues.push(`Does not match brief: looks like "${qc.what_i_see || "unknown"}"`);
     }

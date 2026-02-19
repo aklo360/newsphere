@@ -13,12 +13,21 @@
       "primaryColor": "#8B5CF6",
       "colorName": "purple",
       "createdAt": "2025-02-19"
+    },
+    {
+      "brand": "TestPhant",
+      "creature": "Robotic Elephant",
+      "primaryColor": "#FFC72C",
+      "colorName": "Citrine",
+      "createdAt": "2026-02-19"
     }
   ],
   "takenCombos": [
     "crab-blurple",
     "crab-#5865F2",
     "owl-purple",
-    "owl-#8B5CF6"
+    "owl-#8B5CF6",
+    "Robotic Elephant-Citrine",
+    "Robotic Elephant-#FFC72C"
   ]
 }
