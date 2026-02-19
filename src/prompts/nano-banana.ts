@@ -32,27 +32,27 @@ export type EmoteStyle =
 export const EMOTE_DESCRIPTIONS: Record<EmoteStyle, { eyes: string; mouth: string }> = {
   friendly: {
     eyes: "large round eyes with highlights, soft friendly expression, slightly curved eyebrows",
-    mouth: "small gentle smile, simple BLACK curved line (NOT white), friendly expression",
+    mouth: "small gentle smile, curved line SAME DARK BLUE COLOR as the outlines/linework, friendly expression",
   },
   excited: {
     eyes: "large wide eyes with big highlights, raised eyebrows, excited expression",
-    mouth: "big open smile with BLACK outline and PINK tongue (mouth is BLACK not white), curved upward, joyful",
+    mouth: "big open smile with DARK BLUE outline matching linework and PINK tongue, curved upward, joyful",
   },
   thinking: {
     eyes: "eyes looking to the side or upward, one eyebrow slightly raised, contemplative",
-    mouth: "small closed BLACK mouth line, slight pout or neutral, thoughtful expression",
+    mouth: "small closed mouth line in SAME DARK BLUE as outlines, slight pout or neutral, thoughtful",
   },
   determined: {
     eyes: "focused eyes with confident look, slight eyebrow angle, determined",
-    mouth: "confident smirk, BLACK curved line (NOT white), self-assured expression",
+    mouth: "confident smirk, curved line SAME DARK BLUE COLOR as outlines, self-assured expression",
   },
   waving: {
     eyes: "happy eyes with friendly sparkle, welcoming expression",
-    mouth: "open friendly smile with BLACK outline and PINK tongue (mouth is BLACK not white), welcoming",
+    mouth: "open friendly smile with DARK BLUE outline matching linework and PINK tongue, welcoming",
   },
   neutral: {
     eyes: "relaxed round eyes with gentle highlights, calm expression",
-    mouth: "slight smile, simple BLACK curved line (NOT white), content expression",
+    mouth: "slight smile, curved line SAME DARK BLUE COLOR as the outlines/linework, content expression",
   },
 };
 
