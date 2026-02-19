@@ -10,6 +10,8 @@
  * This file IS the mascot brain. Edit it → change future outputs.
  */
 
+import { GEMINI_RULES, IMAGE_FORMATS, QUALITY_KEYWORDS, POST_PROCESSING_RULES } from "./core.js";
+
 // ============================================================================
 // CORE GENERATION RULES (LOCKED 2025-02-19)
 // ============================================================================

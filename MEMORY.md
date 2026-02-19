@@ -192,19 +192,33 @@ See `SELF-IMPROVEMENT.md` for full documentation.
 
 ### The Loop
 ```
-Generate asset → Notice issue/success → Update learnings → Next generation improves
+Generate ANY asset → Notice issue/success → Update learnings → ALL future generations improve
 ```
 
-### Key Files
-| File | Purpose |
-|------|---------|
-| `src/learnings/mascot.ts` | Runtime mascot rules (edit to improve) |
-| `src/services/mascot-v2.ts` | Service that imports learnings |
-| `SELF-IMPROVEMENT.md` | Architecture doc |
+### Learnings Hierarchy
+```
+src/learnings/
+├── index.ts       ← Import from here
+├── core.ts        ← UNIVERSAL (Gemini, colors, post-processing)
+├── logo.ts        ← Logo rules (icons, wordmarks, lockups)
+├── social.ts      ← Social rules (avatars, banners, platforms)
+├── gfx.ts         ← GFX rules (composition, BYOL)
+└── mascot.ts      ← Mascot rules (creatures, expressions)
+```
+
+### Which File to Edit?
+| Issue | File |
+|-------|------|
+| Gemini/format issues | `core.ts` |
+| Color/quality issues | `core.ts` |
+| Icon/wordmark issues | `logo.ts` |
+| Banner/avatar issues | `social.ts` |
+| On-brand GFX issues | `gfx.ts` |
+| Creature/pose issues | `mascot.ts` |
 
 ### Principle
 **Edit learnings files to change output, NOT service files.**
-Learnings are read at runtime → changes automatically affect next generation.
+Learnings are read at runtime → changes automatically affect ALL future generations.
 
 ## CRITICAL: Development Process (NEVER FORGET)
 **This Telegram thread with @aklo360 is the DEVELOPMENT ENVIRONMENT for OpenGFX.**
