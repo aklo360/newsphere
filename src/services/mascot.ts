@@ -496,6 +496,79 @@ const EXPRESSION_PROMPTS: Record<ExpressionPose, string> = {
 // PROMPT BUILDERS
 // ═══════════════════════════════════════════════════════════════════
 
+/**
+ * Generate a unique color palette based on prompt/creature vibe.
+ * Called when no primaryColor is provided — NEVER default to the same color.
+ */
+async function generateColorFromVibe(prompt: string, creature: string): Promise<string> {
+  // Creature-specific color suggestions (but still vary!)
+  const creatureVibes: Record<string, string[]> = {
+    elephant: ["#6B7280", "#9CA3AF", "#4B5563", "#8B5CF6", "#06B6D4"], // grays, purples, teals
+    cat: ["#F97316", "#FBBF24", "#8B5CF6", "#EC4899", "#6366F1"], // orange, gold, purple, pink
+    dog: ["#D97706", "#92400E", "#FBBF24", "#3B82F6", "#10B981"], // browns, gold, blue, green
+    owl: ["#7C3AED", "#8B5CF6", "#6366F1", "#4F46E5", "#312E81"], // purples, indigos
+    bunny: ["#EC4899", "#F472B6", "#FBBF24", "#A78BFA", "#FCA5A1"], // pinks, gold, lavender
+    fox: ["#EA580C", "#F97316", "#DC2626", "#FB923C", "#FBBF24"], // oranges, reds
+    penguin: ["#1E40AF", "#3B82F6", "#0EA5E9", "#06B6D4", "#14B8A6"], // blues, teals
+    bear: ["#78350F", "#92400E", "#B45309", "#D97706", "#65A30D"], // browns, amber
+    robot: ["#3B82F6", "#06B6D4", "#8B5CF6", "#6366F1", "#10B981"], // tech colors
+    crab: ["#DC2626", "#EF4444", "#F97316", "#EA580C", "#B91C1C"], // reds, oranges
+  };
+  
+  // Vibe-based colors from prompt keywords
+  const vibeColors: Record<string, string[]> = {
+    cute: ["#EC4899", "#F472B6", "#FBBF24", "#A78BFA", "#FCA5A1"],
+    tech: ["#3B82F6", "#06B6D4", "#8B5CF6", "#6366F1", "#10B981"],
+    nature: ["#10B981", "#059669", "#65A30D", "#84CC16", "#22C55E"],
+    fire: ["#DC2626", "#EF4444", "#F97316", "#EA580C", "#FBBF24"],
+    water: ["#0EA5E9", "#06B6D4", "#3B82F6", "#0284C7", "#14B8A6"],
+    space: ["#7C3AED", "#8B5CF6", "#4F46E5", "#312E81", "#1E1B4B"],
+    friendly: ["#FBBF24", "#F97316", "#10B981", "#06B6D4", "#EC4899"],
+    professional: ["#3B82F6", "#1E40AF", "#6366F1", "#4F46E5", "#0F172A"],
+    playful: ["#EC4899", "#8B5CF6", "#FBBF24", "#10B981", "#F97316"],
+    dark: ["#4B5563", "#6B7280", "#374151", "#1F2937", "#6366F1"],
+    bright: ["#FBBF24", "#F97316", "#10B981", "#EC4899", "#3B82F6"],
+    music: ["#8B5CF6", "#EC4899", "#FBBF24", "#06B6D4", "#F97316"],
+    gaming: ["#10B981", "#8B5CF6", "#EC4899", "#06B6D4", "#FBBF24"],
+  };
+  
+  // Check for creature-specific colors
+  const creatureLower = creature.toLowerCase();
+  let colorPool: string[] = [];
+  
+  if (creatureVibes[creatureLower]) {
+    colorPool = [...creatureVibes[creatureLower]];
+  }
+  
+  // Check prompt for vibe keywords
+  const promptLower = prompt.toLowerCase();
+  for (const [vibe, colors] of Object.entries(vibeColors)) {
+    if (promptLower.includes(vibe)) {
+      colorPool = [...colorPool, ...colors];
+    }
+  }
+  
+  // If no specific colors found, use a diverse default pool
+  if (colorPool.length === 0) {
+    colorPool = [
+      "#8B5CF6", // Purple
+      "#EC4899", // Pink
+      "#3B82F6", // Blue
+      "#10B981", // Green
+      "#F97316", // Orange
+      "#06B6D4", // Cyan
+      "#FBBF24", // Yellow
+      "#EF4444", // Red
+      "#6366F1", // Indigo
+      "#14B8A6", // Teal
+    ];
+  }
+  
+  // Pick a random color from the pool
+  const randomIndex = Math.floor(Math.random() * colorPool.length);
+  return colorPool[randomIndex];
+}
+
 // Compute a soft pastel background from primary color
 function computeBgColor(primaryColor: string): { hex: string; name: string } {
   // Simple lightening - take the color and make it 80% lighter
@@ -951,7 +1024,7 @@ function uploadToCdn(
 
 async function parseInputPrompt(prompt: string, brandName: string): Promise<{
   creature: string;
-  primaryColor: string;
+  primaryColor: string | null;  // null if not specified → will generate from vibe
   outlineColor: string;
   legCount: number;
   clawCount: number;
@@ -963,17 +1036,20 @@ REQUEST: "${prompt}"
 BRAND: "${brandName}"
 
 Extract:
-1. creature: What type of creature? (crab, owl, robot, cat, etc.)
-2. primaryColor: Main color in hex (look for color names or hex codes)
-3. outlineColor: Outline color in hex (default "black" or dark version of primary)
-4. legCount: How many legs? (crab=4-6, owl/bird=2, robot=2, spider=8)
-5. clawCount: How many claws/arms? (most creatures=2)
+1. creature: What type of creature? (elephant, owl, robot, cat, dog, bunny, penguin, etc.)
+2. primaryColor: ONLY if explicitly specified in the request (color name or hex). Return null if no color mentioned.
+3. outlineColor: Outline color (default "black")
+4. legCount: How many legs? (elephant/cat/dog=4, owl/penguin=2, robot=2)
+5. clawCount: How many arms/claws? (most animals=0, crab=2, robot=2)
 6. hasAntenna: Does it have antenna? (default false)
+
+⚠️ IMPORTANT: Only return a primaryColor if the user EXPLICITLY mentions a color.
+If no color is specified, return null so we can generate a unique color based on the vibe.
 
 RESPOND WITH ONLY THIS JSON:
 {
   "creature": "string",
-  "primaryColor": "#hexcode",
+  "primaryColor": "#hexcode or null",
   "outlineColor": "#hexcode", 
   "legCount": number,
   "clawCount": number,
@@ -993,10 +1069,13 @@ RESPOND WITH ONLY THIS JSON:
       const parsed = JSON.parse(jsonMatch[0]);
       return {
         creature: parsed.creature || "mascot",
-        primaryColor: parsed.primaryColor || "#5865F2",
+        // Only use parsed color if it's a valid hex, otherwise null → generate from vibe
+        primaryColor: (parsed.primaryColor && parsed.primaryColor !== "null" && parsed.primaryColor.startsWith("#")) 
+          ? parsed.primaryColor 
+          : null,
         outlineColor: parsed.outlineColor || "black",
-        legCount: parsed.legCount || 4,
-        clawCount: parsed.clawCount || 2,
+        legCount: parsed.legCount ?? 4,
+        clawCount: parsed.clawCount ?? 0, // Default 0 — most creatures don't have claws
         hasAntenna: parsed.hasAntenna || false,
       };
     }
@@ -1004,13 +1083,13 @@ RESPOND WITH ONLY THIS JSON:
     console.error("[parse] Failed to parse prompt:", err);
   }
   
-  // Fallback defaults
+  // Fallback defaults — NO default color, will be generated from vibe
   return {
     creature: "mascot",
-    primaryColor: "#5865F2",
+    primaryColor: null, // Will trigger vibe-based color generation
     outlineColor: "black",
     legCount: 4,
-    clawCount: 2,
+    clawCount: 0, // Default 0 — most creatures don't have claws
     hasAntenna: false,
   };
 }
@@ -1046,23 +1125,34 @@ export async function generateMascot(input: MascotInput): Promise<MascotOutput> 
     const legCount = input.legCount ?? parsed.legCount;
     const clawCount = input.clawCount ?? parsed.clawCount;
     const hasAntenna = input.hasAntenna ?? parsed.hasAntenna;
-    input.primaryColor = input.primaryColor || parsed.primaryColor;
+    
+    // COLOR: Use provided, or parsed, or generate unique color from vibe
+    if (!input.primaryColor && !parsed.primaryColor) {
+      console.log(`      Generating unique color from vibe...`);
+      input.primaryColor = await generateColorFromVibe(input.prompt || "", creature);
+    } else {
+      input.primaryColor = input.primaryColor || parsed.primaryColor;
+    }
     input.outlineColor = input.outlineColor || parsed.outlineColor;
     
-    // Create anatomy schema
-    anatomy = createAnatomySchema(creature, {
-      arms: { count: clawCount, type: "claws", description: `${clawCount} claws` },
-      legs: { count: legCount, type: "legs", description: `${legCount} tiny legs` },
-      face: { 
-        eyes: "large kawaii eyes with highlight",
-        mouth: "small friendly smile",
-        extras: hasAntenna ? ["antenna on head"] : undefined,
-      },
-    });
+    // Create anatomy schema from PRESET (not from parsed clawCount which might be wrong)
+    anatomy = createAnatomySchema(creature, {});
+    
+    // Override with explicit inputs if provided
+    if (input.clawCount !== undefined) {
+      anatomy.arms = { count: input.clawCount, type: anatomy.arms.type, description: anatomy.arms.description };
+    }
+    if (input.legCount !== undefined) {
+      anatomy.legs = { count: input.legCount, type: anatomy.legs.type, description: anatomy.legs.description };
+    }
+    if (hasAntenna) {
+      anatomy.face.extras = [...(anatomy.face.extras || []), "antenna on head"];
+    }
     
     console.log(`      Creature: ${creature}`);
-    console.log(`      Anatomy: ${clawCount} claws, ${legCount} legs`);
-    console.log(`      Color: ${input.primaryColor}`);
+    console.log(`      Anatomy: ${anatomy.arms.count} ${anatomy.arms.type}, ${anatomy.legs.count} ${anatomy.legs.type}`);
+    console.log(`      Color: ${input.primaryColor} (${input.primaryColor === parsed.primaryColor ? 'from prompt' : 'generated'})`);
+    console.log(`      Creature features: ${anatomy.extras?.join(", ") || "default"}`);
   } else {
     // MODE 2: Expression sheet from locked master - anatomy MUST be provided
     if (!input.legCount) {
