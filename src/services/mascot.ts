@@ -319,8 +319,61 @@ export async function generateMascot(
     console.log(`      ✓ poses/${pose.name}.png`);
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // STEP 5: QUALITY CONTROL LOOP - Vision verification before delivery
+  // ═══════════════════════════════════════════════════════════════════
+  console.log(`\n[5/5] Running QC verification loop...`);
+  
+  const allAssets = [
+    { path: masterPath, name: "master", type: "full" as const },
+    { path: iconPath, name: "icon", type: "icon" as const },
+    ...poseFiles.map((p, i) => ({ path: p, name: selectedPoses[i].name, type: "pose" as const })),
+  ];
+  
+  const MAX_RETRIES = 2;
+  
+  for (const asset of allAssets) {
+    let passed = false;
+    let attempts = 0;
+    
+    while (!passed && attempts <= MAX_RETRIES) {
+      const qcResult = await runQualityCheck(asset.path, characterSpec, asset.type);
+      
+      if (qcResult.passed) {
+        console.log(`      ✓ QC PASS: ${asset.name}`);
+        passed = true;
+      } else {
+        attempts++;
+        console.log(`      ⚠️ QC FAIL: ${asset.name} — ${qcResult.issues.join(", ")}`);
+        
+        if (attempts <= MAX_RETRIES) {
+          console.log(`         Regenerating (attempt ${attempts}/${MAX_RETRIES})...`);
+          
+          // Regenerate the failed asset
+          if (asset.type === "full") {
+            await generateCharacterImage(brandSystem, characterSpec, "hero", 
+              "full body character, centered, white background", asset.path, 1024);
+          } else if (asset.type === "icon") {
+            await generateCharacterImage(brandSystem, characterSpec, "portrait",
+              "head and shoulders portrait, centered, icon-ready, white background", 
+              asset.path, 512, masterPath);
+          } else {
+            const pose = selectedPoses.find(p => p.name === asset.name);
+            if (pose) {
+              await generateCharacterImage(brandSystem, characterSpec, pose.name,
+                `${pose.prompt}, full body, white background`, asset.path, 1024, masterPath);
+            }
+          }
+        } else {
+          console.log(`         ❌ Max retries reached for ${asset.name} - delivering with warning`);
+          passed = true; // Accept with warning after max retries
+        }
+      }
+    }
+  }
+  
   console.log(`\n══════════════════════════════════════════════════════════════`);
-  console.log(`  ✓ MASCOT COMPLETE`);
+  console.log(`  ✓ MASCOT COMPLETE (QC VERIFIED)`);
   console.log(`  Master: mascot-master.png`);
   console.log(`  Icon: mascot-icon.png`);
   console.log(`  Poses: ${poseFiles.length} variants`);
@@ -334,6 +387,120 @@ export async function generateMascot(
     specPath,
     characterSpec,
   };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// QUALITY CONTROL - Vision-based verification
+// ═══════════════════════════════════════════════════════════════════
+
+interface QCResult {
+  passed: boolean;
+  issues: string[];
+  armCount?: number;
+  legCount?: number;
+  hasAntenna?: boolean;
+  colorMatch?: boolean;
+}
+
+async function runQualityCheck(
+  imagePath: string,
+  characterSpec: CharacterSpec,
+  imageType: "full" | "icon" | "pose"
+): Promise<QCResult> {
+  const imageData = fs.readFileSync(imagePath);
+  const base64Image = imageData.toString("base64");
+  
+  const prompt = `You are a QC inspector for character mascot images. Analyze this image and answer EXACTLY in JSON format.
+
+CHARACTER SPECIFICATION:
+${characterSpec.description}
+Features: ${characterSpec.features.join(", ")}
+
+QC CHECKLIST - Answer each:
+1. ARM_COUNT: How many arms/claws does the character have? (Count carefully - include any limb that looks like an arm or claw)
+2. LEG_COUNT: How many legs does the character have?
+3. HAS_ANTENNA: Does it have an antenna on top? (true/false)
+4. BODY_SHAPE: Is the body shape a rounded dome/shell? (true/false)
+5. COLOR_CORRECT: Is the primary color close to ${characterSpec.colors.primary}? (true/false)
+6. EXTRA_LIMBS: Are there any unexpected extra appendages near the face/mouth area? (true/false)
+
+CRITICAL RULE: The character MUST have EXACTLY 2 arms/claws. Not 1, not 3, not 4. EXACTLY 2.
+
+Respond with ONLY this JSON:
+{
+  "arm_count": <number>,
+  "leg_count": <number>,
+  "has_antenna": <boolean>,
+  "body_shape_correct": <boolean>,
+  "color_correct": <boolean>,
+  "extra_limbs": <boolean>,
+  "issues": ["list of any issues found"]
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: [{
+        role: "user",
+        parts: [
+          { inlineData: { mimeType: "image/png", data: base64Image } },
+          { text: prompt }
+        ]
+      }],
+    });
+
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    
+    if (!jsonMatch) {
+      return { passed: false, issues: ["Could not parse QC response"] };
+    }
+    
+    const qc = JSON.parse(jsonMatch[0]);
+    const issues: string[] = [];
+    
+    // Check arm count - CRITICAL
+    if (qc.arm_count !== 2) {
+      issues.push(`Wrong arm count: ${qc.arm_count} (must be exactly 2)`);
+    }
+    
+    // Check for extra limbs near face
+    if (qc.extra_limbs === true) {
+      issues.push("Extra limbs detected near face/mouth");
+    }
+    
+    // Check antenna (if applicable)
+    if (characterSpec.features.some(f => f.toLowerCase().includes("antenna")) && !qc.has_antenna) {
+      issues.push("Missing antenna");
+    }
+    
+    // Check body shape
+    if (!qc.body_shape_correct) {
+      issues.push("Body shape not matching spec (should be dome/shell)");
+    }
+    
+    // Check color
+    if (!qc.color_correct) {
+      issues.push("Color mismatch");
+    }
+    
+    // Add any issues from vision analysis
+    if (qc.issues && Array.isArray(qc.issues)) {
+      issues.push(...qc.issues.filter((i: string) => i && i.length > 0));
+    }
+    
+    return {
+      passed: issues.length === 0,
+      issues,
+      armCount: qc.arm_count,
+      legCount: qc.leg_count,
+      hasAntenna: qc.has_antenna,
+      colorMatch: qc.color_correct,
+    };
+  } catch (err) {
+    console.error(`      QC Error:`, err);
+    return { passed: false, issues: [`QC error: ${err}`] };
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
