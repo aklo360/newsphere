@@ -407,6 +407,7 @@ https://github.com/aklo360/openGFX.git
 ### Version History
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.5.0 | 2025-02-19 | Added Brand Mascot service ($5, 6 poses) |
 | 1.4.0 | 2025-02-17 | Added On-Brand GFX service ($2/graphic) |
 | 1.3.0 | 2025-02-17 | Added x402 direct API integration alongside ACP |
 | 1.2.1 | 2025-02-17 | BYOL mode, AI brand naming |
