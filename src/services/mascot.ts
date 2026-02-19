@@ -260,7 +260,20 @@ function computeBgColor(primaryColor: string): { hex: string; name: string } {
 }
 
 function buildMasterPromptFromBrief(brief: CreativeBrief, brandName: string): string {
+  const isElephant = brief.creature.toLowerCase().includes("elephant");
+  
+  const elephantBlock = isElephant ? `
+🐘🐘🐘 CRITICAL ELEPHANT ANATOMY — NEVER VIOLATE 🐘🐘🐘
+• The TRUNK is the extended NOSE
+• The MOUTH must be BELOW or BESIDE where the trunk meets the face
+• A mouth ABOVE the trunk is ANATOMICALLY IMPOSSIBLE
+• The mouth is a small opening under/beside where the trunk attaches to face
+• NEVER put a smile/mouth ABOVE the trunk — this is INSTANT REJECTION
+🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘
+` : "";
+
   return `Create a 2D FLAT mascot character in Discord Wumpus / Duolingo owl style.
+${elephantBlock}
 
 ╔══════════════════════════════════════════════════════════════════╗
 ║  🎨 CREATIVE BRIEF FROM DIRECTOR                                  ║
@@ -329,9 +342,22 @@ function buildExpressionPrompt(
     : computeBgColor(color);
   
   // Include creature-specific expression notes if available
+  const isElephant = brief?.creature?.toLowerCase().includes("elephant") || 
+                     anatomy.creature.toLowerCase().includes("elephant");
+  
+  const elephantWarning = isElephant ? `
+🐘🐘🐘 CRITICAL ELEPHANT ANATOMY — NEVER VIOLATE 🐘🐘🐘
+• The TRUNK is the extended NOSE
+• The MOUTH must be BELOW or BESIDE where the trunk meets the face
+• A mouth ABOVE the trunk is ANATOMICALLY IMPOSSIBLE
+• When laughing/smiling: mouth opens UNDER the trunk, trunk can flip UP
+• NEVER put a smile/mouth ABOVE the trunk — this is INSTANT REJECTION
+🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘🐘
+` : "";
+  
   const expressionGuidance = brief?.expressionNotes 
-    ? `\n\n🐾 CREATURE-SPECIFIC EXPRESSION NOTES:\n${brief.expressionNotes}\nFollow these anatomical guidelines for how this creature shows emotions.\n`
-    : "";
+    ? `\n\n🐾 CREATURE-SPECIFIC EXPRESSION NOTES:\n${brief.expressionNotes}\nFollow these anatomical guidelines for how this creature shows emotions.\n${elephantWarning}`
+    : elephantWarning;
   
   return `Transform this character to show a new EXPRESSION. Body stays IDENTICAL.
 ${expressionGuidance}
@@ -528,6 +554,13 @@ THE BRIEF: "${creatureDesc}"
 3. All facial features in correct anatomical positions
 4. Body structure matches master (same character)
 
+🐘 ELEPHANT-SPECIFIC ANATOMY (if this is an elephant):
+- The TRUNK is the extended NOSE
+- The MOUTH must be BELOW or BESIDE the trunk base (where trunk meets face)
+- A mouth ABOVE the trunk is ANATOMICALLY IMPOSSIBLE — INSTANT REJECT
+- The mouth should be a small opening under/beside where the trunk attaches
+- This is the #1 elephant mistake — CHECK CAREFULLY
+
 MUST-HAVE FEATURES:
 ${mustHaveFeatures.map(f => `• ${f}`).join("\n") || "• (none specified)"}
 
@@ -556,10 +589,11 @@ Respond with ONLY this JSON:
   "mouth_on_face": <boolean>,
   "eyes_on_face": <boolean>,
   "anatomy_correct": <boolean>,
+  "elephant_mouth_below_trunk": <boolean or null if not elephant>,
   "eye_color_matches": <boolean>,
   "body_matches_master": <boolean>,
   "design_elements_match": <boolean>,
-  "issues": ["list any problems - BE SPECIFIC about missing patterns/textures"]
+  "issues": ["list any problems - BE SPECIFIC about anatomy errors like mouth-above-trunk"]
 }`
     : `You are a Creative Director doing STRICT QC on a mascot design.
 
@@ -570,6 +604,13 @@ THE BRIEF: "${creatureDesc}"
 2. EYES must be on the FACE (not elsewhere!)
 3. All facial features in correct anatomical positions
 4. Character looks like what was requested
+
+🐘 ELEPHANT-SPECIFIC ANATOMY (if this is an elephant):
+- The TRUNK is the extended NOSE
+- The MOUTH must be BELOW or BESIDE the trunk base (where trunk meets face)
+- A mouth ABOVE the trunk is ANATOMICALLY IMPOSSIBLE — INSTANT REJECT
+- The mouth should be a small opening under/beside where the trunk attaches
+- This is the #1 elephant mistake — CHECK CAREFULLY
 
 MUST-HAVE FEATURES:
 ${mustHaveFeatures.map(f => `• ${f}`).join("\n") || "• (none specified)"}
@@ -585,10 +626,11 @@ Respond with ONLY this JSON:
   "mouth_on_face": <boolean>,
   "eyes_on_face": <boolean>,
   "anatomy_correct": <boolean>,
+  "elephant_mouth_below_trunk": <boolean or null if not elephant>,
   "what_i_see": "<describe what this appears to be>",
   "features_present": ["list features visible"],
   "features_missing": ["list missing features"],
-  "issues": ["list any problems - BE SPECIFIC about anatomy errors"]
+  "issues": ["list any problems - BE SPECIFIC about anatomy errors like mouth-above-trunk"]
 }`;
 
   try {
@@ -624,6 +666,11 @@ Respond with ONLY this JSON:
     }
     if (qc.anatomy_correct === false) {
       issues.push("ANATOMY ERROR: Facial features misplaced");
+    }
+    
+    // 🐘 ELEPHANT-SPECIFIC: Mouth must be BELOW trunk, never above
+    if (qc.elephant_mouth_below_trunk === false) {
+      issues.push("ELEPHANT ANATOMY ERROR: Mouth is ABOVE the trunk — must be BELOW/BESIDE where trunk meets face");
     }
     
     // BRIEF MATCH CHECK
