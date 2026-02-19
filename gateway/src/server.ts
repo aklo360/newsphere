@@ -20,6 +20,7 @@ import cors from "cors";
 import { config } from "dotenv";
 import { spawn } from "child_process";
 import path from "path";
+import fs from "fs";
 import { createJob, getJob, updateJob, listJobs, listJobsByWallet, type Job, type JobType } from "./jobs.js";
 import { settlePayment as settleEvmPayment } from "./settlement.js";
 import { settleSolanaPayment } from "./settlement-solana.js";
@@ -280,6 +281,14 @@ async function handlePaymentRequest(
     gfxPrompt?: string;
     aspectRatio?: string;
     logoUrl?: string;
+    // Mascot-specific
+    characterType?: string;
+    mascotStyle?: string;
+    personality?: string;
+    features?: string;
+    poses?: number;
+    primaryColor?: string;
+    secondaryColor?: string;
   }
 ) {
   const priceUsd = PRICING[jobType];
