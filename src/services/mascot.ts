@@ -538,6 +538,10 @@ Also check:
 ☐ Eye color IDENTICAL to master
 ☐ Body position identical to master (except for pose-specific changes)
 ☐ Facial features are ON THE FACE, not misplaced
+☐ ALL DESIGN ELEMENTS match master (patterns, textures, accessories)
+☐ Ear patterns/textures IDENTICAL to master
+☐ Body markings/patterns IDENTICAL to master
+☐ Any special features (circuit boards, stripes, spots) PRESERVED
 
 Respond with ONLY this JSON:
 {
@@ -547,7 +551,8 @@ Respond with ONLY this JSON:
   "anatomy_correct": <boolean>,
   "eye_color_matches": <boolean>,
   "body_matches_master": <boolean>,
-  "issues": ["list any problems - BE SPECIFIC about anatomy errors"]
+  "design_elements_match": <boolean>,
+  "issues": ["list any problems - BE SPECIFIC about missing patterns/textures"]
 }`
     : `You are a Creative Director doing STRICT QC on a mascot design.
 
@@ -632,6 +637,11 @@ Respond with ONLY this JSON:
     // Body consistency (expressions only)
     if (checkEyeColor && qc.body_matches_master === false) {
       issues.push("Body position changed from master");
+    }
+    
+    // Design element consistency (expressions only) — patterns, textures, accessories
+    if (checkEyeColor && qc.design_elements_match === false) {
+      issues.push("DESIGN MISMATCH: Patterns/textures/accessories don't match master (e.g., missing ear patterns, lost stripes)");
     }
     
     // Add any issues from vision
