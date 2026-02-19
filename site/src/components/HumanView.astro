@@ -24,6 +24,45 @@ const pricing = [
   { service: 'On-Brand GFX', price: '$2', desc: 'Marketing GFX, announcements, updates, daily content' },
 ];
 
+const offerings = [
+  {
+    id: 'logo',
+    icon: '🎨',
+    name: 'Logo System',
+    price: '$5',
+    tagline: 'Complete logo identity from a single prompt',
+    description: "Describe your brand concept and we'll generate a full logo system. Brand name is optional — AI will create one if you don't have one yet.",
+    outputs: ['Icon (1024×1024)', 'Wordmark', 'Stacked lockup', 'Horizontal lockup', 'brand-system.json'],
+  },
+  {
+    id: 'mascot',
+    icon: '🎭',
+    name: 'Brand Mascot',
+    price: '$5',
+    tagline: '6-pose expression sheet for your character',
+    description: 'Generate a kawaii 2D mascot with consistent anatomy across all expressions. Perfect for Discord, Slack, social media, and brand personality.',
+    outputs: ['Master pose', 'Wave', 'Happy', 'Sad', 'Angry', 'Laugh'],
+  },
+  {
+    id: 'social',
+    icon: '📱',
+    name: 'Social Assets',
+    price: '$5',
+    tagline: 'Avatar and banners for every platform',
+    description: 'Generate social media assets from your brand system, or bring your own logo (BYOL). AI extracts colors and creates matching assets.',
+    outputs: ['Avatar (1024px)', 'ACP avatar (400px)', 'Twitter banner', 'OG card', 'Community banner'],
+  },
+  {
+    id: 'gfx',
+    icon: '✨',
+    name: 'On-Brand GFX',
+    price: '$2',
+    tagline: 'Marketing graphics on demand',
+    description: 'Generate on-brand graphics for announcements, launches, milestones, features, hiring posts, and daily content. Any aspect ratio.',
+    outputs: ['Single graphic', 'Any aspect ratio'],
+  },
+];
+
 ---
 
 <div id="human-view" class="persona-content" data-visible="true">
@@ -130,6 +169,40 @@ const pricing = [
           <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
         </svg>
       </button>
+    </div>
+
+    <!-- Our Services -->
+    <div class="pb-20 md:pb-28">
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-4 tracking-tight">Our Services</h2>
+      <p class="text-center text-gray-500 mb-12">Four design services, all powered by AI.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        {offerings.map((offering) => (
+          <div class="bg-white rounded-2xl border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <span class="text-3xl">{offering.icon}</span>
+                <div>
+                  <h3 class="font-bold text-lg text-gray-900">{offering.name}</h3>
+                  <p class="text-sm text-gray-500">{offering.tagline}</p>
+                </div>
+              </div>
+              <span class="text-xl font-bold text-cyan-600">{offering.price}</span>
+            </div>
+            
+            <p class="text-sm text-gray-600 mb-4 leading-relaxed">{offering.description}</p>
+            
+            <div>
+              <div class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Output</div>
+              <div class="flex flex-wrap gap-1.5">
+                {offering.outputs.map((output) => (
+                  <span class="inline-block px-2.5 py-1 bg-gray-100 rounded-full text-xs text-gray-600">{output}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
 
     <!-- Pricing -->
