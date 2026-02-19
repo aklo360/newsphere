@@ -245,61 +245,7 @@ const EXPRESSION_PROMPTS: Record<ExpressionPose, string> = {
 // PROMPT BUILDERS
 // ═══════════════════════════════════════════════════════════════════
 
-/**
- * Generate a unique color palette based on prompt/creature vibe.
- * FULLY DYNAMIC — AI interprets the vibe and suggests a color.
- */
-async function generateColorFromVibe(prompt: string, creature: string): Promise<string> {
-  const colorPrompt = `You are a brand color expert. Generate a single hex color code for a mascot.
-
-MASCOT REQUEST: "${prompt}"
-CREATURE TYPE: ${creature}
-
-Consider:
-- What colors suit this type of creature/character?
-- What vibe does the request give off? (playful, professional, edgy, cute, etc.)
-- What would make this mascot memorable and unique?
-
-DO NOT use generic defaults. Be creative and specific to this request.
-Avoid overused colors like plain blue (#0000FF) or red (#FF0000).
-
-Respond with ONLY a hex color code, nothing else. Example: #8B5CF6`;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: TEXT_MODEL,
-      contents: [{ role: "user", parts: [{ text: colorPrompt }] }],
-    });
-
-    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const hexMatch = text.match(/#[0-9A-Fa-f]{6}/);
-    
-    if (hexMatch) {
-      return hexMatch[0].toUpperCase();
-    }
-  } catch (err) {
-    console.error("[color] Failed to generate color from AI:", err);
-  }
-  
-  // Fallback: generate a random vibrant color
-  const hue = Math.floor(Math.random() * 360);
-  const sat = 70 + Math.floor(Math.random() * 20); // 70-90%
-  const light = 50 + Math.floor(Math.random() * 15); // 50-65%
-  return hslToHex(hue, sat, light);
-}
-
-// Helper: Convert HSL to Hex
-function hslToHex(h: number, s: number, l: number): string {
-  s /= 100;
-  l /= 100;
-  const a = s * Math.min(l, 1 - l);
-  const f = (n: number) => {
-    const k = (n + h / 30) % 12;
-    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-    return Math.round(255 * color).toString(16).padStart(2, '0');
-  };
-  return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
-}
+// Color is now handled by the Creative Brief — no separate function needed
 
 // Compute a soft pastel background from primary color
 function computeBgColor(primaryColor: string): { hex: string; name: string } {
@@ -312,65 +258,33 @@ function computeBgColor(primaryColor: string): { hex: string; name: string } {
   return { hex: newHex, name: "soft pastel" };
 }
 
-function buildMasterPrompt(input: MascotInput, anatomy: AnatomySchema): string {
-  const creature = input.creature || anatomy.creature || "mascot";
-  const color = input.primaryColor || "#5865F2";
-  const outline = input.outlineColor || "black";
-  
-  // LEARNINGS: Never use white background, compute complementary color
-  const bg = input.bgColor 
-    ? { hex: input.bgColor, name: "custom" }
-    : computeBgColor(color);
-  
+function buildMasterPromptFromBrief(brief: CreativeBrief, brandName: string): string {
   return `Create a 2D FLAT mascot character in Discord Wumpus / Duolingo owl style.
 
 ╔══════════════════════════════════════════════════════════════════╗
-║  🚨 USER REQUEST — FOLLOW THIS EXACTLY 🚨                         ║
+║  🎨 CREATIVE BRIEF FROM DIRECTOR                                  ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-BRAND: ${input.brandName}
-${input.prompt ? `
-USER'S CONCEPT (THIS IS THE BIBLE — FOLLOW IT):
-${input.prompt}
+BRAND: ${brandName}
+CREATURE: ${brief.creature}
+MOOD: ${brief.moodAndVibe}
 
-The mascot MUST match what the user described above.
-If they said "elephant" → it must look like an elephant with trunk and big ears.
-If they said "robotic" → it must look mechanical/robotic.
-Interpret their request intelligently and create exactly what they asked for.
-` : ""}
+${brief.imagePrompt}
 
 ╔══════════════════════════════════════════════════════════════════╗
-║  SIMPLICITY IS PARAMOUNT — GOLDEN RULE                           ║
+║  MUST-HAVE FEATURES (NON-NEGOTIABLE)                              ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-THE RULE OF ONE: Pick ONE interesting visual element, not many.
-- Target: 40-50% complexity — SIMPLE, CLEAN, MEMORABLE
-- Think Apple, Stripe, Discord — minimalist elegance
-- Can a child draw this from memory? (should be yes)
-- Must be recognizable at 32x32px
+${brief.mustHaveFeatures.map(f => `• ${f}`).join("\n")}
+
+${brief.styleNotes ? `STYLE NOTES: ${brief.styleNotes}` : ""}
 
 ╔══════════════════════════════════════════════════════════════════╗
-║  LINE WEIGHT CONSISTENCY — #1 PRIORITY                           ║
-║  LINE WEIGHT CONSISTENCY — #1 PRIORITY                           ║
 ║  LINE WEIGHT CONSISTENCY — #1 PRIORITY                           ║
 ╚══════════════════════════════════════════════════════════════════╝
 
 Every single outline must be the EXACT SAME THICKNESS.
-- NO thin lines anywhere
-- NO thick lines anywhere  
-- UNIFORM stroke width throughout entire character
-- This is NON-NEGOTIABLE
-
-⚠️⚠️⚠️ CREATURE ANATOMY — USE YOUR KNOWLEDGE ⚠️⚠️⚠️
-
-${anatomy.body.description ? `DESCRIPTION: ${anatomy.body.description}` : ""}
-${anatomy.extras && anatomy.extras.length > 0 ? `
-KEY FEATURES THAT MUST BE PRESENT:
-${anatomy.extras.map(f => `• ${f}`).join("\n")}
-` : ""}
-
-Use your knowledge of what a ${creature} looks like to create accurate anatomy.
-The mascot must be INSTANTLY RECOGNIZABLE as a ${creature}.
+UNIFORM stroke width throughout entire character.
 
 🎨 STYLE:
 - 2D FLAT illustration with glossy highlights
@@ -478,15 +392,36 @@ ${EXPRESSION_PROMPTS[pose]}
 // ═══════════════════════════════════════════════════════════════════
 
 async function generateMasterImage(
-  input: MascotInput,
-  anatomy: AnatomySchema,
+  brief: CreativeBrief,
+  brandName: string,
   outputPath: string
 ): Promise<void> {
-  const prompt = buildMasterPrompt(input, anatomy);
+  // Build the full prompt from the creative brief
+  const basePrompt = buildMasterPromptFromBrief(brief, brandName);
+  
+  const fullPrompt = `${basePrompt}
+
+🎨 COLORS:
+• Body: ${brief.primaryColor}
+• ALL LINEWORK: ${brief.outlineColor}
+• Highlights: White glossy spots
+• Eyes: Large round with white catchlight
+
+📐 TECHNICAL (CRITICAL):
+• Size: SQUARE 1024x1024 pixels
+• Background: Solid flat ${brief.backgroundColor}
+• Character centered, filling 70-80% of frame
+• FRONT-FACING view only
+
+❌ FORBIDDEN:
+- NO text, wordmarks, or letters
+- NO realistic style
+- NO busy backgrounds
+- NO gradients in body fill`;
   
   const response = await ai.models.generateContent({
     model: IMAGE_MODEL,
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
     },
@@ -496,7 +431,6 @@ async function generateMasterImage(
   for (const part of parts) {
     if (part.inlineData?.data) {
       const buffer = Buffer.from(part.inlineData.data, "base64");
-      // LEARNINGS: Use cover fit to preserve full frame, 1024x1024
       await sharp(buffer)
         .resize(1024, 1024, { fit: "cover" })
         .png()
@@ -565,7 +499,7 @@ async function verifyAnatomy(
   anatomy: AnatomySchema,
   masterPath?: string,
   pose?: string,
-  originalPrompt?: string
+  brief?: CreativeBrief | null
 ): Promise<PoseQC> {
   const imageData = fs.readFileSync(imagePath);
   const base64Image = imageData.toString("base64");
@@ -574,54 +508,57 @@ async function verifyAnatomy(
   const checkEyeColor = masterPath && pose && pose !== "master";
   const masterData = checkEyeColor ? fs.readFileSync(masterPath).toString("base64") : null;
   
-  // FULLY DYNAMIC QC — no hardcoded creature knowledge
+  // Build QC criteria from the creative brief
+  const mustHaveFeatures = brief?.mustHaveFeatures || [];
+  const qcCriteria = brief?.qcCriteria || ["has eyes", "has mouth", "front-facing"];
+  const creatureDesc = brief?.creatureDescription || anatomy.creature;
+  
+  // CREATIVE DIRECTOR QC — criteria comes from the brief
   const prompt = checkEyeColor 
-    ? `You are a QC inspector verifying mascot quality and eye color consistency.
+    ? `You are a Creative Director reviewing a mascot expression.
 
-IMAGE 1 (MASTER): Reference image
+IMAGE 1 (MASTER): Reference image  
 IMAGE 2 (EXPRESSION): Image to verify
 
-${originalPrompt ? `ORIGINAL USER REQUEST: "${originalPrompt}"` : `CREATURE TYPE: ${anatomy.creature}`}
+THE BRIEF: "${creatureDesc}"
 
-INSTRUCTIONS:
-1. Does the mascot match what was requested? Would someone immediately recognize it?
-2. Check if IMAGE 2 is front-facing
-3. Compare EYE COLOR between IMAGE 1 and IMAGE 2 - must be IDENTICAL
-4. Check line weight consistency
-5. Are eyes and mouth visible?
+MUST-HAVE FEATURES:
+${mustHaveFeatures.map(f => `• ${f}`).join("\n") || "• (none specified)"}
+
+REVIEW CHECKLIST:
+${qcCriteria.map(c => `☐ ${c}`).join("\n")}
+
+Also check:
+☐ Eye color IDENTICAL to master
+☐ Body position identical to master
+☐ Only face changed
 
 Respond with ONLY this JSON:
 {
-  "looks_like_requested": <boolean>,
-  "what_it_looks_like": "<describe what creature/thing this appears to be>",
-  "front_facing": <boolean>,
-  "line_weight_consistent": <boolean>,
-  "has_eyes": <boolean>,
-  "has_mouth": <boolean>,
+  "matches_brief": <boolean>,
   "eye_color_matches": <boolean>,
-  "master_eye_color": "<color>",
-  "expression_eye_color": "<color>",
+  "body_matches_master": <boolean>,
   "issues": ["list any problems"]
 }`
-    : `You are a QC inspector verifying mascot quality. BE STRICT but fair.
+    : `You are a Creative Director reviewing a mascot design.
 
-${originalPrompt ? `ORIGINAL USER REQUEST: "${originalPrompt}"` : `CREATURE TYPE: ${anatomy.creature}`}
+THE BRIEF: "${creatureDesc}"
 
-INSTRUCTIONS:
-1. Does this mascot match what was requested?
-2. Would someone immediately recognize what it's supposed to be?
-3. Is it front-facing?
-4. Are lines consistent weight?
-5. Are eyes and mouth visible?
+MUST-HAVE FEATURES:
+${mustHaveFeatures.map(f => `• ${f}`).join("\n") || "• (none specified)"}
 
-Think about what the user ASKED FOR and whether this delivers that.
+REVIEW CHECKLIST:
+${qcCriteria.map(c => `☐ ${c}`).join("\n")}
 
-Respond with ONLY this JSON (no other text):
+Does this mascot match the brief? Be honest but fair.
+
+Respond with ONLY this JSON:
 {
-  "looks_like_requested": <boolean>,
-  "what_it_looks_like": "<describe what creature/thing this appears to be>",
-  "identifying_features_found": ["list key features visible"],
-  "front_facing": <boolean>,
+  "matches_brief": <boolean>,
+  "what_i_see": "<describe what this appears to be>",
+  "features_present": ["list features visible"],
+  "features_missing": ["list missing features"],
+  "issues": ["list any problems"]
 }`;
 
   try {
@@ -648,32 +585,24 @@ Respond with ONLY this JSON (no other text):
     const qc = JSON.parse(jsonMatch[0]);
     const issues: string[] = [];
     
-    // CREATURE/REQUEST MATCH CHECK — most important
-    if (qc.looks_like_requested === false) {
-      issues.push(`Does not match request: looks like "${qc.what_it_looks_like || "unknown"}"`);
+    // BRIEF MATCH CHECK — most important
+    if (qc.matches_brief === false) {
+      issues.push(`Does not match brief: looks like "${qc.what_i_see || "unknown"}"`);
     }
     
-    // Check view
-    if (!qc.front_facing) {
-      issues.push("Not front-facing view");
+    // Missing features
+    if (qc.features_missing && Array.isArray(qc.features_missing) && qc.features_missing.length > 0) {
+      issues.push(`Missing features: ${qc.features_missing.join(", ")}`);
     }
     
-    // Check line weight
-    if (!qc.line_weight_consistent) {
-      issues.push("Inconsistent line weight");
-    }
-    
-    // Check face
-    if (!qc.has_eyes) {
-      issues.push("Missing eyes");
-    }
-    if (!qc.has_mouth) {
-      issues.push("Missing mouth");
-    }
-    
-    // Check eye color consistency (for expressions only)
+    // Eye color consistency (expressions only)
     if (checkEyeColor && qc.eye_color_matches === false) {
-      issues.push(`Eye color mismatch: master=${qc.master_eye_color}, expression=${qc.expression_eye_color}`);
+      issues.push("Eye color doesn't match master");
+    }
+    
+    // Body consistency (expressions only)
+    if (checkEyeColor && qc.body_matches_master === false) {
+      issues.push("Body position changed from master");
     }
     
     // Add any issues from vision
@@ -683,8 +612,6 @@ Respond with ONLY this JSON (no other text):
     
     return {
       passed: issues.length === 0,
-      legCount: qc.leg_count,
-      clawCount: qc.claw_count,
       issues,
       attempts: 1,
     };
@@ -715,45 +642,85 @@ function uploadToCdn(
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// PARSE INPUT PROMPT - Extract creature, color, anatomy from natural language
+// CREATIVE BRIEF — The AI acts as a Creative Director
+// Makes ALL creative decisions holistically for each unique job
 // ═══════════════════════════════════════════════════════════════════
 
-async function parseInputPrompt(prompt: string, brandName: string): Promise<{
+interface CreativeBrief {
+  // What we're making
   creature: string;
-  creatureDescription: string;  // AI's description of what this creature should look like
-  keyFeatures: string[];        // AI-determined key identifying features
-  primaryColor: string | null;  // null if not specified → will generate from vibe
+  creatureDescription: string;
+  
+  // Visual identity
+  primaryColor: string;
+  backgroundColor: string;
   outlineColor: string;
-}> {
-  const parsePrompt = `You are interpreting a mascot request. Use your general knowledge to understand what the user wants.
+  
+  // Key features that MUST be present
+  mustHaveFeatures: string[];
+  
+  // Style decisions
+  styleNotes: string;
+  moodAndVibe: string;
+  
+  // The final prompt to send to the image model
+  imagePrompt: string;
+  
+  // For QC - what should we check for?
+  qcCriteria: string[];
+}
 
-REQUEST: "${prompt}"
-BRAND: "${brandName}"
+async function createCreativeBrief(prompt: string, brandName: string): Promise<CreativeBrief> {
+  const briefPrompt = `You are a Creative Director at a top design agency. A client just gave you a mascot brief.
 
-Your job:
-1. Identify what creature/character they want
-2. Use your knowledge to describe what this creature SHOULD look like
-3. List the KEY FEATURES that make this creature recognizable
-4. Only extract color if EXPLICITLY mentioned
+CLIENT REQUEST: "${prompt}"
+BRAND NAME: "${brandName}"
 
-For example:
-- "cute elephant" → elephant with trunk, big floppy ears, 4 legs, no arms
-- "robotic owl" → owl shape with mechanical elements, big eyes, beak, wings
-- "friendly crab mascot" → crab with shell, 2 claws, small legs
+Your job is to make ALL creative decisions for this mascot. Think holistically:
+
+1. CREATURE INTERPRETATION
+   - What exactly should this creature/character be?
+   - What does this creature ACTUALLY look like? (Use your real-world knowledge)
+   - What are the MUST-HAVE features that make it recognizable?
+
+2. COLOR DECISIONS  
+   - What primary color fits this brand/creature/vibe?
+   - What background color complements it?
+   - Consider: brand personality, creature type, emotional response
+
+3. STYLE & MOOD
+   - What's the vibe? (playful, professional, edgy, cute, etc.)
+   - Any special style notes for this specific mascot?
+
+4. IMAGE PROMPT
+   - Write the EXACT prompt you'd give to an image AI
+   - Be specific about anatomy, colors, style, composition
+   - Include everything needed to generate this mascot correctly
+
+5. QC CRITERIA
+   - What should we check to verify the output is correct?
+   - List the specific things that MUST be present
+
+Think like a creative director who deeply understands both design AND the client's needs.
 
 RESPOND WITH ONLY THIS JSON:
 {
-  "creature": "<what type of creature/thing>",
-  "creatureDescription": "<describe what this creature should look like based on your knowledge - be specific about body parts, anatomy, distinguishing features>",
-  "keyFeatures": ["<list 3-5 KEY features that MUST be present for this to be recognizable as this creature>"],
-  "primaryColor": "<#hexcode if explicitly mentioned, otherwise null>",
-  "outlineColor": "<outline color, default black>"
+  "creature": "<creature type>",
+  "creatureDescription": "<detailed description of what this creature looks like - anatomy, features, distinguishing characteristics>",
+  "primaryColor": "<#hexcode - your creative choice based on the brief>",
+  "backgroundColor": "<#hexcode - complementary background>",
+  "outlineColor": "<#hexcode or 'black'>",
+  "mustHaveFeatures": ["<feature 1>", "<feature 2>", "..."],
+  "styleNotes": "<specific style guidance for this mascot>",
+  "moodAndVibe": "<the emotional feel this mascot should convey>",
+  "imagePrompt": "<the complete, detailed prompt for generating this mascot as a 2D kawaii-style character>",
+  "qcCriteria": ["<what to check 1>", "<what to check 2>", "..."]
 }`;
 
   try {
     const response = await ai.models.generateContent({
       model: TEXT_MODEL,
-      contents: [{ role: "user", parts: [{ text: parsePrompt }] }],
+      contents: [{ role: "user", parts: [{ text: briefPrompt }] }],
     });
 
     const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
@@ -763,25 +730,33 @@ RESPOND WITH ONLY THIS JSON:
       const parsed = JSON.parse(jsonMatch[0]);
       return {
         creature: parsed.creature || "mascot",
-        creatureDescription: parsed.creatureDescription || "",
-        keyFeatures: parsed.keyFeatures || [],
-        primaryColor: (parsed.primaryColor && parsed.primaryColor !== "null" && parsed.primaryColor.startsWith("#")) 
-          ? parsed.primaryColor 
-          : null,
+        creatureDescription: parsed.creatureDescription || prompt,
+        primaryColor: parsed.primaryColor || "#8B5CF6",
+        backgroundColor: parsed.backgroundColor || "#F3E8FF",
         outlineColor: parsed.outlineColor || "black",
+        mustHaveFeatures: parsed.mustHaveFeatures || [],
+        styleNotes: parsed.styleNotes || "",
+        moodAndVibe: parsed.moodAndVibe || "friendly and approachable",
+        imagePrompt: parsed.imagePrompt || prompt,
+        qcCriteria: parsed.qcCriteria || [],
       };
     }
   } catch (err) {
-    console.error("[parse] Failed to parse prompt:", err);
+    console.error("[brief] Failed to create creative brief:", err);
   }
   
-  // Fallback — let the image model interpret directly
+  // Fallback — minimal brief, let image model figure it out
   return {
     creature: "mascot",
-    creatureDescription: prompt, // Pass through the original prompt
-    keyFeatures: [],
-    primaryColor: null,
+    creatureDescription: prompt,
+    primaryColor: "#8B5CF6",
+    backgroundColor: "#F3E8FF", 
     outlineColor: "black",
+    mustHaveFeatures: [],
+    styleNotes: "2D kawaii style like Discord Wumpus",
+    moodAndVibe: "friendly",
+    imagePrompt: prompt,
+    qcCriteria: ["has eyes", "has mouth", "recognizable as requested"],
   };
 }
 
@@ -799,66 +774,72 @@ export async function generateMascot(input: MascotInput): Promise<MascotOutput> 
   fs.mkdirSync(baseDir, { recursive: true });
   
   console.log(`\n══════════════════════════════════════════════════════════════`);
-  console.log(`  OpenGFX Mascot Generator (Unified)`);
+  console.log(`  OpenGFX Mascot Generator`);
   console.log(`  Brand: ${input.brandName}`);
+  console.log(`  Mode: Creative Director`);
   console.log(`══════════════════════════════════════════════════════════════\n`);
   
-  // Determine anatomy
+  // Store the creative brief for QC
+  let brief: CreativeBrief | null = null;
   let anatomy: AnatomySchema;
   
-  // Store original prompt for QC
-  let originalPrompt = input.prompt;
-  
   if (input.prompt && !input.masterUrl && !input.masterPath) {
-    // MODE 1: Generate from prompt - AI interprets what the creature should look like
-    console.log(`[1/6] Parsing input prompt...`);
-    const parsed = await parseInputPrompt(input.prompt, input.brandName);
+    // ═══════════════════════════════════════════════════════════════
+    // MODE 1: CREATIVE DIRECTOR MODE
+    // AI makes ALL creative decisions holistically for this specific job
+    // ═══════════════════════════════════════════════════════════════
     
-    const creature = input.creature || parsed.creature;
+    console.log(`[1/6] Creative Director analyzing brief...`);
+    brief = await createCreativeBrief(input.prompt, input.brandName);
     
-    // COLOR: Use provided, or parsed, or generate unique color from vibe
-    if (!input.primaryColor && !parsed.primaryColor) {
-      console.log(`      Generating unique color from vibe...`);
-      input.primaryColor = await generateColorFromVibe(input.prompt || "", creature);
-    } else {
-      input.primaryColor = input.primaryColor || parsed.primaryColor;
-    }
-    input.outlineColor = input.outlineColor || parsed.outlineColor;
+    // Apply user overrides if provided
+    if (input.primaryColor) brief.primaryColor = input.primaryColor;
+    if (input.bgColor) brief.backgroundColor = input.bgColor;
+    if (input.outlineColor) brief.outlineColor = input.outlineColor;
     
-    // Create anatomy schema with AI-interpreted description
-    // NO PRESETS — anatomy comes entirely from AI interpretation
-    anatomy = createAnatomySchema(creature, {
-      body: { type: "body", description: parsed.creatureDescription || `${creature} body` },
-      extras: parsed.keyFeatures.length > 0 ? parsed.keyFeatures : undefined,
+    console.log(`\n      ┌─────────────────────────────────────────────────`);
+    console.log(`      │ CREATIVE BRIEF`);
+    console.log(`      ├─────────────────────────────────────────────────`);
+    console.log(`      │ Creature: ${brief.creature}`);
+    console.log(`      │ Vibe: ${brief.moodAndVibe}`);
+    console.log(`      │ Color: ${brief.primaryColor}`);
+    console.log(`      │ Background: ${brief.backgroundColor}`);
+    console.log(`      │ Must-have: ${brief.mustHaveFeatures.slice(0, 3).join(", ")}`);
+    console.log(`      └─────────────────────────────────────────────────\n`);
+    
+    // Create anatomy schema from brief
+    anatomy = createAnatomySchema(brief.creature, {
+      body: { type: "body", description: brief.creatureDescription },
+      extras: brief.mustHaveFeatures,
     });
     
-    console.log(`      Creature: ${creature}`);
-    console.log(`      AI Description: ${parsed.creatureDescription?.slice(0, 100)}...`);
-    console.log(`      Key Features: ${parsed.keyFeatures.join(", ") || "AI will determine"}`);
-    console.log(`      Color: ${input.primaryColor} (${parsed.primaryColor ? 'from prompt' : 'generated'})`);
+    // Set colors from brief
+    input.primaryColor = brief.primaryColor;
+    input.bgColor = brief.backgroundColor;
+    input.outlineColor = brief.outlineColor;
+    
   } else {
-    // MODE 2: Expression sheet from locked master - anatomy MUST be provided
+    // ═══════════════════════════════════════════════════════════════
+    // MODE 2: EXPRESSION SHEET MODE (locked master)
+    // ═══════════════════════════════════════════════════════════════
+    
     if (!input.legCount) {
       throw new Error("legCount is REQUIRED when using locked master (expression sheet mode)");
     }
     
     const creature = input.creature || "mascot";
     anatomy = createAnatomySchema(creature, {
-      arms: { count: input.clawCount || 2, type: "claws", description: `${input.clawCount || 2} claws` },
-      legs: { count: input.legCount, type: "legs", description: `${input.legCount} tiny legs` },
-      face: { 
-        eyes: "large kawaii eyes with highlight",
-        mouth: "small friendly smile",
-        extras: input.hasAntenna ? ["antenna on head"] : undefined,
-      },
+      arms: { count: input.clawCount || 0, type: "appendages", description: "as shown in master" },
+      legs: { count: input.legCount, type: "legs", description: "as shown in master" },
     });
     
-    console.log(`[1/6] Using locked master with anatomy:`);
-    console.log(`      Claws: ${anatomy.arms.count}`);
-    console.log(`      Legs: ${anatomy.legs.count}`);
+    console.log(`[1/6] Expression sheet mode (locked master)`);
   }
   
-  // Save anatomy
+  // Save brief and anatomy
+  const briefPath = path.join(baseDir, "creative-brief.json");
+  if (brief) fs.writeFileSync(briefPath, JSON.stringify(brief, null, 2));
+  
   const anatomyPath = path.join(baseDir, "anatomy.json");
   fs.writeFileSync(anatomyPath, JSON.stringify(anatomy, null, 2));
   
@@ -878,7 +859,8 @@ export async function generateMascot(input: MascotInput): Promise<MascotOutput> 
     await sharp(masterImageData).resize(1024, 1024, { fit: "cover" }).png().toFile(masterPath);
   } else {
     console.log(`[2/6] Generating master image...`);
-    await generateMasterImage(input, anatomy, masterPath);
+    if (!brief) throw new Error("Creative brief required for master generation");
+    await generateMasterImage(brief, input.brandName, masterPath);
     masterImageData = fs.readFileSync(masterPath);
   }
   console.log(`      ✓ master.png`);
@@ -901,8 +883,8 @@ export async function generateMascot(input: MascotInput): Promise<MascotOutput> 
       
       await generateExpressionImage(masterImageData, input, anatomy, pose, posePath);
       
-      // Run QC (includes anatomy + eye color consistency)
-      const qcResult = await verifyAnatomy(posePath, anatomy, masterPath, pose);
+      // Run QC using creative brief criteria
+      const qcResult = await verifyAnatomy(posePath, anatomy, masterPath, pose, brief);
       qcResult.attempts = attempts;
       
       if (qcResult.passed) {
@@ -923,9 +905,9 @@ export async function generateMascot(input: MascotInput): Promise<MascotOutput> 
     localPaths[pose] = posePath;
   }
   
-  // QC master too
+  // QC master too using creative brief criteria
   console.log(`[4/6] QC verification on master...`);
-  const masterQc = await verifyAnatomy(masterPath, anatomy);
+  const masterQc = await verifyAnatomy(masterPath, anatomy, undefined, undefined, brief);
   qcReport.poses["master"] = masterQc;
   if (!masterQc.passed) {
     console.log(`      ⚠️ Master QC issues: ${masterQc.issues.join(", ")}`);
