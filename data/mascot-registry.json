@@ -1,0 +1,24 @@
+{
+  "mascots": [
+    {
+      "brand": "Disclaw",
+      "creature": "crab",
+      "primaryColor": "#5865F2",
+      "colorName": "blurple",
+      "createdAt": "2025-02-18"
+    },
+    {
+      "brand": "Nox",
+      "creature": "owl",
+      "primaryColor": "#8B5CF6",
+      "colorName": "purple",
+      "createdAt": "2025-02-19"
+    }
+  ],
+  "takenCombos": [
+    "crab-blurple",
+    "crab-#5865F2",
+    "owl-purple",
+    "owl-#8B5CF6"
+  ]
+}

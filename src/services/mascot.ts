@@ -651,8 +651,9 @@ interface CreativeBrief {
   creature: string;
   creatureDescription: string;
   
-  // Visual identity
-  primaryColor: string;
+  // Visual identity (UNIQUE per brand)
+  colorName: string;      // Human-readable: "coral", "teal", "lavender"
+  primaryColor: string;   // Hex code
   backgroundColor: string;
   outlineColor: string;
   
@@ -670,11 +671,45 @@ interface CreativeBrief {
   qcCriteria: string[];
 }
 
+// Load mascot registry to ensure uniqueness
+function loadMascotRegistry(): { mascots: Array<{ brand: string; creature: string; primaryColor: string; colorName: string }>; takenCombos: string[] } {
+  const registryPath = path.join(__dirname, "..", "..", "data", "mascot-registry.json");
+  try {
+    if (fs.existsSync(registryPath)) {
+      return JSON.parse(fs.readFileSync(registryPath, "utf-8"));
+    }
+  } catch (err) {
+    console.error("[registry] Failed to load:", err);
+  }
+  return { mascots: [], takenCombos: [] };
+}
+
+function saveMascotRegistry(registry: { mascots: Array<{ brand: string; creature: string; primaryColor: string; colorName: string; createdAt: string }>; takenCombos: string[] }): void {
+  const registryPath = path.join(__dirname, "..", "..", "data", "mascot-registry.json");
+  fs.mkdirSync(path.dirname(registryPath), { recursive: true });
+  fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2));
+}
+
 async function createCreativeBrief(prompt: string, brandName: string): Promise<CreativeBrief> {
+  // Load existing mascots to ensure uniqueness
+  const registry = loadMascotRegistry();
+  const existingMascots = registry.mascots.map(m => `${m.creature} (${m.colorName}) for ${m.brand}`).join("\n");
+  
   const briefPrompt = `You are a Creative Director designing a MASCOT character.
 
 CLIENT REQUEST: "${prompt}"
 BRAND NAME: "${brandName}"
+
+═══════════════════════════════════════════════════════════════════
+⚠️ UNIQUENESS IS CRITICAL — NO DUPLICATE MASCOTS
+═══════════════════════════════════════════════════════════════════
+
+These mascots ALREADY EXIST (DO NOT create similar ones):
+${existingMascots || "(none yet)"}
+
+RULE: Each brand needs a UNIQUE mascot. If an existing mascot is a 
+purple owl, do NOT make another purple owl. Choose a different color
+OR a different creature. No two brands should look similar.
 
 ═══════════════════════════════════════════════════════════════════
 MASCOT RULES (STANDARD FOR ALL MASCOTS)
@@ -699,12 +734,12 @@ YOUR CREATIVE DECISIONS
 1. CREATURE IDENTITY
    - What creature/character is this?
    - What are the KEY FEATURES that make it recognizable?
-   - (elephant = trunk + big ears, owl = big eyes + beak, etc.)
 
-2. COLOR PALETTE
-   - Primary body color (creative choice based on vibe)
-   - Background color (complementary)
-   - Consider: brand personality, emotional response
+2. COLOR PALETTE (MUST BE UNIQUE!)
+   - Pick a color that NO existing mascot uses for this creature type
+   - If someone already has a purple elephant, use blue/green/orange/etc.
+   - Be creative — the color should fit the brand vibe
+   - Also include a colorName (e.g., "coral", "teal", "lavender")
 
 3. STYLE & MOOD
    - What vibe? (playful, techy, friendly, edgy, cute?)
@@ -714,7 +749,7 @@ YOUR CREATIVE DECISIONS
    - Write the EXACT prompt for the image AI
    - Remember: 2 legs, 2 arms, standing upright, kawaii style
    - Include creature's identifying features
-   - Specify colors, style, composition
+   - Specify the UNIQUE color
 
 5. QC CRITERIA
    - What must be present to verify it's correct?
@@ -722,8 +757,9 @@ YOUR CREATIVE DECISIONS
 RESPOND WITH ONLY THIS JSON:
 {
   "creature": "<creature type>",
+  "colorName": "<human-readable color name like 'coral', 'teal', 'mint'>",
   "creatureDescription": "<as a mascot: standing upright on 2 legs, 2 arms, plus identifying features>",
-  "primaryColor": "<#hexcode>",
+  "primaryColor": "<#hexcode - UNIQUE, not used by similar mascots>",
   "backgroundColor": "<#hexcode>",
   "outlineColor": "<#hexcode or 'black'>",
   "mustHaveFeatures": ["stands on 2 legs", "has 2 arms", "<creature-specific feature>", "..."],
@@ -746,6 +782,7 @@ RESPOND WITH ONLY THIS JSON:
       const parsed = JSON.parse(jsonMatch[0]);
       return {
         creature: parsed.creature || "mascot",
+        colorName: parsed.colorName || "custom",
         creatureDescription: parsed.creatureDescription || prompt,
         primaryColor: parsed.primaryColor || "#8B5CF6",
         backgroundColor: parsed.backgroundColor || "#F3E8FF",
@@ -764,6 +801,7 @@ RESPOND WITH ONLY THIS JSON:
   // Fallback — minimal brief, let image model figure it out
   return {
     creature: "mascot",
+    colorName: "purple",
     creatureDescription: prompt,
     primaryColor: "#8B5CF6",
     backgroundColor: "#F3E8FF", 
@@ -818,7 +856,7 @@ export async function generateMascot(input: MascotInput): Promise<MascotOutput> 
     console.log(`      ├─────────────────────────────────────────────────`);
     console.log(`      │ Creature: ${brief.creature}`);
     console.log(`      │ Vibe: ${brief.moodAndVibe}`);
-    console.log(`      │ Color: ${brief.primaryColor}`);
+    console.log(`      │ Color: ${brief.colorName} (${brief.primaryColor})`);
     console.log(`      │ Background: ${brief.backgroundColor}`);
     console.log(`      │ Must-have: ${brief.mustHaveFeatures.slice(0, 3).join(", ")}`);
     console.log(`      └─────────────────────────────────────────────────\n`);
@@ -947,6 +985,23 @@ export async function generateMascot(input: MascotInput): Promise<MascotOutput> 
     }
   } else {
     console.log(`[5/6] Skipping CDN upload (disabled)`);
+  }
+  
+  // Save to mascot registry for uniqueness tracking
+  if (brief && qcReport.passed) {
+    const registry = loadMascotRegistry();
+    const newEntry = {
+      brand: input.brandName,
+      creature: brief.creature,
+      primaryColor: brief.primaryColor,
+      colorName: brief.colorName || "custom",
+      createdAt: new Date().toISOString().split("T")[0],
+    };
+    registry.mascots.push(newEntry);
+    registry.takenCombos.push(`${brief.creature}-${brief.colorName}`);
+    registry.takenCombos.push(`${brief.creature}-${brief.primaryColor}`);
+    saveMascotRegistry(registry);
+    console.log(`[6/6] Registered mascot: ${brief.creature} (${brief.colorName}) for ${input.brandName}`);
   }
   
   // Final summary
