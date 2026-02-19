@@ -161,6 +161,41 @@ export const RENDER_STYLES = {
 export type RenderStyle = typeof RENDER_STYLES.presets[number];
 
 // ============================================================================
+// CREATIVE DIRECTOR MODE (NEW 2025-02-19)
+// ============================================================================
+
+export const CREATIVE_DIRECTOR_RULES = {
+  // ONE brief call makes ALL decisions
+  singleBriefCall: true,
+  
+  // AI generates the icon prompt dynamically
+  dynamicIconPrompt: true,
+  
+  // QC criteria defined per job
+  dynamicQC: true,
+  
+  // Registry for uniqueness
+  useRegistry: true,
+  
+  // Always include standard QC checks
+  standardQCCriteria: [
+    "Icon is recognizable at 32x32px",
+    "Single visual element (Rule of One)",
+    "Black on white only (no colors)",
+    "60-70% frame fill",
+  ],
+};
+
+export const BRIEF_MUST_INCLUDE = [
+  "iconConcept: 2-5 word concept",
+  "iconImagePrompt: Full prompt with all rules",
+  "mustHaveFeatures: What MUST be in the icon",
+  "qcCriteria: What to verify",
+  "mode: dark or light",
+  "renderStyle: For later stage",
+];
+
+// ============================================================================
 // EYE/PUPIL RULES
 // ============================================================================
 

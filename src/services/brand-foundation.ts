@@ -91,7 +91,7 @@ function hasDescenders(text: string): boolean {
   return descenderLetters.some(letter => text.includes(letter));
 }
 
-async function compositeStacked(outputDir: string): Promise<string> {
+export async function compositeStacked(outputDir: string): Promise<string> {
   const iconPath = path.join(outputDir, "icon.png");
   const wordmarkPath = path.join(outputDir, "wordmark.png");
   const outPath = path.join(outputDir, "stacked.png");
@@ -139,7 +139,7 @@ async function compositeStacked(outputDir: string): Promise<string> {
   return outPath;
 }
 
-async function compositeHorizontal(outputDir: string, brandName: string): Promise<string> {
+export async function compositeHorizontal(outputDir: string, brandName: string): Promise<string> {
   const iconPath = path.join(outputDir, "icon.png");
   const wordmarkPath = path.join(outputDir, "wordmark.png");
   const outPath = path.join(outputDir, "horizontal.png");

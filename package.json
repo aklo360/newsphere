@@ -7,6 +7,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "brand": "tsx src/cli/brand.ts",
+    "logo": "tsx src/cli/logo-v2.ts",
     "socials": "tsx src/cli/socials.ts",
     "gfx": "tsx src/cli/gfx.ts",
     "build": "tsc",
