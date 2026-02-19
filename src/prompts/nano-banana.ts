@@ -200,7 +200,7 @@ FINAL CHECK:
 // ═══════════════════════════════════════════════════════════════════
 
 export const POSE_EMOTE_MAP: Record<string, EmoteStyle> = {
-  hero: "determined",
+  hero: "friendly",      // Clean happy smile, not tough guy
   wave: "waving",
   thinking: "thinking",
   celebrate: "excited",
