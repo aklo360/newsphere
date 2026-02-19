@@ -671,50 +671,66 @@ interface CreativeBrief {
 }
 
 async function createCreativeBrief(prompt: string, brandName: string): Promise<CreativeBrief> {
-  const briefPrompt = `You are a Creative Director at a top design agency. A client just gave you a mascot brief.
+  const briefPrompt = `You are a Creative Director designing a MASCOT character.
 
 CLIENT REQUEST: "${prompt}"
 BRAND NAME: "${brandName}"
 
-Your job is to make ALL creative decisions for this mascot. Think holistically:
+═══════════════════════════════════════════════════════════════════
+MASCOT RULES (STANDARD FOR ALL MASCOTS)
+═══════════════════════════════════════════════════════════════════
 
-1. CREATURE INTERPRETATION
-   - What exactly should this creature/character be?
-   - What does this creature ACTUALLY look like? (Use your real-world knowledge)
-   - What are the MUST-HAVE features that make it recognizable?
+Mascots are ANTHROPOMORPHIZED characters, NOT realistic animals:
+• STANDS UPRIGHT on TWO LEGS (like a human)
+• HAS TWO ARMS (can wave, hold things, gesture)
+• EXPRESSIVE FACE (big eyes, can smile/frown/laugh)
+• KAWAII/CUTE STYLE (think Discord Wumpus, Duolingo owl)
+• FRONT-FACING, friendly, approachable
 
-2. COLOR DECISIONS  
-   - What primary color fits this brand/creature/vibe?
-   - What background color complements it?
-   - Consider: brand personality, creature type, emotional response
+Even if the creature is normally a 4-legged animal (elephant, dog, cat):
+→ As a MASCOT, it stands on 2 legs and has 2 arms
+→ Keep the creature's IDENTIFYING FEATURES (elephant trunk, cat ears, etc.)
+→ But make it CHARACTER-like, not animal-like
+
+═══════════════════════════════════════════════════════════════════
+YOUR CREATIVE DECISIONS
+═══════════════════════════════════════════════════════════════════
+
+1. CREATURE IDENTITY
+   - What creature/character is this?
+   - What are the KEY FEATURES that make it recognizable?
+   - (elephant = trunk + big ears, owl = big eyes + beak, etc.)
+
+2. COLOR PALETTE
+   - Primary body color (creative choice based on vibe)
+   - Background color (complementary)
+   - Consider: brand personality, emotional response
 
 3. STYLE & MOOD
-   - What's the vibe? (playful, professional, edgy, cute, etc.)
-   - Any special style notes for this specific mascot?
+   - What vibe? (playful, techy, friendly, edgy, cute?)
+   - Any special elements? (robotic, magical, sporty?)
 
 4. IMAGE PROMPT
-   - Write the EXACT prompt you'd give to an image AI
-   - Be specific about anatomy, colors, style, composition
-   - Include everything needed to generate this mascot correctly
+   - Write the EXACT prompt for the image AI
+   - Remember: 2 legs, 2 arms, standing upright, kawaii style
+   - Include creature's identifying features
+   - Specify colors, style, composition
 
 5. QC CRITERIA
-   - What should we check to verify the output is correct?
-   - List the specific things that MUST be present
-
-Think like a creative director who deeply understands both design AND the client's needs.
+   - What must be present to verify it's correct?
 
 RESPOND WITH ONLY THIS JSON:
 {
   "creature": "<creature type>",
-  "creatureDescription": "<detailed description of what this creature looks like - anatomy, features, distinguishing characteristics>",
-  "primaryColor": "<#hexcode - your creative choice based on the brief>",
-  "backgroundColor": "<#hexcode - complementary background>",
+  "creatureDescription": "<as a mascot: standing upright on 2 legs, 2 arms, plus identifying features>",
+  "primaryColor": "<#hexcode>",
+  "backgroundColor": "<#hexcode>",
   "outlineColor": "<#hexcode or 'black'>",
-  "mustHaveFeatures": ["<feature 1>", "<feature 2>", "..."],
-  "styleNotes": "<specific style guidance for this mascot>",
-  "moodAndVibe": "<the emotional feel this mascot should convey>",
-  "imagePrompt": "<the complete, detailed prompt for generating this mascot as a 2D kawaii-style character>",
-  "qcCriteria": ["<what to check 1>", "<what to check 2>", "..."]
+  "mustHaveFeatures": ["stands on 2 legs", "has 2 arms", "<creature-specific feature>", "..."],
+  "styleNotes": "<style guidance>",
+  "moodAndVibe": "<emotional feel>",
+  "imagePrompt": "<complete prompt emphasizing mascot standing upright with 2 arms, 2 legs, plus creature features>",
+  "qcCriteria": ["standing upright on 2 legs", "has 2 arms", "<creature-specific check>", "..."]
 }`;
 
   try {
