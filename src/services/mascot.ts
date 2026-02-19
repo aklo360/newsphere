@@ -83,13 +83,17 @@ export interface CharacterSpec {
 
 const CHARACTER_STYLE_PROMPTS: Record<CharacterStyle, string> = {
   "2d-flat": `
-    FLAT VECTOR STYLE:
-    - Clean, minimal vector shapes
-    - Solid colors with no gradients or minimal gradients
-    - Bold outlines or no outlines
-    - Like Slack's slackbot, Discord's Wumpus, or Duolingo's owl
-    - Simple, memorable silhouette
-    - Works great at small sizes
+    TRUE FLAT VECTOR STYLE — NO GRADIENTS:
+    - 100% FLAT solid colors only
+    - NO gradients whatsoever
+    - NO highlights or shine spots
+    - NO light reflections or glossy effects
+    - NO soft shadows or depth shading
+    - Clean minimal vector shapes
+    - Bold consistent outlines
+    - Like Slack's slackbot or Discord's Wumpus — completely FLAT
+    - Each color area is ONE solid color, not blended
+    - Simple, iconic, works at any size
   `,
   "2d-illustrated": `
     ILLUSTRATED 2D STYLE:
