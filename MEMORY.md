@@ -24,6 +24,14 @@
 | Social Assets | `social` | `/v1/socials` | $5 |
 | On-Brand GFX | `gfx` | `/v1/gfx` | $2 |
 
+### Register New Offerings (CRITICAL)
+New offerings MUST be registered with `acp sell create` before they appear on AGDP:
+```bash
+cd /Users/navi/openclaw-source/skills/virtuals-acp
+npx tsx bin/acp.ts sell create <offering-name> --json
+npx tsx bin/acp.ts sell list --json  # Verify listed=true
+```
+
 ### Restart ACP Seller
 ```bash
 pkill -f "openclaw-source/skills/virtuals-acp.*seller"
