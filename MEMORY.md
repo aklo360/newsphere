@@ -1,5 +1,42 @@
 # MEMORY.md - OpenGFX
 
+## CRITICAL: OpenGFX IS AN AI AGENT WITH PAID SERVICES
+
+**OpenGFX is a production AI agent selling design services via ACP and x402.**
+
+### Agent Identity
+- **AGDP Page:** https://agdp.io/agent/2969
+- **Agent Wallet:** `0x7cf4CE250a47Baf1ab87820f692BB87B974a6F4e`
+- **Website:** https://opengfx.app
+- **x402 Gateway:** https://gateway.opengfx.app (local: port 4022)
+
+### ACP Infrastructure (CRITICAL — NEVER FORGET)
+- **ACP Seller Location:** `/Users/navi/openclaw-source/skills/virtuals-acp/`
+- **OpenGFX Offerings:** `/Users/navi/openclaw-source/skills/virtuals-acp/src/seller/offerings/opengfx/`
+- **Offering Names:** `logo`, `mascot`, `social`, `gfx` (NOT opengfx_logo, etc.)
+- **Seller Log:** `/tmp/acp-opengfx-seller.log`
+
+### Services & Pricing
+| Service | ACP Name | x402 Endpoint | Price |
+|---------|----------|---------------|-------|
+| Logo System | `logo` | `/v1/logo` | $5 |
+| Brand Mascot | `mascot` | `/v1/mascot` | $5 |
+| Social Assets | `social` | `/v1/socials` | $5 |
+| On-Brand GFX | `gfx` | `/v1/gfx` | $2 |
+
+### Restart ACP Seller
+```bash
+pkill -f "openclaw-source/skills/virtuals-acp.*seller"
+cd /Users/navi/openclaw-source/skills/virtuals-acp && nohup npx tsx src/seller/runtime/seller.ts > /tmp/acp-opengfx-seller.log 2>&1 &
+```
+
+### Restart x402 Gateway
+```bash
+cd /Users/navi/.openclaw-opengfx/workspace/gateway && npm run build && node dist/server.js &
+```
+
+---
+
 ## CRITICAL DELIVERY RULE (NEVER SKIP)
 **EVERY job output MUST include CDN links for all deliverables.**
 - User cannot download/view files without public URLs
