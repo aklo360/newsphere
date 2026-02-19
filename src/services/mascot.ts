@@ -727,9 +727,7 @@ function uploadToCdn(
       `wrangler r2 object put opengfx-assets/${cdnKey} --file "${localPath}" --content-type "image/png" --remote`,
       { cwd: opengfxDir, stdio: "pipe" }
     );
-    // Cache-busting: add timestamp so Telegram/Discord always fetch fresh previews
-    const cacheBust = Date.now();
-    return `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${cdnKey}?v=${cacheBust}`;
+    return `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${cdnKey}`;
   } catch (err) {
     console.error(`[upload] Failed to upload ${cdnKey}:`, err);
     return "";
@@ -1081,13 +1079,14 @@ export async function generateMascot(input: MascotInput): Promise<MascotOutput> 
     console.log(`      ✓ Master QC PASS`);
   }
   
-  // Upload to CDN
+  // Upload to CDN with versioned directory (cache-busting for Telegram/Discord)
   const urls: Record<string, string> = {};
+  const cdnVersion = Date.now(); // Unique version for this generation
   
   if (input.uploadToCdn !== false) {
     console.log(`[5/6] Uploading to CDN...`);
     for (const pose of EXPRESSION_POSES) {
-      const cdnKey = `${brandSlug}/mascot/FINAL/${pose}.png`;
+      const cdnKey = `${brandSlug}/mascot/v${cdnVersion}/${pose}.png`;
       const url = uploadToCdn(localPaths[pose], cdnKey, opengfxDir);
       urls[pose] = url;
       if (url) {
