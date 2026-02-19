@@ -20,6 +20,13 @@
       "primaryColor": "#FFC72C",
       "colorName": "Citrine",
       "createdAt": "2026-02-19"
+    },
+    {
+      "brand": "LLPhant",
+      "creature": "Robotic Elephant",
+      "primaryColor": "#2ab0ed",
+      "colorName": "Cerulean",
+      "createdAt": "2026-02-19"
     }
   ],
   "takenCombos": [
@@ -28,6 +35,8 @@
     "owl-purple",
     "owl-#8B5CF6",
     "Robotic Elephant-Citrine",
-    "Robotic Elephant-#FFC72C"
+    "Robotic Elephant-#FFC72C",
+    "Robotic Elephant-Cerulean",
+    "Robotic Elephant-#2ab0ed"
   ]
 }

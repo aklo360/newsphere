@@ -216,6 +216,14 @@ BIRD ANATOMY:
 
 ## Mascot Generation Rules (CRITICAL — LOCKED 2025-02-19)
 
+### Anatomy QC (CRITICAL — Added 2025-02-19)
+QC now checks facial feature placement with instant-fail fields:
+- `mouth_on_face: boolean` — Mouth must be ON THE FACE (not belly!)
+- `eyes_on_face: boolean` — Eyes must be ON THE FACE
+- `anatomy_correct: boolean` — Overall facial feature placement
+
+The "belly mouth" bug (sad expression with mouth drawn on body) is now caught and rejected.
+
 ### Single-Pass Rendering (NEVER TWO-STEP)
 - **REQUEST SQUARE DIRECTLY** — tell Gemini "SQUARE 1:1 aspect ratio (1024x1024)" in the prompt
 - **NEVER** generate wide then resize/pad — this creates visible seams from mismatched background colors
