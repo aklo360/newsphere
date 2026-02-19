@@ -273,20 +273,21 @@ export async function generateMascot(
   );
   console.log(`      ✓ mascot-master.png (1024x1024)`);
 
-  // Step 3: Generate icon (head/bust)
+  // Step 3: Generate icon (head/bust) - USE MASTER AS REFERENCE
   console.log(`[3/4] Generating character icon...`);
   const iconPath = path.join(mascotDir, "mascot-icon.png");
   await generateCharacterImage(
     brandSystem,
     characterSpec,
     "portrait",
-    "head and shoulders portrait, centered, friendly expression, icon-ready, white/transparent background",
+    "head and shoulders portrait ONLY, centered, friendly expression, icon-ready, white/transparent background, SAME CHARACTER as reference",
     iconPath,
-    512
+    512,
+    masterPath  // Reference master for consistency
   );
   console.log(`      ✓ mascot-icon.png (512x512)`);
 
-  // Step 4: Generate pose variants
+  // Step 4: Generate pose variants - USE MASTER AS REFERENCE
   console.log(`[4/4] Generating pose variants...`);
   const poseFiles: string[] = [];
   const selectedPoses = POSE_VARIANTS.slice(0, Math.min(poses, POSE_VARIANTS.length));
@@ -297,9 +298,10 @@ export async function generateMascot(
       brandSystem,
       characterSpec,
       pose.name,
-      `${pose.prompt}, full body, white/transparent background`,
+      `${pose.prompt}, full body, white/transparent background, EXACT SAME CHARACTER as reference image - only change pose`,
       posePath,
-      1024
+      1024,
+      masterPath  // Reference master for consistency
     );
     poseFiles.push(posePath);
     console.log(`      ✓ poses/${pose.name}.png`);
@@ -337,7 +339,7 @@ async function generateCharacterSpec(
   const brandName = brand?.name || altBrandName || "Brand";
   const tagline = brand?.tagline || altTagline || "";
 
-  const prompt = `You are a character designer creating a brand mascot/character.
+  const prompt = `You are a character designer creating a brand mascot/character. Your spec will be used to generate MULTIPLE CONSISTENT images, so be EXTREMELY SPECIFIC about anatomy.
 
 BRAND CONTEXT:
 - Name: ${brandName}
@@ -352,19 +354,25 @@ CHARACTER REQUIREMENTS:
 - Personality: ${personality}
 - Specific Features: ${features || "None specified"}
 
-Generate a detailed character specification in JSON format:
+Generate a HYPER-DETAILED character specification in JSON format:
 {
-  "description": "2-3 sentence description of the character",
-  "features": ["list", "of", "key", "visual", "features"],
-  "designNotes": "Specific design guidance for consistent reproduction"
+  "description": "2-3 sentence description INCLUDING exact body structure (e.g., 'has exactly 2 arms/claws, 6 legs, round body')",
+  "features": [
+    "EXACT number of limbs (e.g., 'exactly 2 claws - one organic, one with subtle robotic details')",
+    "specific color placement",
+    "exact proportions",
+    "distinctive identifying marks",
+    "at least 5-7 specific visual features"
+  ],
+  "designNotes": "Include: exact limb count, which arm has what feature, color mapping, proportions. Be so specific that any artist could recreate this IDENTICALLY."
 }
 
-The character should:
-1. Embody the brand's personality and values
-2. Use the brand colors effectively
-3. Be memorable and distinctive
-4. Work well at various sizes (icon to full illustration)
-5. Be appropriate for ${characterType} style
+CRITICAL RULES FOR SPEC:
+1. ALWAYS specify EXACT limb count (never say 'multiple' or 'several')
+2. If one limb is different (robotic, etc.), specify WHICH one (left/right)
+3. Include head-to-body ratio
+4. Specify eye style and placement
+5. Note any asymmetric features precisely
 
 Respond with ONLY the JSON object, no other text.`;
 
@@ -404,7 +412,7 @@ Respond with ONLY the JSON object, no other text.`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// CHARACTER IMAGE GENERATION
+// CHARACTER IMAGE GENERATION (with reference-based consistency)
 // ═══════════════════════════════════════════════════════════════════
 
 async function generateCharacterImage(
@@ -413,58 +421,84 @@ async function generateCharacterImage(
   poseName: string,
   poseDescription: string,
   outputPath: string,
-  size: number
+  size: number,
+  referenceImagePath?: string  // Pass master image for pose variants
 ): Promise<void> {
   const stylePrompt = CHARACTER_STYLE_PROMPTS[characterSpec.style];
   const typePrompt = CHARACTER_TYPE_PROMPTS[characterSpec.characterType];
 
-  const prompt = `Create a character illustration.
+  // HYPER-SPECIFIC FRONT-LOADED PROMPT for consistency
+  const anatomyBlock = `
+⚠️ CRITICAL ANATOMY RULES — READ FIRST ⚠️
+- EXACTLY 2 arms/claws — NO MORE, NO LESS
+- NEVER add extra limbs or appendages
+- If one arm is robotic/mechanical, keep it SUBTLE (small circuit patterns, slight metallic sheen)
+- Maintain EXACT same body proportions in every pose
+- Same eye size, same head-to-body ratio, same colors
+- This character must be INSTANTLY recognizable across all poses
+`;
 
-CHARACTER SPECIFICATION:
+  const colorBlock = `
+EXACT COLORS (match precisely):
+- Body: ${characterSpec.colors.primary}
+- Highlights/Accent: ${characterSpec.colors.secondary}
+- Eyes/Details: White with ${characterSpec.colors.primary} pupils
+`;
+
+  const prompt = `${anatomyBlock}
+
+CHARACTER IDENTITY (DO NOT DEVIATE):
 ${characterSpec.description}
 
-Key Features:
-${characterSpec.features.map(f => `- ${f}`).join("\n")}
+VISUAL FEATURES (every image must have these):
+${characterSpec.features.map(f => `✓ ${f}`).join("\n")}
 
-Design Notes:
+DESIGN BIBLE:
 ${characterSpec.designNotes}
 
-COLOR PALETTE (use these colors):
-- Primary: ${characterSpec.colors.primary}
-- Secondary: ${characterSpec.colors.secondary}
-- Accent: ${characterSpec.colors.accent}
+${colorBlock}
 
-STYLE REQUIREMENTS:
+STYLE:
 ${stylePrompt}
 
-CHARACTER TYPE:
 ${typePrompt}
 
-POSE/COMPOSITION:
+POSE FOR THIS IMAGE:
 ${poseDescription}
 
-TECHNICAL REQUIREMENTS:
-- Output: ${size}x${size} pixels
-- Background: Clean white or transparent
-- Character should be centered and fill ~70% of the frame
-- High quality, production-ready
-- Consistent with brand identity
+TECHNICAL:
+- Size: ${size}x${size}px
+- Background: Pure white (#FFFFFF) or transparent
+- Character centered, filling ~70% of frame
+- Clean vector-style edges
+- Production-ready quality
 
-Create a premium, polished character that would fit a top-tier brand.`;
+${referenceImagePath ? "REFERENCE IMAGE PROVIDED — match this character EXACTLY, only change the pose." : ""}`;
+
+  // Build content parts
+  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
+  
+  // If we have a reference image, include it FIRST
+  if (referenceImagePath && fs.existsSync(referenceImagePath)) {
+    const refData = fs.readFileSync(referenceImagePath);
+    const base64Ref = refData.toString("base64");
+    parts.push({ inlineData: { mimeType: "image/png", data: base64Ref } });
+  }
+  
+  parts.push({ text: prompt });
 
   const response = await ai.models.generateContent({
     model: IMAGE_MODEL,
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
+    contents: [{ role: "user", parts }],
     config: {
       responseModalities: [Modality.TEXT, Modality.IMAGE],
     },
   });
 
-  const parts = response.candidates?.[0]?.content?.parts || [];
-  for (const part of parts) {
+  const responseParts = response.candidates?.[0]?.content?.parts || [];
+  for (const part of responseParts) {
     if (part.inlineData?.data) {
       const buffer = Buffer.from(part.inlineData.data, "base64");
-      // Ensure correct size
       await sharp(buffer)
         .resize(size, size, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 0 } })
         .png()
