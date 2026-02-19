@@ -195,20 +195,21 @@ const EXPRESSION_POSES: ExpressionPose[] = ["master", "wave", "happy", "sad", "a
 // ═══════════════════════════════════════════════════════════════════
 
 const EXPRESSION_PROMPTS: Record<ExpressionPose, string> = {
-  master: `EXPRESSION: Default friendly face
+  master: `EXPRESSION: Default IDLE pose - neutral, friendly
+• Arms: DOWN at sides (NOT waving, NOT raised)
 • Eyes: Large round eyes with white highlight spots - THIS IS THE CANONICAL EYE COLOR
-• Mouth: Small gentle smile - SAME BLACK as body outline (NOT blue, NOT different shade)
+• Mouth: Small gentle smile - anatomically correct position for this creature
 • This is the CANONICAL expression - all others derive from this
-• ⚠️ EYE COLOR MUST BE PRESERVED EXACTLY IN ALL OTHER POSES
-• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
+• IDLE POSE = relaxed, standing, arms at sides
+• ⚠️ EYE COLOR MUST BE PRESERVED EXACTLY IN ALL OTHER POSES`,
 
-  wave: `EXPRESSION: Friendly welcoming face (BODY UNCHANGED!)
-• Eyes: SAME COLOR AS MASTER - normal round eyes with standard white highlight dots (NO sparkles, NO stars)
-• Mouth: Open happy smile - SAME BLACK as body outline, pink tongue inside if open
+  wave: `EXPRESSION: Friendly welcoming - ONE ARM RAISED waving
+• Arms: ONE ARM UP waving hello (this is the wave pose!)
+• Eyes: SAME COLOR AS MASTER - happy, friendly
+• Mouth: Happy smile - keep anatomically correct for this creature
 • Blush: Optional light pink circles on cheeks
-• ⚠️ BODY STAYS EXACTLY THE SAME
-• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY
-• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
+• ⚠️ BODY SAME except one arm waves
+• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY`,
 
   happy: `EXPRESSION: Joyful closed-eye smile (^_^)
 • Eyes: Closed in happy curves like ^_^ or >_< anime happy eyes (sparkle stars allowed ONLY here)
@@ -290,44 +291,36 @@ UNIFORM stroke width throughout entire character.
 - 2D FLAT illustration with glossy highlights
 - Solid flat colors (NO gradients in body)
 - YES to white glossy highlight spots for dimension
-- Clean bold outlines in ${outline}
+- Clean bold outlines in ${brief.outlineColor}
 - Kawaii/cute aesthetic
 - Like Discord's Wumpus or Slack's slackbot
 
 🎨 COLORS:
-• Body: ${color}
-• ALL LINEWORK: ${outline} (body outline, mouth, eyebrows - ALL SAME COLOR)
+• Body: ${brief.primaryColor}
+• ALL LINEWORK: ${brief.outlineColor} (body outline, mouth, eyebrows - ALL SAME COLOR)
 • Highlights: White glossy spots
 • Eyes: Large, round, with white catchlight highlights
-• Mouth outline: ${outline} — SAME as body outline, NOT pink, NOT red, NOT different
-
-👀 FACE (REQUIRED):
-• Large expressive kawaii eyes with white highlight
-• Small friendly smile mouth — outline in ${outline.toUpperCase()} (SAME as body outline, NOT colored)
-• The character MUST have both eyes AND mouth visible
-• ⚠️ MOUTH LINEWORK = SAME ${outline.toUpperCase()} AS BODY OUTLINE
 
 📐 TECHNICAL (CRITICAL):
 • Size: SQUARE 1024x1024 pixels
-• Background: Solid flat ${bg.hex} ${bg.name} background filling the ENTIRE image
+• Background: Solid flat ${brief.backgroundColor}
 • Character centered, filling 70-80% of frame (~10-15% padding each side)
 • FRONT-FACING view only
 • Clean vector-quality edges
-• NO white background - use the specified colored background
 
 ❌ FORBIDDEN:
 - NO text, wordmarks, or letters
 - NO complex patterns or textures
 - NO realistic style
 - NO busy backgrounds
-- NO gradients in the body fill
-- NO extra limbs beyond specified count`;
+- NO gradients in the body fill`;
 }
 
 function buildExpressionPrompt(
   input: MascotInput,
   anatomy: AnatomySchema,
-  pose: ExpressionPose
+  pose: ExpressionPose,
+  brief?: CreativeBrief | null
 ): string {
   const color = input.primaryColor || "#5865F2";
   const outline = input.outlineColor || "black";
@@ -335,7 +328,13 @@ function buildExpressionPrompt(
     ? { hex: input.bgColor, name: "custom" }
     : computeBgColor(color);
   
+  // Include creature-specific expression notes if available
+  const expressionGuidance = brief?.expressionNotes 
+    ? `\n\n🐾 CREATURE-SPECIFIC EXPRESSION NOTES:\n${brief.expressionNotes}\nFollow these anatomical guidelines for how this creature shows emotions.\n`
+    : "";
+  
   return `Transform this character to show a new EXPRESSION. Body stays IDENTICAL.
+${expressionGuidance}
 
 ╔══════════════════════════════════════════════════════════════════╗
 ║  LINE WEIGHT CONSISTENCY — #1 PRIORITY                           ║
@@ -447,7 +446,8 @@ async function generateExpressionImage(
   input: MascotInput,
   anatomy: AnatomySchema,
   pose: ExpressionPose,
-  outputPath: string
+  outputPath: string,
+  brief?: CreativeBrief | null
 ): Promise<void> {
   if (pose === "master") {
     // Just copy the master
@@ -458,7 +458,7 @@ async function generateExpressionImage(
     return;
   }
   
-  const prompt = buildExpressionPrompt(input, anatomy, pose);
+  const prompt = buildExpressionPrompt(input, anatomy, pose, brief);
   
   const response = await ai.models.generateContent({
     model: IMAGE_MODEL,
@@ -664,7 +664,10 @@ interface CreativeBrief {
   styleNotes: string;
   moodAndVibe: string;
   
-  // The final prompt to send to the image model
+  // Creature-specific expression mechanics
+  expressionNotes: string;  // e.g., "elephant mouth under trunk, trunk flips up when happy"
+  
+  // The final prompt to send to the image model (IDLE pose)
   imagePrompt: string;
   
   // For QC - what should we check for?
@@ -758,6 +761,12 @@ YOUR CREATIVE DECISIONS
 5. QC CRITERIA
    - What must be present to verify it's correct?
 
+6. EXPRESSION NOTES (IMPORTANT!)
+   - How does THIS creature show emotions?
+   - Where is the mouth anatomically? (e.g., elephant mouth is UNDER the trunk)
+   - Any special expression mechanics? (e.g., elephant trunk can flip UP when happy/laughing)
+   - Think through how each expression would work for this specific creature
+
 RESPOND WITH ONLY THIS JSON:
 {
   "creature": "<creature type>",
@@ -769,7 +778,8 @@ RESPOND WITH ONLY THIS JSON:
   "mustHaveFeatures": ["<creature's key identifying features>", "expressive face", "..."],
   "styleNotes": "<style guidance>",
   "moodAndVibe": "<emotional feel>",
-  "imagePrompt": "<complete prompt for a cute kawaii mascot version of this creature>",
+  "expressionNotes": "<how this creature shows emotions - mouth position, any special mechanics like trunk movement>",
+  "imagePrompt": "<complete prompt for IDLE pose - arms DOWN at sides, neutral friendly face>",
   "qcCriteria": ["<what makes this creature recognizable>", "has expressive face", "..."]
 }`;
 
@@ -794,6 +804,7 @@ RESPOND WITH ONLY THIS JSON:
         mustHaveFeatures: parsed.mustHaveFeatures || [],
         styleNotes: parsed.styleNotes || "",
         moodAndVibe: parsed.moodAndVibe || "friendly and approachable",
+        expressionNotes: parsed.expressionNotes || "",
         imagePrompt: parsed.imagePrompt || prompt,
         qcCriteria: parsed.qcCriteria || [],
       };
@@ -813,6 +824,7 @@ RESPOND WITH ONLY THIS JSON:
     mustHaveFeatures: [],
     styleNotes: "2D kawaii style like Discord Wumpus",
     moodAndVibe: "friendly",
+    expressionNotes: "",
     imagePrompt: prompt,
     qcCriteria: ["has eyes", "has mouth", "recognizable as requested"],
   };
@@ -939,7 +951,7 @@ export async function generateMascot(input: MascotInput): Promise<MascotOutput> 
     while (!passed && attempts <= MAX_RETRIES) {
       attempts++;
       
-      await generateExpressionImage(masterImageData, input, anatomy, pose, posePath);
+      await generateExpressionImage(masterImageData, input, anatomy, pose, posePath, brief);
       
       // Run QC using creative brief criteria
       const qcResult = await verifyAnatomy(posePath, anatomy, masterPath, pose, brief);
