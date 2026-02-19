@@ -331,14 +331,16 @@ VERIFY BEFORE GENERATING:
 
 🎨 COLORS:
 • Body: ${color}
-• Outline/linework: ${outline}
+• ALL LINEWORK: ${outline} (body outline, mouth, eyebrows - ALL SAME COLOR)
 • Highlights: White glossy spots
 • Eyes: Large, round, with white catchlight highlights
+• Mouth outline: ${outline} — SAME as body outline, NOT pink, NOT red, NOT different
 
 👀 FACE (REQUIRED):
 • Large expressive kawaii eyes with white highlight
-• Small friendly smile mouth (DARK BLUE, same as linework)
+• Small friendly smile mouth — outline in ${outline.toUpperCase()} (SAME as body outline, NOT colored)
 • The character MUST have both eyes AND mouth visible
+• ⚠️ MOUTH LINEWORK = SAME ${outline.toUpperCase()} AS BODY OUTLINE
 
 📐 TECHNICAL (CRITICAL):
 • Size: SQUARE 1024x1024 pixels
@@ -400,7 +402,8 @@ ${EXPRESSION_PROMPTS[pose]}
 
 🎨 COLORS (MATCH EXACTLY):
 • Body: ${color}
-• Outline: ${outline}
+• ALL LINEWORK: ${outline} (body, mouth, eyebrows - ALL SAME)
+• Mouth outline: ${outline} — NOT pink, NOT red, NOT colored
 • All linework must match outline color
 
 📐 TECHNICAL:
@@ -415,7 +418,8 @@ ${EXPRESSION_PROMPTS[pose]}
 ☐ Front-facing view?
 ☐ Body position identical to reference?
 ☐ ONLY face/expression changed?
-☐ EYE COLOR IDENTICAL to master? (CRITICAL - no sparkles except happy)`;
+☐ EYE COLOR IDENTICAL to master? (CRITICAL - no sparkles except happy)
+☐ MOUTH LINEWORK same ${outline} as body outline? (NOT pink/red)`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
