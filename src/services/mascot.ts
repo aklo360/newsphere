@@ -205,9 +205,9 @@ export interface PoseQC {
 }
 
 // Standard expression poses (LOCKED - these are the ONLY poses)
-export type ExpressionPose = "master" | "wave" | "happy" | "sad" | "angry" | "laugh";
+export type ExpressionPose = "master" | "wave" | "happy" | "sad" | "angry" | "laugh" | "love" | "think" | "shocked" | "cool";
 
-const EXPRESSION_POSES: ExpressionPose[] = ["master", "wave", "happy", "sad", "angry", "laugh"];
+const EXPRESSION_POSES: ExpressionPose[] = ["master", "wave", "happy", "sad", "angry", "laugh", "love", "think", "shocked", "cool"];
 
 // ═══════════════════════════════════════════════════════════════════
 // EXPRESSION DEFINITIONS (FACE ONLY - BODY NEVER CHANGES)
@@ -256,6 +256,39 @@ const EXPRESSION_PROMPTS: Record<ExpressionPose, string> = {
 • Eyes: Squeezed shut in happy curves (>o< style, NOT X eyes)
 • Mouth: Wide open laughing - SAME BLACK as body outline, PINK tongue inside
 • Tears: Small tears of joy on both sides of face
+• ⚠️ BODY STAYS EXACTLY THE SAME
+• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
+
+  love: `EXPRESSION: In love / heart eyes
+• Eyes: SAME COLOR AS MASTER but with heart shapes OR heart sparkles around eyes
+• Mouth: Dreamy smile - SAME BLACK as body outline
+• Blush: Strong pink/red blush on cheeks
+• Optional: Small floating hearts nearby
+• ⚠️ BODY STAYS EXACTLY THE SAME
+• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY
+• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
+
+  think: `EXPRESSION: Thinking / pondering
+• Eyes: SAME COLOR AS MASTER - looking up and to the side, thoughtful
+• Eyebrows: One raised slightly
+• Mouth: Small closed-mouth hmm expression - SAME BLACK as body outline
+• Optional: One hand/arm touching chin (if anatomy allows)
+• ⚠️ BODY STAYS EXACTLY THE SAME
+• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY
+• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
+
+  shocked: `EXPRESSION: Shocked / surprised
+• Eyes: SAME COLOR AS MASTER but WIDE open, pupils small, eyebrows raised HIGH
+• Mouth: Wide open "O" shape showing surprise - SAME BLACK as body outline
+• Optional: Small sweat drop or exclamation marks
+• ⚠️ BODY STAYS EXACTLY THE SAME
+• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY
+• ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
+
+  cool: `EXPRESSION: Cool / confident with sunglasses
+• Eyes: Wearing DARK SUNGLASSES (black lenses, black frame)
+• Mouth: Confident smirk or slight smile - SAME BLACK as body outline
+• Attitude: Relaxed, confident vibe
 • ⚠️ BODY STAYS EXACTLY THE SAME
 • ⚠️ MOUTH LINEWORK = SAME COLOR AS BODY OUTLINE`,
 };

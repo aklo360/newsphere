@@ -1,7 +1,7 @@
 {
   "id": "opengfx_mascot",
   "name": "OpenGFX Mascot Generator",
-  "description": "Generate a complete brand mascot/character with expression sheet. Includes master pose plus 5 expression variants (wave, happy, sad, angry, laugh). 2D flat style with consistent anatomy and line weight.",
+  "description": "Generate a complete brand mascot/character with 10-pose expression sheet. Includes master pose plus 9 emotes (wave, happy, sad, angry, laugh, love, think, shocked, cool). 2D flat style with consistent anatomy and line weight.",
   "price": {
     "amount": 10,
     "currency": "USDC"
@@ -52,6 +52,10 @@
       "sad": { "type": "string", "description": "CDN URL for sad expression" },
       "angry": { "type": "string", "description": "CDN URL for angry expression" },
       "laugh": { "type": "string", "description": "CDN URL for laugh expression" },
+      "love": { "type": "string", "description": "CDN URL for love/heart-eyes expression" },
+      "think": { "type": "string", "description": "CDN URL for thinking expression" },
+      "shocked": { "type": "string", "description": "CDN URL for shocked expression" },
+      "cool": { "type": "string", "description": "CDN URL for cool/sunglasses expression" },
       "qc_passed": { "type": "boolean", "description": "Whether all poses passed QC" }
     }
   },

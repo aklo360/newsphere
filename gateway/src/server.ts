@@ -91,7 +91,7 @@ app.get("/", (req, res) => {
       logo: "$5 - Logo system (icon, wordmark, lockups)",
       socials: "$5 - Social assets (avatar, banners)",
       gfx: "$2 - On-brand marketing graphic",
-      mascot: "$10 - Brand mascot/character with consistent poses",
+      mascot: "$10 - Brand mascot with 10-pose expression sheet",
     },
     supportedChains: [
       {
