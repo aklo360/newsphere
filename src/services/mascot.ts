@@ -236,14 +236,26 @@ export async function generateMascot(
   }
 
   const brandName = brandSystem.brand?.name || brandSystem.brandName || "Brand";
-  const mascotDir = outputDir || path.join(brandDir, "mascot");
+  
+  // VERSIONED OUTPUT - never overwrite previous generations
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const mascotBaseDir = path.join(brandDir, "mascot");
+  const mascotDir = outputDir || path.join(mascotBaseDir, `gen-${timestamp}`);
   const posesDir = path.join(mascotDir, "poses");
   fs.mkdirSync(posesDir, { recursive: true });
+  
+  // Also create/update a "latest" symlink for convenience
+  const latestLink = path.join(mascotBaseDir, "latest");
+  try {
+    if (fs.existsSync(latestLink)) fs.unlinkSync(latestLink);
+    fs.symlinkSync(mascotDir, latestLink);
+  } catch { /* symlink may fail on some systems */ }
 
   console.log(`\n══════════════════════════════════════════════════════════════`);
   console.log(`  OpenGFX Mascot Generator`);
   console.log(`  Brand: ${brandName}`);
   console.log(`  Type: ${characterType} | Style: ${style}`);
+  console.log(`  Output: gen-${timestamp}`);
   console.log(`══════════════════════════════════════════════════════════════\n`);
 
   // Step 1: Generate character concept
@@ -339,42 +351,44 @@ async function generateCharacterSpec(
   const brandName = brand?.name || altBrandName || "Brand";
   const tagline = brand?.tagline || altTagline || "";
 
-  const prompt = `You are a character designer creating a brand mascot/character. Your spec will be used to generate MULTIPLE CONSISTENT images, so be EXTREMELY SPECIFIC about anatomy.
+  const prompt = `You are a character designer creating a brand mascot. Your spec will generate MULTIPLE CONSISTENT images.
 
-BRAND CONTEXT:
-- Name: ${brandName}
-- Tagline: ${tagline || "N/A"}
-- Primary Color: ${colors.primary}
-- Secondary Color: ${colors.secondary || colors.accent || "#ffffff"}
-- Brand Style: ${renderStyle?.preset || "modern"}
+BRAND: ${brandName}
+TAGLINE: ${tagline || "N/A"}
+PRIMARY COLOR: ${colors.primary}
+SECONDARY COLOR: ${colors.secondary || colors.accent || "#ffffff"}
 
-CHARACTER REQUIREMENTS:
-- Type: ${characterType}
-- Visual Style: ${style}
-- Personality: ${personality}
-- Specific Features: ${features || "None specified"}
+CHARACTER TYPE: ${characterType}
+STYLE: ${style}
+PERSONALITY: ${personality}
+USER FEATURES: ${features || "None specified"}
 
-Generate a HYPER-DETAILED character specification in JSON format:
+⚠️ CRITICAL ANATOMY RULE ⚠️
+ARMS/CLAWS: EXACTLY 2. Never 3, never 4. TWO ARMS ONLY.
+LEGS: Can be 2, 4, 6, or 8 depending on the creature type (e.g., crab = 6 legs, humanoid = 2 legs).
+
+Generate a character spec JSON:
 {
-  "description": "2-3 sentence description INCLUDING exact body structure (e.g., 'has exactly 2 arms/claws, 6 legs, round body')",
+  "description": "Start with 'A [creature] with EXACTLY 2 arms/claws and [N] legs...' then describe body shape, shell/skin texture, overall silhouette",
   "features": [
-    "EXACT number of limbs (e.g., 'exactly 2 claws - one organic, one with subtle robotic details')",
-    "specific color placement",
-    "exact proportions",
-    "distinctive identifying marks",
-    "at least 5-7 specific visual features"
+    "EXACTLY 2 claws/arms (state this first)",
+    "[N] legs positioned [how]",
+    "body shape description (e.g., 'rounded crab shell', 'oval body')",
+    "eye style and size",
+    "antenna/appendage details if any",
+    "color placement on body parts",
+    "any asymmetric features (which side)"
   ],
-  "designNotes": "Include: exact limb count, which arm has what feature, color mapping, proportions. Be so specific that any artist could recreate this IDENTICALLY."
+  "designNotes": "Describe like a character bible: proportions, what makes it recognizable at small sizes, key silhouette elements"
 }
 
-CRITICAL RULES FOR SPEC:
-1. ALWAYS specify EXACT limb count (never say 'multiple' or 'several')
-2. If one limb is different (robotic, etc.), specify WHICH one (left/right)
-3. Include head-to-body ratio
-4. Specify eye style and placement
-5. Note any asymmetric features precisely
+If it's a CRAB/LOBSTER creature:
+- Emphasize the SHELL shape (rounded, dome-like, protective)
+- EXACTLY 2 large front claws
+- Small walking legs underneath (typically 6)
+- The shell is the main visual mass, claws extend from sides
 
-Respond with ONLY the JSON object, no other text.`;
+Respond with ONLY valid JSON.`;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.0-flash",
@@ -412,7 +426,7 @@ Respond with ONLY the JSON object, no other text.`;
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// CHARACTER IMAGE GENERATION (with reference-based consistency)
+// CHARACTER IMAGE GENERATION (nano banana prompting)
 // ═══════════════════════════════════════════════════════════════════
 
 async function generateCharacterImage(
@@ -422,63 +436,85 @@ async function generateCharacterImage(
   poseDescription: string,
   outputPath: string,
   size: number,
-  referenceImagePath?: string  // Pass master image for pose variants
+  referenceImagePath?: string
 ): Promise<void> {
   const stylePrompt = CHARACTER_STYLE_PROMPTS[characterSpec.style];
-  const typePrompt = CHARACTER_TYPE_PROMPTS[characterSpec.characterType];
 
-  // HYPER-SPECIFIC FRONT-LOADED PROMPT for consistency
-  const anatomyBlock = `
-⚠️ CRITICAL ANATOMY RULES — READ FIRST ⚠️
-- EXACTLY 2 arms/claws — NO MORE, NO LESS
-- NEVER add extra limbs or appendages
-- If one arm is robotic/mechanical, keep it SUBTLE (small circuit patterns, slight metallic sheen)
-- Maintain EXACT same body proportions in every pose
-- Same eye size, same head-to-body ratio, same colors
-- This character must be INSTANTLY recognizable across all poses
+  // ═══════════════════════════════════════════════════════════════════
+  // NANO BANANA PROMPTING: Front-load critical constraints, repeat key rules
+  // ═══════════════════════════════════════════════════════════════════
+  
+  // FIRST LINE = MOST CRITICAL (Gemini weighs early tokens highest)
+  const criticalFirst = `EXACTLY 2 ARMS. DO NOT DRAW MORE THAN 2 ARMS. TWO ARMS ONLY.`;
+  
+  // Negative prompting block (what NOT to do)
+  const negativeBlock = `
+❌ FORBIDDEN — NEVER DO THESE:
+- NO 3 arms, NO 4 arms, NO extra limbs
+- NO changing the character design
+- NO different colors than specified
+- NO realistic style (keep it stylized/cartoon)
+- NO busy backgrounds
 `;
 
-  const colorBlock = `
-EXACT COLORS (match precisely):
-- Body: ${characterSpec.colors.primary}
-- Highlights/Accent: ${characterSpec.colors.secondary}
-- Eyes/Details: White with ${characterSpec.colors.primary} pupils
-`;
-
-  const prompt = `${anatomyBlock}
-
-CHARACTER IDENTITY (DO NOT DEVIATE):
+  // Character description block
+  const characterBlock = `
+✅ CHARACTER DESIGN:
 ${characterSpec.description}
 
-VISUAL FEATURES (every image must have these):
-${characterSpec.features.map(f => `✓ ${f}`).join("\n")}
+IDENTIFYING FEATURES:
+${characterSpec.features.map(f => `• ${f}`).join("\n")}
 
-DESIGN BIBLE:
+DESIGN NOTES:
 ${characterSpec.designNotes}
+`;
 
-${colorBlock}
+  // Color block with exact hex values
+  const colorBlock = `
+🎨 EXACT COLORS:
+• Primary body: ${characterSpec.colors.primary}
+• Secondary/highlights: ${characterSpec.colors.secondary}
+• Accent details: ${characterSpec.colors.accent}
+`;
 
-STYLE:
+  // Style block
+  const styleBlock = `
+🖼️ ART STYLE:
 ${stylePrompt}
+Like Discord's Wumpus, Duolingo's owl, or Slack's slackbot — clean, memorable, mascot-quality.
+`;
 
-${typePrompt}
-
-POSE FOR THIS IMAGE:
+  // Pose block
+  const poseBlock = `
+📐 THIS IMAGE — POSE:
 ${poseDescription}
+Character centered, filling 70% of frame, white background.
+`;
 
-TECHNICAL:
-- Size: ${size}x${size}px
-- Background: Pure white (#FFFFFF) or transparent
-- Character centered, filling ~70% of frame
-- Clean vector-style edges
-- Production-ready quality
+  // Final reinforcement (repeat critical rule)
+  const reinforcement = `
+⚠️ FINAL CHECK: Count the arms before outputting. There must be EXACTLY 2 arms/claws. Not 3. Not 4. TWO.
+`;
 
-${referenceImagePath ? "REFERENCE IMAGE PROVIDED — match this character EXACTLY, only change the pose." : ""}`;
+  // Assemble prompt with critical constraint FIRST and LAST
+  const prompt = referenceImagePath 
+    ? `${criticalFirst}
 
-  // Build content parts
+REFERENCE IMAGE PROVIDED — This is the EXACT character. Match it PERFECTLY. Only change the pose.
+${negativeBlock}
+${poseBlock}
+${reinforcement}`
+    : `${criticalFirst}
+${negativeBlock}
+${characterBlock}
+${colorBlock}
+${styleBlock}
+${poseBlock}
+${reinforcement}`;
+
+  // Build content parts - reference image FIRST if provided
   const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
   
-  // If we have a reference image, include it FIRST
   if (referenceImagePath && fs.existsSync(referenceImagePath)) {
     const refData = fs.readFileSync(referenceImagePath);
     const base64Ref = refData.toString("base64");
