@@ -127,6 +127,13 @@ BIRD ANATOMY:
 - Body proportions stay consistent across all poses
 - Only face/expression changes (except wave which has arm movement)
 
+### Eye Consistency (CRITICAL — LOCKED 2025-02-19)
+- **EYE COLOR MUST BE IDENTICAL** across ALL poses
+- Eye SHAPE can change (closed for happy, droopy for sad)
+- **SPARKLY/STARRY EYES ONLY FOR HAPPY** — standard highlight dots for all other poses
+- Never change eye color between master and expressions
+- This is NON-NEGOTIABLE
+
 ## Mascot Generation Rules (CRITICAL — LOCKED 2025-02-19)
 
 ### Single-Pass Rendering (NEVER TWO-STEP)

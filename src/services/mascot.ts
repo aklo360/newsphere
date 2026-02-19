@@ -215,33 +215,37 @@ const EXPRESSION_POSES: ExpressionPose[] = ["master", "wave", "happy", "sad", "a
 
 const EXPRESSION_PROMPTS: Record<ExpressionPose, string> = {
   master: `EXPRESSION: Default friendly face
-• Eyes: Large round eyes with white highlight spots
+• Eyes: Large round eyes with white highlight spots - THIS IS THE CANONICAL EYE COLOR
 • Mouth: Small gentle smile, curved line in DARK BLUE matching linework
-• This is the CANONICAL expression - all others derive from this`,
+• This is the CANONICAL expression - all others derive from this
+• ⚠️ EYE COLOR MUST BE PRESERVED EXACTLY IN ALL OTHER POSES`,
 
   wave: `EXPRESSION: Friendly welcoming face (BODY UNCHANGED!)
-• Eyes: Normal round eyes with highlights, warm friendly sparkle
+• Eyes: SAME COLOR AS MASTER - normal round eyes with standard white highlight dots (NO sparkles, NO stars)
 • Mouth: Open happy smile, DARK BLUE outline with hints of PINK inside
 • Blush: Optional light pink circles on cheeks
-• ⚠️ BODY STAYS EXACTLY THE SAME - wave is an EXPRESSION, not arm movement`,
+• ⚠️ BODY STAYS EXACTLY THE SAME
+• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY`,
 
   happy: `EXPRESSION: Joyful closed-eye smile (^_^)
-• Eyes: Closed in happy curves like ^_^ or >_< anime happy eyes
+• Eyes: Closed in happy curves like ^_^ or >_< anime happy eyes (sparkle stars allowed ONLY here)
 • Mouth: Big wide smile, DARK BLUE outline
 • Blush: Pink/magenta circles on cheeks
 • ⚠️ BODY STAYS EXACTLY THE SAME`,
 
   sad: `EXPRESSION: Sad droopy face
-• Eyes: Droopy/downturned with sad eyebrows tilted UP in center
+• Eyes: SAME COLOR AS MASTER - droopy/downturned with sad eyebrows, standard highlight dots
 • Mouth: Small downturned frown, DARK BLUE outline
 • Tear: Single blue tear drop on one cheek
-• ⚠️ BODY STAYS EXACTLY THE SAME`,
+• ⚠️ BODY STAYS EXACTLY THE SAME
+• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY`,
 
   angry: `EXPRESSION: Angry grumpy face
-• Eyes: Narrowed eyes with V-shaped angry eyebrows pointing DOWN in center
+• Eyes: SAME COLOR AS MASTER - narrowed with V-shaped angry eyebrows pointing DOWN, standard highlight dots
 • Mouth: Grumpy frown or grimace, DARK BLUE outline
 • No tears, no blush
-• ⚠️ BODY STAYS EXACTLY THE SAME`,
+• ⚠️ BODY STAYS EXACTLY THE SAME
+• ⚠️ EYE COLOR MUST MATCH MASTER EXACTLY`,
 
   laugh: `EXPRESSION: Laughing hysterically (>o<)
 • Eyes: Squeezed shut in happy curves (>o< style, NOT X eyes)
@@ -404,7 +408,8 @@ ${EXPRESSION_PROMPTS[pose]}
 ☐ Leg count = ${anatomy.legs.count}?
 ☐ Front-facing view?
 ☐ Body position identical to reference?
-☐ ONLY face/expression changed?`;
+☐ ONLY face/expression changed?
+☐ EYE COLOR IDENTICAL to master? (CRITICAL - no sparkles except happy)`;
 }
 
 // ═══════════════════════════════════════════════════════════════════

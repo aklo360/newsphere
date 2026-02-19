@@ -83,6 +83,13 @@ IMAGE FORMAT:
 - All bird expressions from beak SHAPE only (open/closed, angled)
 - NO separate mouth/smile line under beak
 
+### Eye Consistency (CRITICAL)
+- Eye COLOR must be IDENTICAL across ALL poses
+- Eye SHAPE can change for expressions (closed for happy, droopy for sad)
+- Sparkly/starry eyes ONLY for happy pose
+- Standard highlight dots for all other poses
+- NEVER change eye color between master and expressions
+
 ### Frame Composition
 - 70% frame fill (~15% padding each side)
 - Character centered
