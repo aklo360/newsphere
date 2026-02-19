@@ -494,8 +494,12 @@ Respond with ONLY this JSON:
       issues.push("Extra limbs detected near face/mouth");
     }
     
-    // Check antenna (if applicable)
-    if (characterSpec.features.some(f => f.toLowerCase().includes("antenna")) && !qc.has_antenna) {
+    // Check antenna (if applicable) - skip if "no antenna" is specified
+    const wantsAntenna = characterSpec.features.some(f => {
+      const lower = f.toLowerCase();
+      return lower.includes("antenna") && !lower.includes("no antenna");
+    });
+    if (wantsAntenna && !qc.has_antenna) {
       issues.push("Missing antenna");
     }
     
@@ -647,7 +651,10 @@ async function generateCharacterImage(
   const anatomy: AnatomyConfig = {
     armCount: 2,  // Always 2 for mascots unless specified otherwise
     legCount,
-    hasAntenna: characterSpec.features.some(f => f.toLowerCase().includes("antenna")),
+    hasAntenna: characterSpec.features.some(f => {
+      const lower = f.toLowerCase();
+      return lower.includes("antenna") && !lower.includes("no antenna");
+    }),
   };
   
   // Build the full nano banana prompt (will be doubled internally)

@@ -183,7 +183,19 @@ TECHNICAL:
 • Character centered, filling 70% of frame
 • Clean vector edges, production-ready
 
-${isReferenceMode ? "⚠️ REFERENCE IMAGE PROVIDED - Match character EXACTLY, only change pose and expression." : ""}
+${isReferenceMode ? `
+🚨🚨🚨 CRITICAL: REFERENCE IMAGE PROVIDED 🚨🚨🚨
+You MUST match the reference image EXACTLY:
+- SAME exact character design (head shape, body proportions, eye style)
+- SAME exact art style (line thickness, shading style, highlight placement)
+- SAME exact colors (exact hex values, same saturation/brightness)
+- SAME exact facial features (eye shape, mouth shape, expression style)
+- ONLY change the POSE and EXPRESSION
+- DO NOT redesign the character
+- DO NOT change proportions
+- DO NOT change the art style
+- This must look like the SAME CHARACTER, not a different interpretation
+` : ""}
 
 FINAL CHECK: 
 1. Count arms - must be EXACTLY ${anatomy.armCount}
