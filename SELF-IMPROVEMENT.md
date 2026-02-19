@@ -3,175 +3,91 @@
 ## The Loop
 
 ```
-Generate ANY asset → Notice issue/success → Update learnings → ALL future generations improve
-```
-
-## Key Insight
-
-OpenGFX is not a static tool. It's a **stateful agent** with:
-- **Persistent memory** (MEMORY.md, workspace files)
-- **Self-modification** (can edit its own learnings)
-- **Runtime-loaded rules** (learnings files read at generation time)
-- **Universal design intelligence** (learnings apply across all services)
-
-## Architecture
-
-```
-src/learnings/
-├── index.ts       ← Re-exports everything (import from here)
-├── core.ts        ← UNIVERSAL rules (Gemini, colors, quality, post-processing)
-├── logo.ts        ← Logo-specific rules (icons, wordmarks, lockups)
-├── social.ts      ← Social asset rules (avatars, banners, platforms)
-├── gfx.ts         ← On-brand GFX rules (composition, BYOL)
-└── mascot.ts      ← Mascot rules (creatures, expressions, anatomy)
-
-src/services/
-├── logo.ts        ← IMPORTS from learnings
-├── social.ts      ← IMPORTS from learnings  
-├── gfx.ts         ← IMPORTS from learnings
-└── mascot.ts      ← IMPORTS from learnings
-```
-
-## The Learnings Hierarchy
-
-```
-┌─────────────────────────────────────────┐
-│           core.ts (UNIVERSAL)           │
-│  Gemini rules, colors, quality, post-   │
-│  processing - applies to EVERYTHING     │
-└─────────────────┬───────────────────────┘
-                  │
-    ┌─────────────┼─────────────┬─────────────┐
-    ▼             ▼             ▼             ▼
-┌────────┐  ┌──────────┐  ┌─────────┐  ┌──────────┐
-│logo.ts │  │social.ts │  │ gfx.ts  │  │mascot.ts │
-│        │  │          │  │         │  │          │
-│ Icons  │  │ Avatars  │  │ On-brand│  │ Creatures│
-│Wordmark│  │ Banners  │  │ Graphics│  │ Poses    │
-│Lockups │  │ Platforms│  │ BYOL    │  │ Anatomy  │
-└────────┘  └──────────┘  └─────────┘  └──────────┘
+Generate ANY asset → Notice issue/success → Update LEARNINGS.md → ALL future generations improve
 ```
 
 ## How It Works
 
-### 1. Universal Rules (core.ts)
-Rules that apply to ALL design generation:
-- Gemini behavior (no transparent, single-pass, solid bg)
-- Color specifications (always hex + name)
-- Quality keywords
-- Post-processing rules (never clamp white)
-
-### 2. Service-Specific Rules
-Each service has its own learnings file:
-- `logo.ts` - Icon complexity, wordmark rules, banner layout
-- `social.ts` - Avatar sizes, banner adaptation, platform rules
-- `gfx.ts` - Composition, style consistency, BYOL mode
-- `mascot.ts` - Creature anatomy, expressions, poses
-
-### 3. Runtime Import
-Services import learnings at runtime:
-```typescript
-import { 
-  GEMINI_RULES,           // From core.ts
-  LOGO_RULES,             // From logo.ts
-  buildMascotPrompt,      // From mascot.ts
-} from "../learnings/index.js";
+```
+src/learnings/LEARNINGS.md    ← THE BRAIN (edit this file)
+         ↓
+    loadLearnings()           ← Read at runtime
+         ↓
+    Injected into prompts     ← Affects ALL generation
 ```
 
-## Determinism vs Improvement
+## The Magic
 
-| Concern | Solution |
-|---------|----------|
-| Same inputs = same outputs? | ✅ Yes, within same learnings version |
-| Can we improve? | ✅ Yes, by updating learnings files |
-| Auditability? | ✅ Git history tracks all changes |
-| Rollback? | ✅ Revert to previous commit |
+**Edit `src/learnings/LEARNINGS.md` → change ALL future design outputs.**
 
-**Key**: Learnings are "frozen" at each generation. They only change when we:
-1. Notice an issue
-2. Explicitly update the learnings file
-3. Commit the change
+That's it. One markdown file. Services load it at runtime and inject into prompts.
+
+## Usage in Services
+
+```typescript
+import { loadLearnings, injectLearnings, getLearningsSection } from "../learnings/index.js";
+
+// Option 1: Inject full learnings
+const prompt = injectLearnings("Create a logo for...");
+
+// Option 2: Inject specific sections
+const prompt = injectLearnings("Create a mascot...", ["MASCOT RULES", "HIGHLIGHTS"]);
+
+// Option 3: Get section for manual use
+const mascotRules = getLearningsSection("MASCOT RULES");
+```
+
+## File Structure
+
+```
+src/learnings/
+├── LEARNINGS.md     ← THE BRAIN (edit to improve ALL design)
+├── index.ts         ← Loader functions
+├── core.ts          ← TypeScript constants (optional, for type safety)
+├── logo.ts          ← Logo-specific (optional)
+├── social.ts        ← Social-specific (optional)
+├── gfx.ts           ← GFX-specific (optional)
+└── mascot.ts        ← Mascot-specific (optional)
+```
+
+**Primary**: `LEARNINGS.md` — edit this to improve outputs
+**Secondary**: `*.ts` files — for structured data when needed
 
 ## Self-Improvement Workflow
 
 ```
-1. GENERATE    → Create any asset (logo, social, gfx, mascot)
-2. REVIEW      → Check output quality
+1. GENERATE    → Create any asset
+2. REVIEW      → Check output quality  
 3. IDENTIFY    → What went wrong/right?
-4. CATEGORIZE  → Is this universal (core.ts) or service-specific?
-5. UPDATE      → Edit the appropriate learnings file
-6. TEST        → Regenerate to verify fix
-7. COMMIT      → Save with descriptive message
-8. DOCUMENT    → Add to MEMORY.md if significant
+4. EDIT        → Update LEARNINGS.md
+5. TEST        → Regenerate to verify
+6. COMMIT      → Save with descriptive message
 ```
 
-## Which File to Edit?
+## LEARNINGS.md Sections
 
-| Issue | File to Edit |
-|-------|--------------|
-| Gemini generating wrong format | `core.ts` |
-| Colors looking wrong | `core.ts` |
-| Post-processing breaking output | `core.ts` |
-| Icon too complex | `logo.ts` |
-| Banner layout wrong | `logo.ts` / `social.ts` |
-| Avatar sizing issues | `social.ts` |
-| Platform-specific problems | `social.ts` |
-| GFX composition issues | `gfx.ts` |
-| BYOL not working | `gfx.ts` |
-| Creature anatomy wrong | `mascot.ts` |
-| Expression not matching | `mascot.ts` |
+| Section | Affects |
+|---------|---------|
+| GEMINI IMAGE GENERATION | All image generation |
+| POST-PROCESSING RULES | All post-processing |
+| HIGHLIGHTS & GLOSSY | Kawaii/glossy assets |
+| ICON & LOGO RULES | Logo service |
+| BANNER LAYOUT | Social banners |
+| MASCOT RULES | Mascot service |
+| RENDER STYLES | Style selection |
+| ANTI-PATTERNS | Everything (what NOT to do) |
 
-## Example: Universal Learning
+## Determinism
 
-**Issue noticed**: Gemini draws checkered pattern for transparent.
+- Same LEARNINGS.md + same inputs = same outputs
+- Changes only happen when you edit the file
+- Git tracks all changes for rollback
 
-**File to edit**: `core.ts` (affects ALL services)
+## Key Insight
 
-```typescript
-// In src/learnings/core.ts
-export const GEMINI_RULES = {
-  neverRequestTransparent: true,  // ← Added this
-};
+OpenGFX is not a static tool. It's a **stateful agent** with:
+- **Persistent memory** (LEARNINGS.md, MEMORY.md)
+- **Self-modification** (can edit its own learnings)
+- **Runtime-loaded rules** (LEARNINGS.md read at generation time)
 
-export const GEMINI_ANTI_PATTERNS = [
-  "Never request transparent background → Gemini draws checkered pattern",
-];
-```
-
-**Result**: ALL services now avoid requesting transparent backgrounds.
-
-## Example: Service-Specific Learning
-
-**Issue noticed**: Bird mascots getting mouths instead of beaks.
-
-**File to edit**: `mascot.ts` (only affects mascots)
-
-```typescript
-// In src/learnings/mascot.ts
-export const CREATURE_RULES = {
-  bird: [
-    "BEAK only, no mouth line",
-    "Expression from beak shape",
-  ],
-};
-```
-
-**Result**: Only mascot generation changes, other services unaffected.
-
-## Files That Define Behavior
-
-| File | Scope | Purpose |
-|------|-------|---------|
-| `SOUL.md` | Agent | Personality, voice |
-| `MEMORY.md` | Agent | Persistent context |
-| `src/learnings/core.ts` | All Services | Universal Gemini/design rules |
-| `src/learnings/logo.ts` | Logo Service | Logo-specific rules |
-| `src/learnings/social.ts` | Social Service | Social asset rules |
-| `src/learnings/gfx.ts` | GFX Service | On-brand graphic rules |
-| `src/learnings/mascot.ts` | Mascot Service | Mascot/creature rules |
-
-## The Magic
-
-**Edit ANY learnings file → change ALL future generations that use those rules.**
-
-The learnings ARE OpenGFX's design brain. When we edit them, we're literally rewiring how future designs are generated.
+The learnings ARE OpenGFX's design brain. Edit them → rewire future outputs.
