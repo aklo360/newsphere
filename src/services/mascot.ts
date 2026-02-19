@@ -727,7 +727,9 @@ function uploadToCdn(
       `wrangler r2 object put opengfx-assets/${cdnKey} --file "${localPath}" --content-type "image/png" --remote`,
       { cwd: opengfxDir, stdio: "pipe" }
     );
-    return `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${cdnKey}`;
+    // Cache-busting: add timestamp so Telegram/Discord always fetch fresh previews
+    const cacheBust = Date.now();
+    return `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${cdnKey}?v=${cacheBust}`;
   } catch (err) {
     console.error(`[upload] Failed to upload ${cdnKey}:`, err);
     return "";
