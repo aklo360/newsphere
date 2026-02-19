@@ -6,9 +6,25 @@
       "primaryColor": "#3498DB",
       "renderStyle": "flat-solid",
       "createdAt": "2026-02-19"
+    },
+    {
+      "brandName": "Nocturne Brew",
+      "iconConcept": "Stylized crescent moon coffee bean",
+      "primaryColor": "#222222",
+      "renderStyle": "gradient",
+      "createdAt": "2026-02-19"
+    },
+    {
+      "brandName": "QubitLink",
+      "iconConcept": "Interlocking quantum circuit glyph",
+      "primaryColor": "#66FF99",
+      "renderStyle": "flat",
+      "createdAt": "2026-02-19"
     }
   ],
   "takenConcepts": [
-    "abstract brain muscle form"
+    "abstract brain muscle form",
+    "stylized crescent moon coffee bean",
+    "interlocking quantum circuit glyph"
   ]
 }

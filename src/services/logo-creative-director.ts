@@ -22,9 +22,12 @@ import { fileURLToPath } from "url";
 import sharp from "sharp";
 import { createCanvas, registerFont } from "canvas";
 
+import { execSync } from "child_process";
 import { ai, IMAGE_MODEL, TEXT_MODEL, generateImage } from "../ai.js";
 import type { BrandSystem, ColorPalette, Typography, RenderStyle } from "../types.js";
 import { FONT_LIBRARY, INSTALLED_FONTS } from "../constants.js";
+
+const CDN_BASE = "https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev";
 
 // Import existing learnings — these are PRESERVED
 import {
@@ -440,6 +443,26 @@ export interface LogoOutput {
     horizontal: string;
     brandSystem: string;
   };
+  cdn: {
+    icon: string;
+    wordmark: string;
+    stacked: string;
+    horizontal: string;
+    brandSystem: string;
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// CDN UPLOAD
+// ═══════════════════════════════════════════════════════════════════
+
+async function uploadToR2(localPath: string, cdnKey: string): Promise<string> {
+  const contentType = localPath.endsWith(".json") ? "application/json" : "image/png";
+  execSync(
+    `wrangler r2 object put opengfx-assets/${cdnKey} --file "${localPath}" --content-type "${contentType}" --remote`,
+    { stdio: "pipe" }
+  );
+  return `${CDN_BASE}/${cdnKey}`;
 }
 
 export async function generateLogo(input: LogoInput): Promise<LogoOutput> {
@@ -452,7 +475,7 @@ export async function generateLogo(input: LogoInput): Promise<LogoOutput> {
   console.log(`${"═".repeat(62)}\n`);
 
   // ─── STEP 1: CREATIVE BRIEF ───
-  console.log(`[1/6] Creative Director analyzing brief...`);
+  console.log(`[1/7] Creative Director analyzing brief...`);
   const brief = await createLogoBrief(input.concept, input.brandName, input.tagline);
   
   // Apply user overrides
@@ -480,7 +503,7 @@ export async function generateLogo(input: LogoInput): Promise<LogoOutput> {
   fs.mkdirSync(styleDir, { recursive: true });
 
   // ─── STEP 2: GENERATE ICON ───
-  console.log(`[2/6] Generating icon...`);
+  console.log(`[2/7] Generating icon...`);
   const iconPath = path.join(logoDir, "icon.png");
   
   let qcReport: LogoQCResult = { passed: false, issues: [], complexity: 0.5 };
@@ -508,7 +531,7 @@ export async function generateLogo(input: LogoInput): Promise<LogoOutput> {
   }
 
   // ─── STEP 3: GENERATE WORDMARK ───
-  console.log(`[3/6] Generating wordmark...`);
+  console.log(`[3/7] Generating wordmark...`);
   const wordmarkPath = path.join(logoDir, "wordmark.png");
   
   if (brief.wordmarkApproach === "library" && brief.fontFamily) {
@@ -531,7 +554,7 @@ CRITICAL:
   }
 
   // ─── STEP 4: COMPOSITE LOCKUPS ───
-  console.log(`[4/6] Compositing lockups...`);
+  console.log(`[4/7] Compositing lockups...`);
   const stackedPath = path.join(logoDir, "stacked.png");
   const horizontalPath = path.join(logoDir, "horizontal.png");
   
@@ -543,7 +566,7 @@ CRITICAL:
   console.log(`      ✓ horizontal.png`);
 
   // ─── STEP 5: SAVE BRAND SYSTEM ───
-  console.log(`[5/6] Generating style guide...`);
+  console.log(`[5/7] Generating style guide...`);
   
   const colors: ColorPalette = {
     primary: brief.primaryColor,
@@ -599,7 +622,7 @@ CRITICAL:
   console.log(`      ✓ brand-system.json`);
 
   // ─── STEP 6: REGISTER LOGO ───
-  console.log(`[6/6] Registering logo...`);
+  console.log(`[6/7] Registering logo...`);
   const registry = loadLogoRegistry();
   registry.logos.push({
     brandName: brief.brandName,
@@ -612,6 +635,25 @@ CRITICAL:
   saveLogoRegistry(registry);
   console.log(`      ✓ Registered: ${brief.brandName} (${brief.iconConcept})`);
 
+  // ─── STEP 7: UPLOAD TO CDN ───
+  console.log(`[7/7] Uploading to CDN...`);
+  const version = Date.now();
+  const cdnPrefix = `${brandSlug}/v${version}`;
+  
+  const cdn = {
+    icon: await uploadToR2(iconPath, `${cdnPrefix}/icon.png`),
+    wordmark: await uploadToR2(wordmarkPath, `${cdnPrefix}/wordmark.png`),
+    stacked: await uploadToR2(stackedPath, `${cdnPrefix}/stacked.png`),
+    horizontal: await uploadToR2(horizontalPath, `${cdnPrefix}/horizontal.png`),
+    brandSystem: await uploadToR2(brandSystemPath, `${cdnPrefix}/brand-system.json`),
+  };
+  
+  console.log(`      ✓ icon.png → ${cdn.icon}`);
+  console.log(`      ✓ wordmark.png`);
+  console.log(`      ✓ stacked.png`);
+  console.log(`      ✓ horizontal.png`);
+  console.log(`      ✓ brand-system.json`);
+
   // ─── SUMMARY ───
   console.log(`\n${"═".repeat(62)}`);
   console.log(`  ✓ LOGO COMPLETE`);
@@ -619,6 +661,14 @@ CRITICAL:
   console.log(`  QC: ${qcReport.passed ? "PASSED" : "WARNINGS"}`);
   console.log(`  Output: ${outputDir}`);
   console.log(`${"═".repeat(62)}\n`);
+  
+  console.log(`  CDN Links:`);
+  console.log(`    Icon:     ${cdn.icon}`);
+  console.log(`    Wordmark: ${cdn.wordmark}`);
+  console.log(`    Stacked:  ${cdn.stacked}`);
+  console.log(`    Horiz:    ${cdn.horizontal}`);
+  console.log(`    System:   ${cdn.brandSystem}`);
+  console.log();
 
   // Print result for parsing
   console.log(`LOGO_RESULT:${JSON.stringify({
@@ -631,6 +681,7 @@ CRITICAL:
       horizontal: horizontalPath,
       brandSystem: brandSystemPath,
     },
+    cdn,
     qcPassed: qcReport.passed,
   })}`);
 
@@ -645,5 +696,6 @@ CRITICAL:
       horizontal: horizontalPath,
       brandSystem: brandSystemPath,
     },
+    cdn,
   };
 }
