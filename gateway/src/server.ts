@@ -949,33 +949,30 @@ function runGfxPipeline(job: Job): Promise<GfxResult> {
 interface MascotResult {
   mascot: {
     master: string;
-    icon: string;
-    poses: string[];
-    spec: string;
+    wave: string;
+    happy: string;
+    sad: string;
+    unhappy: string;
+    laugh: string;
   };
 }
+
+// Standard mascot poses
+const MASCOT_POSES = ["master", "wave", "happy", "sad", "unhappy", "laugh"];
 
 function runMascotPipeline(job: Job): Promise<MascotResult> {
   return new Promise((resolve, reject) => {
     const opengfxDir = path.resolve(process.cwd(), OPENGFX_PATH);
     
-    // Build args
-    const args = ["run", "mascot", "--"];
+    // Build args for mascot-v2
+    const args = ["run", "mascot-v2", "--"];
     
-    if (job.brandSystemPath) {
-      args.push(job.brandSystemPath);
-    } else if (job.logoUrl) {
-      args.push("--logo", job.logoUrl);
-      args.push("--name", job.brandName);
-      if (job.primaryColor) args.push("--primary", job.primaryColor);
-      if (job.secondaryColor) args.push("--secondary", job.secondaryColor);
-    }
-    
-    if (job.characterType) args.push("--type", job.characterType);
+    // Required args for mascot-v2
+    args.push("--name", job.brandName);
+    if (job.primaryColor) args.push("--color", job.primaryColor);
+    if (job.characterType) args.push("--creature", job.characterType);
     if (job.mascotStyle) args.push("--style", job.mascotStyle);
     if (job.personality) args.push("--personality", job.personality);
-    if (job.features) args.push("--features", job.features);
-    if (job.poses) args.push("--poses", String(job.poses));
     
     console.log(`[mascot] Running: npm ${args.join(" ")}`);
     
@@ -1013,50 +1010,34 @@ function runMascotPipeline(job: Job): Promise<MascotResult> {
       
       try {
         const brandSlug = job.brandName.toLowerCase().replace(/[^a-z0-9]/g, "-");
-        const mascotDir = path.join(opengfxDir, "output", brandSlug, "mascot");
+        // Find latest mascot output dir
+        const mascotBaseDir = path.join(opengfxDir, "output", brandSlug, "mascot");
+        const dirs = fs.readdirSync(mascotBaseDir).filter(d => d.startsWith("202")).sort().reverse();
+        const mascotDir = dirs.length > 0 ? path.join(mascotBaseDir, dirs[0]) : mascotBaseDir;
+        
         const { execSync } = await import("child_process");
         
         const cdnBase = `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${brandSlug}/mascot`;
-        const uploads: { master: string; icon: string; poses: string[]; spec: string } = {
+        const uploads: { master: string; wave: string; happy: string; sad: string; unhappy: string; laugh: string } = {
           master: "",
-          icon: "",
-          poses: [],
-          spec: "",
+          wave: "",
+          happy: "",
+          sad: "",
+          unhappy: "",
+          laugh: "",
         };
         
-        // Upload master
-        const masterPath = path.join(mascotDir, "mascot-master.png");
-        if (fs.existsSync(masterPath)) {
-          execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/mascot-master.png --file "${masterPath}" --content-type "image/png" --remote`, { cwd: opengfxDir, stdio: "pipe" });
-          uploads.master = `${cdnBase}/mascot-master.png`;
-        }
-        
-        // Upload icon
-        const iconPath = path.join(mascotDir, "mascot-icon.png");
-        if (fs.existsSync(iconPath)) {
-          execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/mascot-icon.png --file "${iconPath}" --content-type "image/png" --remote`, { cwd: opengfxDir, stdio: "pipe" });
-          uploads.icon = `${cdnBase}/mascot-icon.png`;
-        }
-        
-        // Upload spec
-        const specPath = path.join(mascotDir, "mascot-spec.json");
-        if (fs.existsSync(specPath)) {
-          execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/mascot-spec.json --file "${specPath}" --content-type "application/json" --remote`, { cwd: opengfxDir, stdio: "pipe" });
-          uploads.spec = `${cdnBase}/mascot-spec.json`;
-        }
-        
-        // Upload poses
-        const posesDir = path.join(mascotDir, "poses");
-        if (fs.existsSync(posesDir)) {
-          const poseFiles = fs.readdirSync(posesDir).filter(f => f.endsWith(".png"));
-          for (const poseFile of poseFiles) {
-            const posePath = path.join(posesDir, poseFile);
-            execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/poses/${poseFile} --file "${posePath}" --content-type "image/png" --remote`, { cwd: opengfxDir, stdio: "pipe" });
-            uploads.poses.push(`${cdnBase}/poses/${poseFile}`);
+        // Upload all standard poses
+        for (const pose of MASCOT_POSES) {
+          const posePath = path.join(mascotDir, `${pose}.png`);
+          if (fs.existsSync(posePath)) {
+            execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/${pose}.png --file "${posePath}" --content-type "image/png" --remote`, { cwd: opengfxDir, stdio: "pipe" });
+            (uploads as any)[pose] = `${cdnBase}/${pose}.png`;
+            console.log(`  ✓ ${pose}.png`);
           }
         }
         
-        console.log(`[mascot] Uploaded ${uploads.poses.length + 3} files to CDN`);
+        console.log(`[mascot] Uploaded ${MASCOT_POSES.length} poses to CDN`);
         
         resolve({ mascot: uploads });
       } catch (err) {

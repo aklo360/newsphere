@@ -35,9 +35,11 @@ export interface GfxOutput {
 
 export interface MascotOutput {
   master: string;
-  icon: string;
-  poses: string[];
-  spec: string;
+  wave: string;
+  happy: string;
+  sad: string;
+  unhappy: string;
+  laugh: string;
 }
 
 export interface Job {
