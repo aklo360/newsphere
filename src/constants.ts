@@ -328,6 +328,8 @@ SPECS:
 - ~15% padding on each side — breathing room without floating
 
 FORBIDDEN:
+- ❌ NO TEXT WHATSOEVER — icon only, no brand name, no letters, no words
+- ❌ NO WORDMARK — the icon must be PURELY GRAPHICAL, text is rendered separately
 - NO COLORS — only black, white, grey (this is critical)
 - NO borders, frames, or outlines around the icon
 - NO box or container
@@ -335,7 +337,7 @@ FORBIDDEN:
 - NO circuit boards, complex machinery details
 - NO combining 5+ symbols into one icon
 - NO detailed line work that disappears at small sizes
-- ONLY the icon itself on pure white
+- ONLY the icon itself on pure white — NOTHING ELSE
 `;
 
 export const WORDMARK_STYLE_PROMPT = `
