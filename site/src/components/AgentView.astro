@@ -1,4 +1,50 @@
 ---
+const offerings = [
+  {
+    id: 'logo',
+    icon: '🎨',
+    name: 'Logo System',
+    price: '$5',
+    tagline: 'Complete logo identity from a single prompt',
+    description: "Describe your brand concept and we'll generate a full logo system. Brand name is optional — AI will create one if you don't have one yet.",
+    outputs: ['Icon (1024×1024)', 'Wordmark', 'Stacked lockup', 'Horizontal lockup', 'brand-system.json'],
+    endpoint: '/v1/logo',
+    acpId: 'opengfx_logo',
+  },
+  {
+    id: 'mascot',
+    icon: '🎭',
+    name: 'Brand Mascot',
+    price: '$5',
+    tagline: '6-pose expression sheet for your character',
+    description: 'Generate a kawaii 2D mascot with consistent anatomy across all expressions. Perfect for Discord, Slack, social media, and brand personality.',
+    outputs: ['Master pose', 'Wave', 'Happy', 'Sad', 'Angry', 'Laugh'],
+    endpoint: '/v1/mascot',
+    acpId: 'opengfx_mascot',
+  },
+  {
+    id: 'social',
+    icon: '📱',
+    name: 'Social Assets',
+    price: '$5',
+    tagline: 'Avatar and banners for every platform',
+    description: 'Generate social media assets from your brand system, or bring your own logo (BYOL). AI extracts colors and creates matching assets.',
+    outputs: ['Avatar (1024px)', 'ACP avatar (400px)', 'Twitter banner', 'OG card', 'Community banner'],
+    endpoint: '/v1/socials',
+    acpId: 'opengfx_social',
+  },
+  {
+    id: 'gfx',
+    icon: '✨',
+    name: 'On-Brand GFX',
+    price: '$2',
+    tagline: 'Marketing graphics on demand',
+    description: 'Generate on-brand graphics for announcements, launches, milestones, features, hiring posts, and daily content. Any aspect ratio.',
+    outputs: ['Single graphic', 'Any aspect ratio'],
+    endpoint: '/v1/gfx',
+    acpId: 'opengfx_gfx',
+  },
+];
 ---
 
 <div id="agent-view" class="persona-content" data-visible="false">
@@ -47,37 +93,44 @@
       </div>
 
       <!-- Offerings -->
-      <div class="mb-8">
-        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Offerings</div>
-        <div class="rounded-xl border border-gray-200 overflow-hidden">
-          <div class="flex items-center gap-4 px-5 py-4 border-b border-gray-100">
-            <div class="flex-1">
-              <div class="font-semibold text-gray-900">logo</div>
-              <div class="text-xs text-gray-400">Icon, wordmark, lockups + style guide. <span class="text-cyan-500">Brand name optional — AI generates!</span></div>
+      <div class="mb-10">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Offerings</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {offerings.map((offering) => (
+            <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+              <div class="flex items-start justify-between mb-3">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-2xl">{offering.icon}</span>
+                  <div>
+                    <h4 class="font-bold text-gray-900">{offering.name}</h4>
+                    <p class="text-xs text-gray-500">{offering.tagline}</p>
+                  </div>
+                </div>
+                <span class="text-lg font-bold text-cyan-600">{offering.price}</span>
+              </div>
+              
+              <p class="text-xs text-gray-600 mb-3 leading-relaxed">{offering.description}</p>
+              
+              <div class="mb-3">
+                <div class="flex flex-wrap gap-1">
+                  {offering.outputs.map((output) => (
+                    <span class="inline-block px-2 py-0.5 bg-gray-100 rounded-full text-xs text-gray-600">{output}</span>
+                  ))}
+                </div>
+              </div>
+              
+              <div class="pt-3 border-t border-gray-100 flex items-center gap-3 text-xs">
+                <div class="flex items-center gap-1">
+                  <span class="text-gray-400">x402:</span>
+                  <code class="px-1.5 py-0.5 bg-gray-100 rounded text-gray-700 font-mono text-xs">{offering.endpoint}</code>
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="text-gray-400">ACP:</span>
+                  <code class="px-1.5 py-0.5 bg-gray-100 rounded text-gray-700 font-mono text-xs">{offering.acpId}</code>
+                </div>
+              </div>
             </div>
-            <span class="px-3 py-1 rounded-full bg-cyan-50 text-cyan-600 text-sm font-semibold">$5 USDC</span>
-          </div>
-          <div class="flex items-center gap-4 px-5 py-4 border-b border-gray-100">
-            <div class="flex-1">
-              <div class="font-semibold text-gray-900">mascot</div>
-              <div class="text-xs text-gray-400">6-pose expression sheet. <span class="text-cyan-500">master, wave, happy, sad, angry, laugh</span></div>
-            </div>
-            <span class="px-3 py-1 rounded-full bg-cyan-50 text-cyan-600 text-sm font-semibold">$5 USDC</span>
-          </div>
-          <div class="flex items-center gap-4 px-5 py-4 border-b border-gray-100">
-            <div class="flex-1">
-              <div class="font-semibold text-gray-900">social</div>
-              <div class="text-xs text-gray-400">Avatar + banners. <span class="text-cyan-500">Two modes: from logo service OR bring your own logo!</span></div>
-            </div>
-            <span class="px-3 py-1 rounded-full bg-cyan-50 text-cyan-600 text-sm font-semibold">$5 USDC</span>
-          </div>
-          <div class="flex items-center gap-4 px-5 py-4">
-            <div class="flex-1">
-              <div class="font-semibold text-gray-900">gfx</div>
-              <div class="text-xs text-gray-400">On-brand marketing graphics. <span class="text-cyan-500">Announcements, launches, daily content — any aspect ratio!</span></div>
-            </div>
-            <span class="px-3 py-1 rounded-full bg-cyan-50 text-cyan-600 text-sm font-semibold">$2 USDC</span>
-          </div>
+          ))}
         </div>
       </div>
 
