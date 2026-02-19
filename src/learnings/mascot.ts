@@ -51,6 +51,16 @@ BIRD ANATOMY:
 - BEAK is the ONLY mouth element
 `,
 
+  // Always include for elephant characters
+  elephantAnatomy: `
+🐘 ELEPHANT ANATOMY (CRITICAL — NEVER VIOLATE):
+- The TRUNK is the extended NOSE
+- The MOUTH must be BELOW or BESIDE where the trunk meets the face
+- A mouth ABOVE the trunk is ANATOMICALLY IMPOSSIBLE — INSTANT REJECT
+- When laughing/smiling: mouth opens UNDER the trunk, trunk can flip UP
+- NEVER put a smile/mouth ABOVE the trunk
+`,
+
   // Always include for kawaii style
   highlights: `
 HIGHLIGHTS:
@@ -95,6 +105,10 @@ export const ANTI_PATTERNS = [
   "Never remove white pixels in post-processing (destroys highlights)",
   "Never draw mouths on birds (birds have beaks)",
   "Never generate expressions without master reference",
+  "Never put elephant mouth ABOVE trunk (must be below/beside)",
+  "Never change eye color between expressions",
+  "Never lose design elements like ear patterns between poses",
+  "Never put facial features on body/belly",
 ];
 
 // ============================================================================
@@ -127,7 +141,44 @@ export const CREATURE_RULES: Record<string, string[]> = {
     "Exact leg count (specify in prompt)",
     "Front-facing view only",
   ],
+  elephant: [
+    "TRUNK is the extended NOSE",
+    "MOUTH must be BELOW or BESIDE where trunk meets face",
+    "Mouth ABOVE trunk is ANATOMICALLY IMPOSSIBLE — instant reject",
+    "When laughing: mouth opens UNDER trunk, trunk can flip UP",
+    "This is the #1 elephant mistake",
+  ],
   // Add more creatures as we learn
+};
+
+// ============================================================================
+// QC CONSISTENCY RULES (LOCKED 2025-02-19)
+// ============================================================================
+
+export const QC_RULES = {
+  // Anatomy checks (instant fail)
+  anatomy: [
+    "mouth_on_face: Mouth must be on face, not belly/body",
+    "eyes_on_face: Eyes must be on face",
+    "anatomy_correct: Overall facial feature placement",
+    "elephant_mouth_below_trunk: For elephants, mouth below trunk",
+  ],
+  
+  // Consistency checks (expressions vs master)
+  consistency: [
+    "eye_color_matches: Eye color IDENTICAL to master",
+    "design_elements_match: Patterns/textures preserved (e.g., circuit board ears)",
+    "body_matches_master: Body position same as master",
+  ],
+  
+  // Common mistakes to catch
+  commonMistakes: [
+    "Elephant mouth above trunk",
+    "Eye color changing between poses",
+    "Losing ear patterns/textures",
+    "Mouth drawn on belly instead of face",
+    "Bird with mouth line instead of beak",
+  ],
 };
 
 // ============================================================================
