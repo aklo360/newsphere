@@ -75,7 +75,7 @@ const PRICING: Record<JobType, number> = {
   logo: 5,
   socials: 5,
   gfx: 2,
-  mascot: 10,
+  mascot: 5,
 };
 
 // ============================================================
@@ -91,7 +91,7 @@ app.get("/", (req, res) => {
       logo: "$5 - Logo system (icon, wordmark, lockups)",
       socials: "$5 - Social assets (avatar, banners)",
       gfx: "$2 - On-brand marketing graphic",
-      mascot: "$10 - Brand mascot with 10-pose expression sheet",
+      mascot: "$5 - Brand mascot with 6-pose expression sheet",
     },
     supportedChains: [
       {
