@@ -31,7 +31,7 @@ export function validateRequirements(request: any): ValidationResult {
 }
 
 export function requestPayment(): string {
-  return "OpenGFX Mascot Generator. Fee: $10 USDC. Includes master pose + 5 expression variants.";
+  return "OpenGFX Mascot Generator. Fee: $5 USDC. Includes master pose + 5 expression variants.";
 }
 
 export async function executeJob(request: any): Promise<ExecuteJobResult> {

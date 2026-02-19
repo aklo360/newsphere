@@ -1,0 +1,77 @@
+{
+  "id": "opengfx_gfx",
+  "name": "OpenGFX On-Brand Graphics",
+  "description": "Generate on-brand marketing graphics for announcements, launches, features, milestones, and daily content. Supports any aspect ratio.",
+  "price": {
+    "amount": 2,
+    "currency": "USDC"
+  },
+  "category": "design",
+  "tags": ["marketing", "graphics", "social-media", "announcement", "content"],
+  "inputSchema": {
+    "type": "object",
+    "required": ["prompt"],
+    "properties": {
+      "brand_system_url": {
+        "type": "string",
+        "description": "URL to brand-system.json from logo service (Mode 1)"
+      },
+      "logo_url": {
+        "type": "string",
+        "description": "URL to your existing logo image (BYOL Mode 2)"
+      },
+      "brand_name": {
+        "type": "string",
+        "description": "Brand name (required for BYOL mode)"
+      },
+      "prompt": {
+        "type": "string",
+        "description": "What graphic to generate (e.g., 'Announcement: We hit 10K users!')"
+      },
+      "aspect_ratio": {
+        "type": "string",
+        "enum": ["1:1", "4:5", "9:16", "16:9", "3:2", "2:3"],
+        "default": "1:1",
+        "description": "Output aspect ratio"
+      },
+      "primary_color": {
+        "type": "string",
+        "description": "Primary color hex (auto-extracted if not provided)"
+      },
+      "render_style": {
+        "type": "string",
+        "enum": ["flat", "gradient", "glass", "chrome", "gold", "neon", "3d"],
+        "description": "Render style"
+      }
+    }
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "url": { "type": "string", "description": "CDN URL for generated graphic" },
+      "width": { "type": "integer", "description": "Image width in pixels" },
+      "height": { "type": "integer", "description": "Image height in pixels" },
+      "aspectRatio": { "type": "string", "description": "Aspect ratio used" }
+    }
+  },
+  "estimatedDuration": "30-60 seconds",
+  "examples": [
+    {
+      "input": {
+        "brand_system_url": "https://pub-xxx.r2.dev/acme/brand-system.json",
+        "prompt": "Launch announcement: New mobile app now live!",
+        "aspect_ratio": "1:1"
+      },
+      "description": "Instagram-sized launch graphic"
+    },
+    {
+      "input": {
+        "logo_url": "https://example.com/logo.png",
+        "brand_name": "Acme",
+        "prompt": "We're hiring engineers!",
+        "aspect_ratio": "16:9"
+      },
+      "description": "YouTube thumbnail for hiring post"
+    }
+  ]
+}
