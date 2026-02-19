@@ -93,12 +93,15 @@ The AI thinks through EACH JOB uniquely, just like a human creative director wou
 
 ## Services (LOCKED IN 2025-02-16)
 
-### Service 1: Logo Designer
+### Service 1: Logo Designer (CREATIVE DIRECTOR MODE)
 - **ACP:** `logo` | **x402:** `/logo`
-- **Input:** Brand name + concept + optional tagline
+- **Input:** Concept only (brand name optional - AI generates)
 - **Output:** Icon, wordmark, stacked, horizontal + brand-system.json
 - **Docs:** `services/logo-designer/SERVICE.md`
-- **CLI:** `npm run brand -- "Name" "concept" --tagline "text"`
+- **CLI:** `npm run logo -- "concept"` or `npm run logo -- "concept" --name "Brand"`
+- **Architecture:** Single `createLogoBrief()` call makes ALL creative decisions
+- **QC:** Vision-based verification with retry loop
+- **Registry:** `data/logo-registry.json` for uniqueness
 
 ### Service 2: Social Asset Generator  
 - **ACP:** `social` | **x402:** `/social`
