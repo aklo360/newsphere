@@ -66,6 +66,7 @@ const POSE_ANATOMY: Record<string, PoseAnatomyConfig> = {
 };
 
 const ANATOMY_PRESETS: Record<string, AnatomySchema> = {
+  // CRUSTACEANS
   crab: {
     creature: "crab",
     body: { type: "dome shell", description: "rounded dome-shaped shell body" },
@@ -80,12 +81,90 @@ const ANATOMY_PRESETS: Record<string, AnatomySchema> = {
     legs: { count: 0, type: "none", description: "" },
     face: { eyes: "big round kawaii eyes", mouth: "small cute beak smile" },
   },
+  
+  // ROBOTS/TECH
   robot: {
     creature: "robot",
     body: { type: "boxy torso", description: "rectangular robotic body" },
     arms: { count: 2, type: "arms", description: "two mechanical arms with gripper hands" },
     legs: { count: 2, type: "legs", description: "two sturdy robot legs" },
     face: { eyes: "LED screen eyes", mouth: "pixel smile display" },
+  },
+  
+  // MAMMALS
+  elephant: {
+    creature: "elephant",
+    body: { type: "round body", description: "large rounded elephant body" },
+    arms: { count: 0, type: "none", description: "no arms - elephants have NO ARMS" },
+    legs: { count: 4, type: "legs", description: "four sturdy elephant legs with round feet" },
+    face: { eyes: "big round kawaii eyes", mouth: "small friendly smile" },
+    extras: ["LONG TRUNK (most important feature!)", "large floppy elephant ears on sides of head", "tiny tail"],
+  },
+  cat: {
+    creature: "cat",
+    body: { type: "round body", description: "soft rounded cat body" },
+    arms: { count: 0, type: "none", description: "no arms - cats have NO ARMS, only legs" },
+    legs: { count: 4, type: "paws", description: "four cat paws (or 2 visible in front view)" },
+    face: { eyes: "big round kawaii cat eyes with vertical pupils", mouth: "small cat mouth with whiskers" },
+    extras: ["pointed cat ears on top of head", "whiskers", "fluffy tail"],
+  },
+  dog: {
+    creature: "dog",
+    body: { type: "round body", description: "soft rounded dog body" },
+    arms: { count: 0, type: "none", description: "no arms - dogs have NO ARMS, only legs" },
+    legs: { count: 4, type: "paws", description: "four dog paws (or 2 visible in front view)" },
+    face: { eyes: "big round kawaii dog eyes", mouth: "happy dog mouth with tongue" },
+    extras: ["floppy or pointed dog ears", "wet nose", "wagging tail"],
+  },
+  bear: {
+    creature: "bear",
+    body: { type: "round body", description: "big soft rounded bear body" },
+    arms: { count: 2, type: "paws", description: "two bear paws/arms with paw pads" },
+    legs: { count: 2, type: "legs", description: "two sturdy bear legs" },
+    face: { eyes: "small round kawaii bear eyes", mouth: "small bear snout with nose" },
+    extras: ["round bear ears on top of head", "small fluffy tail"],
+  },
+  bunny: {
+    creature: "bunny",
+    body: { type: "round body", description: "soft fluffy round bunny body" },
+    arms: { count: 2, type: "paws", description: "two small bunny paws" },
+    legs: { count: 2, type: "feet", description: "two big bunny feet" },
+    face: { eyes: "big round kawaii eyes", mouth: "small bunny mouth with buck teeth" },
+    extras: ["LONG UPRIGHT BUNNY EARS (most important!)", "fluffy cotton tail", "pink inner ears"],
+  },
+  fox: {
+    creature: "fox",
+    body: { type: "sleek body", description: "sleek fox body" },
+    arms: { count: 0, type: "none", description: "no arms - foxes have NO ARMS, only legs" },
+    legs: { count: 4, type: "paws", description: "four fox paws (or 2 visible in front view)" },
+    face: { eyes: "sly kawaii fox eyes", mouth: "small fox snout" },
+    extras: ["large pointed fox ears", "bushy fox tail with white tip"],
+  },
+  penguin: {
+    creature: "penguin",
+    body: { type: "oval body", description: "oval penguin body with white belly" },
+    arms: { count: 2, type: "flippers", description: "two penguin flippers (not hands!)" },
+    legs: { count: 2, type: "feet", description: "two orange penguin feet" },
+    face: { eyes: "big round kawaii eyes", mouth: "small orange beak" },
+    extras: ["white belly patch", "black and white coloring"],
+  },
+  owl: {
+    creature: "owl",
+    body: { type: "round body", description: "round fluffy owl body" },
+    arms: { count: 2, type: "wings", description: "two owl wings (not hands!)" },
+    legs: { count: 2, type: "talons", description: "two small owl feet with talons" },
+    face: { eyes: "BIG round owl eyes (owls have huge eyes!)", mouth: "small triangular beak" },
+    extras: ["ear tufts on head", "round face disk"],
+  },
+  
+  // OBJECTS
+  "music note": {
+    creature: "music note",
+    body: { type: "note shape", description: "stylized music note shape body" },
+    arms: { count: 2, type: "arms", description: "two small cartoon arms" },
+    legs: { count: 2, type: "legs", description: "two small cartoon legs" },
+    face: { eyes: "big round kawaii eyes", mouth: "happy smile" },
+    extras: ["music note stem", "headphones optional"],
   },
 };
 
@@ -114,17 +193,170 @@ function buildAnatomyPrompt(schema: AnatomySchema, pose: string): string {
   return parts.join("\n");
 }
 
+/**
+ * Build QC checks for creature identity verification.
+ * Returns a string describing what features to look for.
+ */
+function buildCreatureQCChecks(creature: string): string {
+  const creatureLower = creature.toLowerCase();
+  
+  const checks: Record<string, string> = {
+    elephant: `REQUIRED FEATURES FOR ELEPHANT:
+- ✅ Long trunk (MOST IMPORTANT - without trunk, it's NOT an elephant)
+- ✅ Large floppy ears on sides of head
+- ✅ Four legs (NO arms, NO hands, NO claws)
+- ❌ REJECT if: has arms, has hands, has claws, no trunk, no big ears`,
+    
+    cat: `REQUIRED FEATURES FOR CAT:
+- ✅ Pointed cat ears on top of head
+- ✅ Whiskers
+- ✅ Cat-like face
+- ❌ REJECT if: has human hands, has claws (cats have PAWS)`,
+    
+    dog: `REQUIRED FEATURES FOR DOG:
+- ✅ Dog ears (floppy or pointed)
+- ✅ Dog snout/nose
+- ❌ REJECT if: has human hands, no dog features`,
+    
+    owl: `REQUIRED FEATURES FOR OWL:
+- ✅ Large round owl eyes
+- ✅ Small triangular beak (NOT a mouth)
+- ✅ Wings (NOT arms)
+- ❌ REJECT if: has hands, has arms instead of wings, no beak`,
+    
+    bunny: `REQUIRED FEATURES FOR BUNNY:
+- ✅ Long upright bunny ears (MOST IMPORTANT)
+- ✅ Small bunny nose
+- ❌ REJECT if: no long ears, has claws`,
+    
+    penguin: `REQUIRED FEATURES FOR PENGUIN:
+- ✅ Flippers (NOT arms)
+- ✅ White belly
+- ✅ Beak
+- ❌ REJECT if: has hands, has arms instead of flippers`,
+    
+    crab: `REQUIRED FEATURES FOR CRAB:
+- ✅ Pincer claws (crabs DO have claws)
+- ✅ Shell body
+- This is the only creature that SHOULD have claws`,
+    
+    fox: `REQUIRED FEATURES FOR FOX:
+- ✅ Large pointed fox ears
+- ✅ Fox snout
+- ✅ Bushy tail
+- ❌ REJECT if: has hands, no fox features`,
+    
+    bear: `REQUIRED FEATURES FOR BEAR:
+- ✅ Round bear ears
+- ✅ Bear snout with nose
+- Bear paws are acceptable`,
+    
+    robot: `REQUIRED FEATURES FOR ROBOT:
+- ✅ Mechanical/robotic appearance
+- Gripper hands are acceptable for robots`,
+  };
+  
+  return checks[creatureLower] || 
+    `REQUIRED: Must be clearly recognizable as a ${creature}.
+Look for the defining characteristics that make a ${creature} identifiable.`;
+}
+
+/**
+ * Build a strong creature identity block that emphasizes what the creature should LOOK like.
+ * This is critical for QC - the mascot MUST be recognizable as this creature.
+ */
+function buildCreatureIdentityBlock(creature: string, anatomy: AnatomySchema): string {
+  const creatureLower = creature.toLowerCase();
+  
+  // Creature-specific identity traits
+  const identityTraits: Record<string, string> = {
+    elephant: `THIS IS AN ELEPHANT MASCOT.
+- MUST HAVE: Long trunk extending from face (THIS IS THE #1 IDENTIFYING FEATURE)
+- MUST HAVE: Large floppy ears on sides of head
+- MUST HAVE: Four sturdy legs (elephants do NOT have arms or hands)
+- NO CLAWS, NO HANDS, NO ARMS — elephants have FEET and a TRUNK
+- The trunk is ESSENTIAL — without it, it's NOT an elephant`,
+    
+    cat: `THIS IS A CAT MASCOT.
+- MUST HAVE: Pointed cat ears on top of head
+- MUST HAVE: Whiskers
+- MUST HAVE: Cat-like face shape
+- NO ARMS — cats have four PAWS, not hands
+- Optional: fluffy tail`,
+    
+    dog: `THIS IS A DOG MASCOT.
+- MUST HAVE: Dog ears (floppy or pointed)
+- MUST HAVE: Dog-like snout/nose
+- NO ARMS — dogs have four PAWS, not hands
+- Optional: tongue out, wagging tail`,
+    
+    owl: `THIS IS AN OWL MASCOT.
+- MUST HAVE: Large round owl eyes (owls are known for big eyes!)
+- MUST HAVE: Small triangular beak (NOT a mouth)
+- MUST HAVE: Wings (NOT arms or hands)
+- Optional: ear tufts, round face disk`,
+    
+    bunny: `THIS IS A BUNNY/RABBIT MASCOT.
+- MUST HAVE: Long upright bunny ears (THIS IS THE #1 IDENTIFYING FEATURE)
+- MUST HAVE: Small bunny nose
+- Optional: buck teeth, fluffy cotton tail`,
+    
+    penguin: `THIS IS A PENGUIN MASCOT.
+- MUST HAVE: Flippers (NOT arms or hands)
+- MUST HAVE: White belly patch
+- MUST HAVE: Orange beak
+- MUST HAVE: Orange feet`,
+    
+    crab: `THIS IS A CRAB MASCOT.
+- MUST HAVE: Two pincer claws (crabs DO have claws)
+- MUST HAVE: Shell body
+- Optional: multiple small legs`,
+    
+    fox: `THIS IS A FOX MASCOT.
+- MUST HAVE: Large pointed fox ears
+- MUST HAVE: Fox snout
+- MUST HAVE: Bushy tail with white tip
+- NO ARMS — foxes have four PAWS`,
+    
+    bear: `THIS IS A BEAR MASCOT.
+- MUST HAVE: Round bear ears on top of head
+- MUST HAVE: Bear snout with nose
+- Bear paws are OK (bears can have arm-like front legs)`,
+    
+    robot: `THIS IS A ROBOT MASCOT.
+- MUST HAVE: Mechanical/robotic appearance
+- Can have: Gripper hands, antenna, screen face, metallic body`,
+  };
+  
+  // Get creature-specific traits or generate generic ones
+  const traits = identityTraits[creatureLower] || 
+    `THIS IS A ${creature.toUpperCase()} MASCOT.
+- The character MUST be clearly recognizable as a ${creature}
+- Include the defining features that make a ${creature} identifiable
+- ${anatomy.extras ? anatomy.extras.join("\n- ") : ""}`;
+  
+  return `${traits}
+
+⚠️ CRITICAL: Someone looking at this should IMMEDIATELY say "that's a ${creature}!"
+⚠️ If the defining features are missing, the mascot is REJECTED.`;
+}
+
 function createAnatomySchema(creature: string, options: Partial<AnatomySchema>): AnatomySchema {
   const preset = ANATOMY_PRESETS[creature.toLowerCase()];
   if (preset) return { ...preset, ...options };
   
+  // For unknown creatures, use sensible defaults — NO CLAWS by default
+  // Most animals have paws/feet, not claws or hands
   return {
     creature,
-    body: options.body || { type: "body", description: "rounded body" },
-    arms: options.arms || { count: 2, type: "arms", description: "two arms" },
-    legs: options.legs || { count: 2, type: "legs", description: "two legs" },
-    face: options.face || { eyes: "round eyes", mouth: "smile" },
-    extras: options.extras,
+    body: options.body || { type: "body", description: `rounded ${creature} body` },
+    arms: options.arms || { count: 0, type: "none", description: "no arms (most animals don't have arms)" },
+    legs: options.legs || { count: 4, type: "legs", description: "four legs with paws/feet (NOT hands, NOT claws)" },
+    face: options.face || { 
+      eyes: "big round kawaii eyes with white highlight", 
+      mouth: "small friendly smile or species-appropriate mouth" 
+    },
+    extras: options.extras || [`must look like a ${creature}`, `include ${creature}-specific features`],
   };
 }
 
@@ -285,7 +517,16 @@ function buildMasterPrompt(input: MascotInput, anatomy: AnatomySchema): string {
     ? { hex: input.bgColor, name: "custom" }
     : computeBgColor(color);
   
+  // Build creature identity block - MOST IMPORTANT SECTION
+  const creatureIdentity = buildCreatureIdentityBlock(creature, anatomy);
+  
   return `Create a 2D FLAT mascot character in Discord Wumpus / Duolingo owl style.
+
+╔══════════════════════════════════════════════════════════════════╗
+║  🚨 CREATURE IDENTITY — MOST IMPORTANT 🚨                         ║
+╚══════════════════════════════════════════════════════════════════╝
+
+${creatureIdentity}
 
 ╔══════════════════════════════════════════════════════════════════╗
 ║  SIMPLICITY IS PARAMOUNT — GOLDEN RULE                           ║
@@ -522,24 +763,38 @@ async function verifyAnatomy(
   const checkEyeColor = masterPath && pose && pose !== "master";
   const masterData = checkEyeColor ? fs.readFileSync(masterPath).toString("base64") : null;
   
+  // Build creature-specific identity checks
+  const creatureChecks = buildCreatureQCChecks(anatomy.creature);
+  
   const prompt = checkEyeColor 
-    ? `You are a QC inspector verifying mascot anatomy AND eye color consistency.
+    ? `You are a QC inspector verifying mascot CREATURE IDENTITY, anatomy, AND eye color consistency.
 
 IMAGE 1 (MASTER): Reference image
 IMAGE 2 (EXPRESSION): Image to verify
 
+🚨 CREATURE IDENTITY CHECK (MOST IMPORTANT):
+This MUST be recognizable as a ${anatomy.creature.toUpperCase()}.
+${creatureChecks}
+
 EXPECTED ANATOMY:
-- Claws/Arms: ${anatomy.arms.count}
+- Arms/appendages: ${anatomy.arms.count} ${anatomy.arms.type}
 - Legs: ${anatomy.legs.count}
 
 INSTRUCTIONS:
-1. Count claws/arms in IMAGE 2 - should be ${anatomy.arms.count}
-2. Count legs in IMAGE 2 - should be ${anatomy.legs.count}
-3. Check if IMAGE 2 is front-facing
-4. Compare EYE COLOR between IMAGE 1 and IMAGE 2 - must be IDENTICAL (shape can differ)
+1. FIRST: Does this look like a ${anatomy.creature}? Check for identifying features.
+2. Count arms/appendages in IMAGE 2 - should be ${anatomy.arms.count}
+3. Count legs in IMAGE 2 - should be ${anatomy.legs.count}
+4. Check if IMAGE 2 is front-facing
+5. Compare EYE COLOR between IMAGE 1 and IMAGE 2 - must be IDENTICAL
 
 Respond with ONLY this JSON:
 {
+  "looks_like_creature": <boolean>,
+  "creature_expected": "${anatomy.creature}",
+  "creature_detected": "<what it actually looks like>",
+  "has_identifying_features": <boolean>,
+  "identifying_features_found": ["list features found"],
+  "identifying_features_missing": ["list features missing"],
   "claw_count": <number>,
   "leg_count": <number>,
   "front_facing": <boolean>,
@@ -551,19 +806,31 @@ Respond with ONLY this JSON:
   "expression_eye_color": "<color>",
   "issues": ["list any problems"]
 }`
-    : `You are a QC inspector verifying mascot anatomy. Count CAREFULLY.
+    : `You are a QC inspector verifying mascot CREATURE IDENTITY and anatomy. BE STRICT.
+
+🚨 CREATURE IDENTITY CHECK (MOST IMPORTANT):
+This MUST be recognizable as a ${anatomy.creature.toUpperCase()}.
+${creatureChecks}
 
 EXPECTED ANATOMY:
-- Claws/Arms: ${anatomy.arms.count}
+- Arms/appendages: ${anatomy.arms.count} ${anatomy.arms.type}
 - Legs: ${anatomy.legs.count}
 
 INSTRUCTIONS:
-1. Count ALL claw-like appendages (the big pincers) - should be ${anatomy.arms.count}
-2. Count ALL leg-like appendages (the small walking legs) - should be ${anatomy.legs.count}
-3. Check if it's front-facing view
+1. FIRST: Does this look like a ${anatomy.creature}? Would someone immediately recognize it?
+2. Check for the identifying features listed above
+3. Count arms/appendages - should be ${anatomy.arms.count}
+4. Count legs - should be ${anatomy.legs.count}
+5. Check if it's front-facing view
 
 Respond with ONLY this JSON (no other text):
 {
+  "looks_like_creature": <boolean>,
+  "creature_expected": "${anatomy.creature}",
+  "creature_detected": "<what it actually looks like>",
+  "has_identifying_features": <boolean>,
+  "identifying_features_found": ["list features found"],
+  "identifying_features_missing": ["list features missing"],
   "claw_count": <number>,
   "leg_count": <number>,
   "front_facing": <boolean>,
@@ -597,9 +864,19 @@ Respond with ONLY this JSON (no other text):
     const qc = JSON.parse(jsonMatch[0]);
     const issues: string[] = [];
     
-    // Check claw count
+    // 🚨 CREATURE IDENTITY CHECK — MOST IMPORTANT
+    if (qc.looks_like_creature === false) {
+      issues.push(`CREATURE IDENTITY FAIL: Expected ${anatomy.creature}, looks like ${qc.creature_detected || "unknown"}`);
+    }
+    
+    if (qc.has_identifying_features === false) {
+      const missing = qc.identifying_features_missing?.join(", ") || "key features";
+      issues.push(`Missing ${anatomy.creature} features: ${missing}`);
+    }
+    
+    // Check arm/appendage count
     if (qc.claw_count !== anatomy.arms.count) {
-      issues.push(`Wrong claw count: ${qc.claw_count} (expected ${anatomy.arms.count})`);
+      issues.push(`Wrong arm/appendage count: ${qc.claw_count} (expected ${anatomy.arms.count})`);
     }
     
     // Check leg count - CRITICAL
