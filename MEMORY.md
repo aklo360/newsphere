@@ -84,6 +84,85 @@
 - Tagline always plain (white for dark, black for light)
 - Mode detected in style guide analysis, stored in `brand-system.json`
 
+## Bird Mascot Anatomy (CRITICAL — LOCKED 2025-02-19)
+- **BIRDS HAVE BEAKS, NOT MOUTHS**
+- All expressions must come from the BEAK shape (open/closed, angled)
+- NO separate mouth/smile line under or below the beak
+- Happy = beak slightly open, angled up
+- Sad = beak closed, angled down
+- Laugh = beak wide open
+- Angry = beak closed tight, angled down
+- This applies to: owls, penguins, parrots, eagles, any bird creature
+
+### Bird Anatomy Prompt Block (copy into prompts)
+```
+BIRD ANATOMY:
+- Small triangular BEAK only (no mouth line - birds have beaks not mouths)
+- Expression from beak SHAPE only
+```
+
+## Highlight Usage (CRITICAL)
+- **SPARINGLY** - only add white glossy highlights when necessary
+- 1-2 highlights max per character (e.g., one on head/body)
+- Do NOT cover the character with highlights everywhere
+- Highlights should accent, not dominate
+- Clean, minimal aesthetic > over-decorated
+- **NEVER REMOVE IN POST-PROCESSING** — highlights are essential for kawaii aesthetic
+
+## Expression Poses (LOCKED 2025-02-19)
+
+### Standard 6-Pose Set
+| Pose | Description |
+|------|-------------|
+| **master** | Neutral, friendly default |
+| **wave** | One wing/arm raised waving, friendly face |
+| **happy** | Eyes closed (^_^), big smile/open beak, pink blush |
+| **sad** | Droopy eyes, downturned mouth/beak, single tear |
+| **angry** | V-shaped eyebrows, narrowed eyes, tight frown/beak |
+| **laugh** | Eyes squeezed shut, wide open mouth/beak, tears of joy |
+
+### Pose Generation Rules
+- **PASS MASTER AS REFERENCE** — all poses derive from master for consistency
+- **WAVE = ACTUAL ACTION** — wing must be raised and waving, not just excited face
+- Body proportions stay consistent across all poses
+- Only face/expression changes (except wave which has arm movement)
+
+## Mascot Generation Rules (CRITICAL — LOCKED 2025-02-19)
+
+### Single-Pass Rendering (NEVER TWO-STEP)
+- **REQUEST SQUARE DIRECTLY** — tell Gemini "SQUARE 1:1 aspect ratio (1024x1024)" in the prompt
+- **NEVER** generate wide then resize/pad — this creates visible seams from mismatched background colors
+- The entire image should be generated in ONE pass with the final dimensions
+
+### Background Rules
+- **SOLID COLORED BACKGROUND** — specify exact hex color in prompt (e.g., "#C8B4DC lavender")
+- **NEVER REQUEST TRANSPARENT** — Gemini draws a checkered pattern instead of real alpha
+- Background color should complement the mascot (soft pastels work well)
+
+### Frame Composition
+- **FRAME FILL: 70%** — mascot takes up ~70% of frame (~15% padding each side)
+- Mascot centered in frame
+- Specify in prompt: "Owl centered in frame, taking up ~70% of the space"
+
+### Highlight Preservation (CRITICAL)
+- **NEVER CLAMP WHITE PIXELS** — white removal destroys glossy highlights
+- White highlights (eye catchlights, head shine) are essential for kawaii aesthetic
+- If post-processing needed, ONLY resize — no color manipulation
+
+### Prompt Template (LOCKED)
+```
+IMAGE FORMAT:
+- SQUARE 1:1 aspect ratio (1024x1024)
+- Solid flat #[HEX] [color name] background filling the ENTIRE image
+- [Character] centered in frame, taking up ~70% of the space
+
+DESIGN:
+- [Color] body
+- [Details...]
+- WHITE GLOSSY HIGHLIGHTS on eyes and head (1-2 highlights)
+- 2D flat illustration, black outlines
+```
+
 ## Icon Complexity (UPDATED 2025-02-17)
 - **TARGET: 40-50% complexity** — SIMPLE, CLEAN, LUXURY
 - **FRAME FILL: 60-70%** — substantial but not cramped (~15% padding each side)
@@ -253,6 +332,28 @@ virtuals-protocol-acp/.../opengfx_mascot/  # ACP offering
 ```
 
 Old v1/v2 files have been DELETED.
+
+## Nox Brand Package (COMPLETE 2025-02-19)
+**Product:** Kawaii owl mascot
+**Style:** Purple (#8B5CF6) body, cream belly, lavender (#C8B4DC) background
+
+### Mascot Assets
+| Pose | CDN URL |
+|------|---------|
+| Master | https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/nox/mascot/FINAL/master.png |
+| Wave | https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/nox/mascot/FINAL/wave.png |
+| Happy | https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/nox/mascot/FINAL/happy.png |
+| Sad | https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/nox/mascot/FINAL/sad.png |
+| Angry | https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/nox/mascot/FINAL/angry.png |
+| Laugh | https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/nox/mascot/FINAL/laugh.png |
+
+### Key Learnings from Nox Session
+1. Request SQUARE 1:1 directly from Gemini (never two-step render)
+2. Request SOLID colored background (never transparent — Gemini draws checkers)
+3. Bird anatomy: BEAKS NOT MOUTHS
+4. Never clamp white pixels (destroys highlights)
+5. 70% frame fill
+6. Pass master as reference for all expression poses
 
 ## GitHub
 https://github.com/aklo360/openGFX.git
