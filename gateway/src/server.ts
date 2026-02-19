@@ -1042,7 +1042,7 @@ function runMascotPipeline(job: Job): Promise<MascotResult> {
           } catch { /* Fall through to manual upload */ }
         }
         
-        // Fallback: Find latest mascot output dir and upload manually
+        // Fallback: Find latest mascot output dir and upload manually with versioned path
         const mascotBaseDir = path.join(opengfxDir, "output", brandSlug, "mascot");
         const dirs = fs.readdirSync(mascotBaseDir)
           .filter(d => d.startsWith("unified-") || d.startsWith("v2-") || d.startsWith("202"))
@@ -1052,7 +1052,9 @@ function runMascotPipeline(job: Job): Promise<MascotResult> {
         
         const { execSync } = await import("child_process");
         
-        const cdnBase = `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${brandSlug}/mascot/FINAL`;
+        // Use versioned directory for cache-busting (Telegram/Discord previews)
+        const version = Date.now();
+        const cdnBase = `https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev/${brandSlug}/mascot/v${version}`;
         const uploads: { master: string; wave: string; happy: string; sad: string; angry: string; laugh: string } = {
           master: "",
           wave: "",
@@ -1062,17 +1064,17 @@ function runMascotPipeline(job: Job): Promise<MascotResult> {
           laugh: "",
         };
         
-        // Upload all standard poses
+        // Upload all standard poses to versioned directory
         for (const pose of MASCOT_POSES) {
           const posePath = path.join(mascotDir, `${pose}.png`);
           if (fs.existsSync(posePath)) {
-            execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/FINAL/${pose}.png --file "${posePath}" --content-type "image/png" --remote`, { cwd: opengfxDir, stdio: "pipe" });
+            execSync(`wrangler r2 object put opengfx-assets/${brandSlug}/mascot/v${version}/${pose}.png --file "${posePath}" --content-type "image/png" --remote`, { cwd: opengfxDir, stdio: "pipe" });
             (uploads as any)[pose] = `${cdnBase}/${pose}.png`;
             console.log(`  ✓ ${pose}.png`);
           }
         }
         
-        console.log(`[mascot] Uploaded ${MASCOT_POSES.length} poses to CDN`);
+        console.log(`[mascot] Uploaded ${MASCOT_POSES.length} poses to CDN (v${version})`);
         
         resolve({ mascot: uploads });
       } catch (err) {
