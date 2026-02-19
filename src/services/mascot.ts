@@ -534,14 +534,21 @@ ${mustHaveFeatures.map(f => `• ${f}`).join("\n") || "• (none specified)"}
 REVIEW CHECKLIST:
 ${qcCriteria.map(c => `☐ ${c}`).join("\n")}
 
-Also check:
-☐ Eye color IDENTICAL to master
+⚠️ CRITICAL CONSISTENCY CHECKS (REJECT IF DIFFERENT FROM MASTER):
+
+☐ EYE COLOR — Must be EXACTLY the same as master!
+  - If master has BLACK eyes → expression must have BLACK eyes
+  - If master has BLUE eyes → expression must have BLUE eyes
+  - ONLY exception: sparkly/heart eyes for specific expressions
+  - This is the #1 most common mistake — CHECK CAREFULLY
+
+☐ DESIGN ELEMENTS — Patterns/textures must match master:
+  - Ear patterns (circuit boards, stripes, etc.) IDENTICAL
+  - Body markings IDENTICAL
+  - Special features PRESERVED (don't lose details!)
+
 ☐ Body position identical to master (except for pose-specific changes)
 ☐ Facial features are ON THE FACE, not misplaced
-☐ ALL DESIGN ELEMENTS match master (patterns, textures, accessories)
-☐ Ear patterns/textures IDENTICAL to master
-☐ Body markings/patterns IDENTICAL to master
-☐ Any special features (circuit boards, stripes, spots) PRESERVED
 
 Respond with ONLY this JSON:
 {
@@ -629,9 +636,9 @@ Respond with ONLY this JSON:
       issues.push(`Missing features: ${qc.features_missing.join(", ")}`);
     }
     
-    // Eye color consistency (expressions only)
+    // 🚨 EYE COLOR CONSISTENCY — #1 most common mistake (expressions only)
     if (checkEyeColor && qc.eye_color_matches === false) {
-      issues.push("Eye color doesn't match master");
+      issues.push("EYE COLOR MISMATCH: Eyes must be EXACTLY the same color as master (e.g., black→black, blue→blue)");
     }
     
     // Body consistency (expressions only)
