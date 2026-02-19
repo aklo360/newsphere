@@ -509,6 +509,71 @@ async function generateExpressionImage(
 // VISION QC - Verify anatomy
 // ═══════════════════════════════════════════════════════════════════
 
+async function verifyExpressionConsistency(
+  expressionPath: string,
+  masterPath: string,
+  pose: string
+): Promise<{ passed: boolean; issues: string[] }> {
+  const expressionData = fs.readFileSync(expressionPath);
+  const masterData = fs.readFileSync(masterPath);
+  
+  // Skip eye color check for poses with closed eyes
+  if (pose === "happy" || pose === "laugh") {
+    return { passed: true, issues: [] };
+  }
+  
+  const prompt = `Compare these two mascot images for EYE COLOR consistency.
+
+IMAGE 1 (MASTER - reference): The first image
+IMAGE 2 (EXPRESSION - to verify): The second image
+
+TASK: Check if the eye COLOR in the expression matches the master.
+- Eye SHAPE can change (droopy for sad, narrowed for angry)
+- Eye COLOR must be IDENTICAL (same hue: black, brown, blue, etc.)
+
+Respond with ONLY this JSON:
+{
+  "master_eye_color": "<color name>",
+  "expression_eye_color": "<color name>", 
+  "colors_match": <boolean>,
+  "issue": "<describe mismatch if any, or empty string>"
+}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: TEXT_MODEL,
+      contents: [{
+        role: "user",
+        parts: [
+          { inlineData: { mimeType: "image/png", data: masterData.toString("base64") } },
+          { inlineData: { mimeType: "image/png", data: expressionData.toString("base64") } },
+          { text: prompt }
+        ]
+      }],
+    });
+
+    const text = response.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    
+    if (!jsonMatch) {
+      return { passed: true, issues: [] }; // Can't parse, let it pass
+    }
+    
+    const result = JSON.parse(jsonMatch[0]);
+    
+    if (!result.colors_match) {
+      return {
+        passed: false,
+        issues: [`Eye color mismatch: master=${result.master_eye_color}, expression=${result.expression_eye_color}`]
+      };
+    }
+    
+    return { passed: true, issues: [] };
+  } catch (err) {
+    return { passed: true, issues: [] }; // On error, let it pass
+  }
+}
+
 async function verifyAnatomy(
   imagePath: string,
   anatomy: AnatomySchema
@@ -809,23 +874,38 @@ export async function generateMascot(input: MascotInput): Promise<MascotOutput> 
       
       await generateExpressionImage(masterImageData, input, anatomy, pose, posePath);
       
-      // Run QC
+      // Run anatomy QC
       const qcResult = await verifyAnatomy(posePath, anatomy);
       qcResult.attempts = attempts;
       
-      if (qcResult.passed) {
-        console.log(`      ✓ ${pose}.png (QC PASS)`);
-        passed = true;
-        qcReport.poses[pose] = qcResult;
-      } else {
+      if (!qcResult.passed) {
         console.log(`      ⚠️ ${pose} QC FAIL (attempt ${attempts}): ${qcResult.issues.join(", ")}`);
-        
         if (attempts > MAX_RETRIES) {
           console.log(`      ❌ Max retries — accepting with warning`);
           qcReport.poses[pose] = qcResult;
           qcReport.passed = false;
+          passed = true; // Exit loop
         }
+        continue;
       }
+      
+      // Run eye color consistency QC (only for poses with open eyes)
+      const eyeQc = await verifyExpressionConsistency(posePath, masterPath, pose);
+      if (!eyeQc.passed) {
+        console.log(`      ⚠️ ${pose} EYE QC FAIL (attempt ${attempts}): ${eyeQc.issues.join(", ")}`);
+        qcResult.issues.push(...eyeQc.issues);
+        if (attempts > MAX_RETRIES) {
+          console.log(`      ❌ Max retries — accepting with warning`);
+          qcReport.poses[pose] = qcResult;
+          qcReport.passed = false;
+          passed = true; // Exit loop
+        }
+        continue;
+      }
+      
+      console.log(`      ✓ ${pose}.png (QC PASS)`);
+      passed = true;
+      qcReport.poses[pose] = qcResult;
     }
     
     localPaths[pose] = posePath;
