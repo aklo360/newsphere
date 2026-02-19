@@ -47,27 +47,23 @@ cd /Users/navi/.openclaw-opengfx/workspace/gateway && npm run build && node dist
 
 ## CRITICAL MASCOT RULES (NEVER BREAK)
 
-### Creature Identity is #1 Priority
-- Mascot MUST be instantly recognizable as the requested creature
-- QC checks creature identity BEFORE anatomy counts
-- If it doesn't look like the creature, it's REJECTED
+### NO PRESETS — Fully Dynamic AI Interpretation
+- NO hardcoded creature anatomy
+- AI interprets what ANY creature looks like from general knowledge
+- parseInputPrompt returns `creatureDescription` + `keyFeatures` from AI
+- QC verifies output matches the ORIGINAL USER REQUEST
 
-### Creature-Specific Anatomy (LOCKED)
-| Creature | Arms | Legs | Key Features |
-|----------|------|------|--------------|
-| elephant | 0 (NO arms) | 4 | TRUNK + big ears |
-| cat | 0 (NO arms) | 4 paws | pointed ears, whiskers |
-| dog | 0 (NO arms) | 4 paws | dog ears, snout |
-| owl | 2 wings | 2 talons | BIG eyes, beak |
-| bunny | 2 paws | 2 feet | LONG ears |
-| penguin | 2 flippers | 2 feet | white belly, beak |
-| crab | 2 claws | 4 legs | ONLY creature with claws |
-| robot | 2 arms | 2 legs | mechanical, grippers OK |
+### How It Works
+1. User says "cute robotic elephant"
+2. AI interprets: elephant = trunk, big ears, 4 legs, no arms, robotic = mechanical elements
+3. Image model generates based on AI interpretation
+4. QC checks: "does this look like what the user asked for?"
 
-### NO CLAWS Rule (CRITICAL)
-- ONLY crabs should have claws
-- Most animals have PAWS or FEET, not hands or claws
-- Default anatomy: 0 arms, 4 legs
+### Trust the Model
+- The AI knows what an elephant looks like
+- The AI knows dogs have paws, not claws
+- The AI knows owls have beaks, not mouths
+- No need for hardcoded rules
 
 ---
 
