@@ -45,6 +45,32 @@ cd /Users/navi/.openclaw-opengfx/workspace/gateway && npm run build && node dist
 
 ---
 
+## CRITICAL MASCOT RULES (NEVER BREAK)
+
+### Creature Identity is #1 Priority
+- Mascot MUST be instantly recognizable as the requested creature
+- QC checks creature identity BEFORE anatomy counts
+- If it doesn't look like the creature, it's REJECTED
+
+### Creature-Specific Anatomy (LOCKED)
+| Creature | Arms | Legs | Key Features |
+|----------|------|------|--------------|
+| elephant | 0 (NO arms) | 4 | TRUNK + big ears |
+| cat | 0 (NO arms) | 4 paws | pointed ears, whiskers |
+| dog | 0 (NO arms) | 4 paws | dog ears, snout |
+| owl | 2 wings | 2 talons | BIG eyes, beak |
+| bunny | 2 paws | 2 feet | LONG ears |
+| penguin | 2 flippers | 2 feet | white belly, beak |
+| crab | 2 claws | 4 legs | ONLY creature with claws |
+| robot | 2 arms | 2 legs | mechanical, grippers OK |
+
+### NO CLAWS Rule (CRITICAL)
+- ONLY crabs should have claws
+- Most animals have PAWS or FEET, not hands or claws
+- Default anatomy: 0 arms, 4 legs
+
+---
+
 ## CRITICAL DELIVERY RULE (NEVER SKIP)
 **EVERY job output MUST include CDN links for all deliverables.**
 - User cannot download/view files without public URLs
