@@ -72,6 +72,12 @@ The mascot service now works like a real creative director:
 ### The Philosophy
 The AI thinks through EACH JOB uniquely, just like a human creative director would. It doesn't follow templates — it interprets the brief and makes creative decisions.
 
+### Mascot Registry (UNIQUENESS)
+- Location: `data/mascot-registry.json`
+- Tracks all mascots created (brand, creature, color)
+- AI sees existing mascots and avoids duplicates
+- No two brands should have similar mascots (e.g., no two purple elephants)
+
 ---
 
 ## CRITICAL DELIVERY RULE (NEVER SKIP)
