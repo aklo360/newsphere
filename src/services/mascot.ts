@@ -12,6 +12,12 @@ import type { BrandSystem, ColorPalette, RenderStyle } from "../types.js";
 import { ai, IMAGE_MODEL } from "../ai.js";
 import { Modality } from "@google/genai";
 import { RENDER_STYLE_PROMPTS } from "../constants.js";
+import { 
+  buildNanoBananaPrompt, 
+  getEmoteForPose,
+  type EmoteStyle,
+  type AnatomyConfig,
+} from "../prompts/nano-banana.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -416,20 +422,27 @@ CHARACTER SPECIFICATION:
 ${characterSpec.description}
 Features: ${characterSpec.features.join(", ")}
 
-QC CHECKLIST - Answer each:
-1. ARM_COUNT: How many arms/claws does the character have? (Count carefully - include any limb that looks like an arm or claw)
+QC CHECKLIST - Answer each carefully:
+1. ARM_COUNT: How many arms/claws does the character have? (Count ALL limbs that look like arms or claws)
 2. LEG_COUNT: How many legs does the character have?
-3. HAS_ANTENNA: Does it have an antenna on top? (true/false)
-4. BODY_SHAPE: Is the body shape a rounded dome/shell? (true/false)
-5. COLOR_CORRECT: Is the primary color close to ${characterSpec.colors.primary}? (true/false)
-6. EXTRA_LIMBS: Are there any unexpected extra appendages near the face/mouth area? (true/false)
+3. HAS_EYES: Does the character have visible eyes? (true/false)
+4. HAS_MOUTH: Does the character have a visible mouth? (true/false) - CRITICAL: mascots MUST have mouths
+5. HAS_ANTENNA: Does it have an antenna on top? (true/false)
+6. BODY_SHAPE: Is the body shape correct (rounded dome/shell for crabs)? (true/false)
+7. COLOR_CORRECT: Is the primary color close to ${characterSpec.colors.primary}? (true/false)
+8. EXTRA_LIMBS: Are there any unexpected extra appendages near the face/mouth area? (true/false)
 
-CRITICAL RULE: The character MUST have EXACTLY 2 arms/claws. Not 1, not 3, not 4. EXACTLY 2.
+CRITICAL RULES:
+- MUST have EXACTLY 2 arms/claws (not 1, not 3, not 4)
+- MUST have visible EYES
+- MUST have visible MOUTH (no mouthless mascots!)
 
 Respond with ONLY this JSON:
 {
   "arm_count": <number>,
   "leg_count": <number>,
+  "has_eyes": <boolean>,
+  "has_mouth": <boolean>,
   "has_antenna": <boolean>,
   "body_shape_correct": <boolean>,
   "color_correct": <boolean>,
@@ -462,6 +475,16 @@ Respond with ONLY this JSON:
     // Check arm count - CRITICAL
     if (qc.arm_count !== 2) {
       issues.push(`Wrong arm count: ${qc.arm_count} (must be exactly 2)`);
+    }
+    
+    // Check eyes - CRITICAL for expressions
+    if (qc.has_eyes === false) {
+      issues.push("Missing eyes (mascots MUST have eyes)");
+    }
+    
+    // Check mouth - CRITICAL for expressions
+    if (qc.has_mouth === false) {
+      issues.push("Missing mouth (mascots MUST have a visible mouth)");
     }
     
     // Check for extra limbs near face
@@ -608,76 +631,35 @@ async function generateCharacterImage(
   const stylePrompt = CHARACTER_STYLE_PROMPTS[characterSpec.style];
 
   // ═══════════════════════════════════════════════════════════════════
-  // NANO BANANA PROMPTING: Front-load critical constraints, repeat key rules
+  // NANO BANANA PROMPTING v2: Emote management + prompt doubling
   // ═══════════════════════════════════════════════════════════════════
   
-  // FIRST LINE = MOST CRITICAL (Gemini weighs early tokens highest)
-  const criticalFirst = `EXACTLY 2 ARMS. DO NOT DRAW MORE THAN 2 ARMS. TWO ARMS ONLY.`;
+  // Detect leg count from features (default 6 for crabs)
+  const legMatch = characterSpec.features.find(f => /(\d+)\s*(legs?|walking)/i.test(f));
+  const legCount = legMatch ? parseInt(legMatch.match(/(\d+)/)?.[1] || "6") : 6;
   
-  // Negative prompting block (what NOT to do)
-  const negativeBlock = `
-❌ FORBIDDEN — NEVER DO THESE:
-- NO 3 arms, NO 4 arms, NO extra limbs
-- NO changing the character design
-- NO different colors than specified
-- NO realistic style (keep it stylized/cartoon)
-- NO busy backgrounds
-`;
-
-  // Character description block
-  const characterBlock = `
-✅ CHARACTER DESIGN:
-${characterSpec.description}
-
-IDENTIFYING FEATURES:
-${characterSpec.features.map(f => `• ${f}`).join("\n")}
-
-DESIGN NOTES:
-${characterSpec.designNotes}
-`;
-
-  // Color block with exact hex values
-  const colorBlock = `
-🎨 EXACT COLORS:
-• Primary body: ${characterSpec.colors.primary}
-• Secondary/highlights: ${characterSpec.colors.secondary}
-• Accent details: ${characterSpec.colors.accent}
-`;
-
-  // Style block
-  const styleBlock = `
-🖼️ ART STYLE:
-${stylePrompt}
-Like Discord's Wumpus, Duolingo's owl, or Slack's slackbot — clean, memorable, mascot-quality.
-`;
-
-  // Pose block
-  const poseBlock = `
-📐 THIS IMAGE — POSE:
-${poseDescription}
-Character centered, filling 70% of frame, white background.
-`;
-
-  // Final reinforcement (repeat critical rule)
-  const reinforcement = `
-⚠️ FINAL CHECK: Count the arms before outputting. There must be EXACTLY 2 arms/claws. Not 3. Not 4. TWO.
-`;
-
-  // Assemble prompt with critical constraint FIRST and LAST
-  const prompt = referenceImagePath 
-    ? `${criticalFirst}
-
-REFERENCE IMAGE PROVIDED — This is the EXACT character. Match it PERFECTLY. Only change the pose.
-${negativeBlock}
-${poseBlock}
-${reinforcement}`
-    : `${criticalFirst}
-${negativeBlock}
-${characterBlock}
-${colorBlock}
-${styleBlock}
-${poseBlock}
-${reinforcement}`;
+  // Get emote for this pose
+  const emote = getEmoteForPose(poseName);
+  
+  // Build anatomy config
+  const anatomy: AnatomyConfig = {
+    armCount: 2,  // Always 2 for mascots unless specified otherwise
+    legCount,
+    hasAntenna: characterSpec.features.some(f => f.toLowerCase().includes("antenna")),
+  };
+  
+  // Build the full nano banana prompt (will be doubled internally)
+  const prompt = buildNanoBananaPrompt({
+    anatomy,
+    emote,
+    characterDescription: characterSpec.description,
+    features: characterSpec.features,
+    colors: characterSpec.colors,
+    style: `${stylePrompt}\nLike Discord's Wumpus, Duolingo's owl, or Slack's slackbot — clean, memorable, mascot-quality.`,
+    pose: poseDescription,
+    size,
+    isReferenceMode: !!referenceImagePath,
+  });
 
   // Build content parts - reference image FIRST if provided
   const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [];
