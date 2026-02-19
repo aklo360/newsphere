@@ -29,7 +29,7 @@ src/services/
 ├── logo.ts        ← IMPORTS from learnings
 ├── social.ts      ← IMPORTS from learnings  
 ├── gfx.ts         ← IMPORTS from learnings
-└── mascot-v2.ts   ← IMPORTS from learnings
+└── mascot.ts      ← IMPORTS from learnings
 ```
 
 ## The Learnings Hierarchy

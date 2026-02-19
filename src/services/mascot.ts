@@ -8,7 +8,9 @@
  * 4. VISION QC: Verifies anatomy before delivery
  * 5. CDN UPLOAD: All outputs uploaded with URLs returned
  * 
- * This replaces mascot.ts and mascot-v2.ts
+ * SELF-IMPROVEMENT:
+ * This service imports from src/learnings/*.ts at runtime.
+ * To improve output quality: edit the learnings files, not this service.
  */
 
 import * as fs from "fs";
@@ -20,6 +22,16 @@ import { execSync } from "child_process";
 import { ai, IMAGE_MODEL, TEXT_MODEL } from "../ai.js";
 import { Modality } from "@google/genai";
 import type { BrandSystem, ColorPalette } from "../types.js";
+
+// SELF-IMPROVEMENT: Import runtime learnings
+// Edit these files to improve ALL future mascot generation
+import {
+  GEMINI_RULES,
+  POST_PROCESSING_RULES,
+  GENERATION_RULES,
+  CREATURE_RULES,
+  PROMPT_BLOCKS,
+} from "../learnings/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
