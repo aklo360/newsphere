@@ -518,8 +518,8 @@ async function verifyAnatomy(
   const imageData = fs.readFileSync(imagePath);
   const base64Image = imageData.toString("base64");
   
-  // Check if we need to verify eye color (expression vs master)
-  const checkEyeColor = masterPath && pose && !["happy", "laugh", "master"].includes(pose);
+  // Check eye color for ALL expressions (compare to master)
+  const checkEyeColor = masterPath && pose && pose !== "master";
   const masterData = checkEyeColor ? fs.readFileSync(masterPath).toString("base64") : null;
   
   const prompt = checkEyeColor 
