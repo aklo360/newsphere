@@ -5,11 +5,12 @@ import "./globals.css";
 const inter = Inter({ 
   subsets: ["latin"],
   variable: "--font-inter",
+  weight: ["300", "400", "500"],
 });
 
 export const metadata: Metadata = {
-  title: "NewSphere — Where brands come to life",
-  description: "AI-powered brand creation and content generation platform. Create your brand from scratch or import existing guidelines.",
+  title: "NewSphere",
+  description: "Where brands come to life",
 };
 
 export default function RootLayout({
@@ -18,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light">
-      <body className={`${inter.variable} font-sans antialiased bg-[#fafafa]`}>
+    <html lang="en">
+      <body className={`${inter.variable} font-sans antialiased`}>
         {children}
       </body>
     </html>

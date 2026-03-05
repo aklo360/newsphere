@@ -15,10 +15,8 @@ const vertexShader = `
 const fragmentShader = `
   uniform float uTime;
   uniform vec2 uMouse;
-  uniform vec2 uResolution;
   varying vec2 vUv;
 
-  // Simplex noise function
   vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
@@ -73,45 +71,36 @@ const fragmentShader = `
   void main() {
     vec2 uv = vUv;
     
-    // Mouse influence
+    // Mouse influence - very subtle
     vec2 mouse = uMouse * 0.5 + 0.5;
     float mouseDist = length(uv - mouse);
-    float mouseInfluence = smoothstep(0.5, 0.0, mouseDist) * 0.3;
+    float mouseInfluence = smoothstep(0.6, 0.0, mouseDist) * 0.15;
     
-    // Animated noise
-    float time = uTime * 0.15;
-    float noise1 = snoise(vec3(uv * 2.0 + mouseInfluence, time));
-    float noise2 = snoise(vec3(uv * 3.0 - mouseInfluence, time * 1.3));
-    float noise3 = snoise(vec3(uv * 1.5, time * 0.7));
+    // Very slow, organic noise
+    float time = uTime * 0.08;
+    float noise1 = snoise(vec3(uv * 1.5 + mouseInfluence, time));
+    float noise2 = snoise(vec3(uv * 2.0 - mouseInfluence * 0.5, time * 0.7));
     
-    float combinedNoise = (noise1 + noise2 * 0.5 + noise3 * 0.25) / 1.75;
+    float combinedNoise = (noise1 + noise2 * 0.5) / 1.5;
     combinedNoise = combinedNoise * 0.5 + 0.5;
     
-    // Color gradient: purple -> pink -> orange
-    vec3 purple = vec3(0.545, 0.361, 0.965);  // #8B5CF6
-    vec3 pink = vec3(0.925, 0.286, 0.600);    // #EC4899
-    vec3 orange = vec3(0.976, 0.451, 0.086);  // #F97316
+    // Greyscale gradient - very subtle warm to cool grey
+    vec3 warmGrey = vec3(0.96, 0.95, 0.94);   // Warm off-white
+    vec3 coolGrey = vec3(0.92, 0.93, 0.95);   // Cool off-white
+    vec3 midGrey = vec3(0.88, 0.88, 0.90);    // Subtle mid tone
     
-    vec3 color1 = mix(purple, pink, smoothstep(0.0, 0.5, combinedNoise + uv.x * 0.3));
-    vec3 color2 = mix(pink, orange, smoothstep(0.5, 1.0, combinedNoise + uv.y * 0.3));
-    vec3 finalColor = mix(color1, color2, combinedNoise);
+    // Create soft, organic shapes
+    float shape1 = smoothstep(0.3, 0.7, combinedNoise + sin(uv.x * 3.14159) * 0.2);
+    float shape2 = smoothstep(0.4, 0.6, combinedNoise + cos(uv.y * 3.14159) * 0.15);
     
-    // Add glow intensity based on noise
-    float glow = pow(combinedNoise, 2.0) * 0.5 + 0.5;
-    finalColor *= glow;
+    vec3 color = mix(warmGrey, coolGrey, shape1);
+    color = mix(color, midGrey, shape2 * 0.3 + mouseInfluence);
     
-    // Fade to white at edges for light mode integration
-    float edgeFade = smoothstep(0.0, 0.3, uv.x) * smoothstep(1.0, 0.7, uv.x);
-    edgeFade *= smoothstep(0.0, 0.3, uv.y) * smoothstep(1.0, 0.7, uv.y);
+    // Very subtle highlight spots for glass to catch
+    float highlight = pow(combinedNoise, 3.0) * 0.08;
+    color += vec3(highlight);
     
-    // Mix with very light background
-    vec3 lightBg = vec3(0.98, 0.98, 0.99);
-    finalColor = mix(lightBg, finalColor, edgeFade * 0.4 + mouseInfluence * 0.3);
-    
-    // Add subtle opacity variation
-    float alpha = 0.6 + combinedNoise * 0.3 + mouseInfluence * 0.2;
-    
-    gl_FragColor = vec4(finalColor, alpha);
+    gl_FragColor = vec4(color, 1.0);
   }
 `;
 
@@ -123,7 +112,6 @@ function LiquidPlane() {
     () => ({
       uTime: { value: 0 },
       uMouse: { value: new THREE.Vector2(0, 0) },
-      uResolution: { value: new THREE.Vector2(1, 1) },
     }),
     []
   );
@@ -134,7 +122,7 @@ function LiquidPlane() {
       material.uniforms.uTime.value = state.clock.elapsedTime;
       material.uniforms.uMouse.value.lerp(
         new THREE.Vector2(pointer.x, pointer.y),
-        0.05
+        0.03
       );
     }
   });
@@ -146,7 +134,6 @@ function LiquidPlane() {
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
         uniforms={uniforms}
-        transparent
       />
     </mesh>
   );
@@ -155,10 +142,7 @@ function LiquidPlane() {
 export default function LiquidBackground() {
   return (
     <div className="fixed inset-0 -z-10">
-      <Canvas
-        camera={{ position: [0, 0, 1] }}
-        style={{ background: "linear-gradient(135deg, #fefefe 0%, #f8f9ff 50%, #fff5f5 100%)" }}
-      >
+      <Canvas camera={{ position: [0, 0, 1] }}>
         <LiquidPlane />
       </Canvas>
     </div>

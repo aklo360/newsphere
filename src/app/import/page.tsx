@@ -1,9 +1,22 @@
+import Link from "next/link";
+
 export default function ImportBrand() {
   return (
-    <main className="min-h-screen bg-neutral-950 flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-white mb-4">Brand Import</h1>
-        <p className="text-neutral-400">Coming soon...</p>
+    <main className="min-h-screen bg-gradient-to-b from-neutral-50 to-neutral-100/50 flex flex-col items-center justify-center p-6">
+      <div className="text-center max-w-md">
+        <Link 
+          href="/" 
+          className="inline-block mb-12 text-[10px] tracking-[0.15em] text-neutral-400 hover:text-neutral-600 transition-colors"
+        >
+          ← Back
+        </Link>
+        
+        <h1 className="text-xl font-light text-neutral-800 mb-3 tracking-wide">
+          Brand Import
+        </h1>
+        <p className="text-[11px] text-neutral-400 leading-relaxed">
+          Coming soon — Upload PDFs, enter URLs, or add images to extract your brand
+        </p>
       </div>
     </main>
   );
