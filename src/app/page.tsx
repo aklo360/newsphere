@@ -17,11 +17,11 @@ export default function Home() {
         {/* Logo */}
         <div className="mb-16 flex flex-col items-center">
           <Image
-            src="/logomark.jpg"
+            src="/logomark.png"
             alt="NewSphere"
-            width={80}
-            height={80}
-            className="mb-6 opacity-90"
+            width={72}
+            height={72}
+            className="mb-5"
             priority
           />
           <h1 className="text-2xl font-medium tracking-[0.08em] text-neutral-400 mb-1">
