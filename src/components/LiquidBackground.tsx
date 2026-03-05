@@ -101,29 +101,25 @@ const fragmentShader = `
     // Mouse position
     vec2 mouse = vec2((uMouse.x * 0.5) * aspect, uMouse.y * 0.5);
     
-    float time = uTime * 0.15;
+    float time = uTime * 0.1;
     
-    // Animated metaball positions
-    vec2 p1 = vec2(sin(time * 0.7) * 0.3, cos(time * 0.5) * 0.25);
-    vec2 p2 = vec2(cos(time * 0.6) * 0.35, sin(time * 0.8) * 0.2);
-    vec2 p3 = vec2(sin(time * 0.4 + 2.0) * 0.25, cos(time * 0.6 + 1.0) * 0.3);
-    vec2 p4 = vec2(cos(time * 0.5 + 1.5) * 0.28, sin(time * 0.7 + 2.5) * 0.22);
-    vec2 p5 = vec2(sin(time * 0.3) * 0.4, cos(time * 0.4) * 0.35);
+    // Animated metaball positions - fewer, larger, slower
+    vec2 p1 = vec2(sin(time * 0.4) * 0.4, cos(time * 0.3) * 0.35);
+    vec2 p2 = vec2(cos(time * 0.35) * 0.45, sin(time * 0.45) * 0.3);
+    vec2 p3 = vec2(sin(time * 0.25 + 2.0) * 0.35, cos(time * 0.35 + 1.0) * 0.4);
     
-    // Mouse-following blob
-    vec2 pMouse = mouse * 0.8;
+    // Mouse-following blob - subtle
+    vec2 pMouse = mouse * 0.6;
     
-    // Calculate metaball field
+    // Calculate metaball field - larger radius values
     float m = 0.0;
-    m += metaball(uvAspect, p1, 0.07);
-    m += metaball(uvAspect, p2, 0.06);
-    m += metaball(uvAspect, p3, 0.08);
-    m += metaball(uvAspect, p4, 0.055);
-    m += metaball(uvAspect, p5, 0.065);
-    m += metaball(uvAspect, pMouse, 0.05);
+    m += metaball(uvAspect, p1, 0.18);
+    m += metaball(uvAspect, p2, 0.15);
+    m += metaball(uvAspect, p3, 0.16);
+    m += metaball(uvAspect, pMouse, 0.08);
     
-    // Add noise for organic movement
-    float noise = snoise(vec3(uvAspect * 3.0, time)) * 0.15;
+    // Add noise for organic movement - subtle
+    float noise = snoise(vec3(uvAspect * 2.0, time)) * 0.08;
     m += noise;
     
     // Create soft threshold for blob shapes
