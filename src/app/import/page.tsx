@@ -32,7 +32,7 @@ function StepIndicator({ currentStep, steps }: {
             <div className={`
               w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium transition-all
               ${isActive ? "bg-neutral-700 text-white scale-110" : ""}
-              ${isComplete ? "bg-green-500 text-white" : ""}
+              ${isComplete ? "bg-neutral-500 text-white" : ""}
               ${isFuture ? "bg-neutral-200 text-neutral-400" : ""}
             `}>
               {isComplete ? (
@@ -44,7 +44,7 @@ function StepIndicator({ currentStep, steps }: {
               )}
             </div>
             {idx < steps.length - 1 && (
-              <div className={`w-8 h-0.5 mx-1 ${isComplete ? "bg-green-500" : "bg-neutral-200"}`} />
+              <div className={`w-8 h-0.5 mx-1 ${isComplete ? "bg-neutral-500" : "bg-neutral-200"}`} />
             )}
           </div>
         );
@@ -174,8 +174,8 @@ function InputStep({
             
             {state.files && state.files.length > 0 ? (
               <div>
-                <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <div className="w-12 h-12 rounded-xl bg-sky-50 flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-6 h-6 text-sky-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
@@ -237,7 +237,7 @@ function ExtractingStep({ state }: { state: ImportWizardState }) {
 
   return (
     <div className="text-center py-12">
-      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 mb-6 shadow-lg shadow-blue-500/30">
+      <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-neutral-400 mb-6 shadow-lg shadow-neutral-400/20">
         <svg className="w-10 h-10 text-white animate-spin" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
@@ -254,7 +254,7 @@ function ExtractingStep({ state }: { state: ImportWizardState }) {
         {state.inputType === "url" ? (
           <>
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+              <div className="w-5 h-5 rounded-full bg-neutral-500 flex items-center justify-center">
                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
@@ -262,7 +262,7 @@ function ExtractingStep({ state }: { state: ImportWizardState }) {
               <span className="text-neutral-600">Fetching page</span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-5 h-5 rounded-full bg-blue-500 animate-pulse" />
+              <div className="w-5 h-5 rounded-full bg-sky-300 animate-pulse" />
               <span className="text-neutral-600">Extracting CSS styles</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-neutral-300">
@@ -277,7 +277,7 @@ function ExtractingStep({ state }: { state: ImportWizardState }) {
         ) : (
           <>
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+              <div className="w-5 h-5 rounded-full bg-neutral-500 flex items-center justify-center">
                 <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
@@ -285,7 +285,7 @@ function ExtractingStep({ state }: { state: ImportWizardState }) {
               <span className="text-neutral-600">Processing file</span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <div className="w-5 h-5 rounded-full bg-blue-500 animate-pulse" />
+              <div className="w-5 h-5 rounded-full bg-sky-300 animate-pulse" />
               <span className="text-neutral-600">Extracting colors</span>
             </div>
             <div className="flex items-center gap-3 text-sm text-neutral-300">
@@ -331,7 +331,7 @@ function VerifyStep({
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs font-medium text-neutral-400 uppercase">Brand Name</span>
             <span className={`text-xs px-2 py-0.5 rounded-full ${
-              extracted.name ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"
+              extracted.name ? "bg-sky-50 text-sky-600" : "bg-amber-100 text-amber-600"
             }`}>
               {extracted.name ? "Detected" : "Not found"}
             </span>
@@ -352,7 +352,7 @@ function VerifyStep({
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-medium text-neutral-400 uppercase">Colors</span>
             <span className={`text-xs px-2 py-0.5 rounded-full ${
-              extracted.colors.extracted.length > 0 ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"
+              extracted.colors.extracted.length > 0 ? "bg-sky-50 text-sky-600" : "bg-amber-100 text-amber-600"
             }`}>
               {extracted.colors.extracted.length} found
             </span>
@@ -377,7 +377,7 @@ function VerifyStep({
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-medium text-neutral-400 uppercase">Fonts</span>
             <span className={`text-xs px-2 py-0.5 rounded-full ${
-              extracted.fonts.extracted.length > 0 ? "bg-green-100 text-green-600" : "bg-amber-100 text-amber-600"
+              extracted.fonts.extracted.length > 0 ? "bg-sky-50 text-sky-600" : "bg-amber-100 text-amber-600"
             }`}>
               {extracted.fonts.extracted.length} found
             </span>
@@ -407,7 +407,7 @@ function VerifyStep({
                 alt="Logo" 
                 className="h-12 object-contain"
               />
-              <span className="text-xs text-green-600">Detected</span>
+              <span className="text-xs text-sky-600">Detected</span>
             </div>
           </div>
         )}
@@ -418,7 +418,7 @@ function VerifyStep({
           <div className="mt-2 flex items-center gap-2">
             <div className="flex-1 h-2 rounded-full bg-neutral-200 overflow-hidden">
               <div 
-                className="h-full bg-green-500 rounded-full"
+                className="h-full bg-neutral-500 rounded-full"
                 style={{ width: `${extracted.confidence.overall * 100}%` }}
               />
             </div>
@@ -750,7 +750,7 @@ export default function ImportPage() {
             
             {(state.step === "enhance" || state.isEnhancing) && (
               <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <div className="w-16 h-16 rounded-full bg-neutral-400 flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <svg className="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
