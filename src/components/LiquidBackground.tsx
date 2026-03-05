@@ -112,7 +112,7 @@ const fragmentShader = `
     // Calculate metaball field
     float m = 0.0;
     m += metaball(uvAspect, p1, 0.45);
-    m += metaball(uvAspect, pMouse, 0.1);
+    m += metaball(uvAspect, pMouse, 0.01);
     
     // Add noise for organic movement - subtle
     float noise = snoise(vec3(uvAspect * 2.0, time)) * 0.08;
@@ -145,9 +145,9 @@ const fragmentShader = `
     // Add subtle overall iridescence to blobs
     color += iridescentColor * blob * 0.08;
     
-    // Mouse proximity glow - localized like finger on water
+    // Mouse proximity glow - ultra tight
     float mouseDist = length(uvAspect - mouse);
-    float mouseGlow = smoothstep(0.15, 0.0, mouseDist) * 0.25;
+    float mouseGlow = smoothstep(0.08, 0.0, mouseDist) * 0.3;
     color += iridescentColor * mouseGlow;
     
     // Subtle lighter vignette for light mode
