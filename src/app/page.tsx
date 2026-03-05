@@ -33,8 +33,11 @@ export default function Home() {
           <h1 className="text-[28px] font-semibold tracking-[0.02em] text-neutral-400 mb-1.5">
             NewSphere
           </h1>
-          <p className="text-[11px] tracking-[0.2em] text-neutral-400/60 font-light">
+          <p className="text-[12px] tracking-[0.15em] text-neutral-400/70 font-normal">
             Agentic Creative Agency
+          </p>
+          <p className="text-[11px] tracking-wide text-neutral-400/50 mt-2">
+            Automate your branding & marketing
           </p>
         </div>
 
@@ -163,7 +166,7 @@ export default function Home() {
         </div>
 
         {/* Footer */}
-        <p className="mt-20 text-[10px] tracking-[0.15em] text-neutral-400/50 uppercase">
+        <p className="mt-20 text-[11px] tracking-[0.12em] text-neutral-400/60 uppercase font-normal">
           From concept to content
         </p>
       </main>
