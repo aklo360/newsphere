@@ -36,9 +36,6 @@ export default function Home() {
           <p className="text-[12px] tracking-[0.15em] text-neutral-400/70 font-normal">
             Agentic Creative Agency
           </p>
-          <p className="text-[11px] tracking-wide text-neutral-400/50 mt-2">
-            Automate your branding & marketing
-          </p>
         </div>
 
         {/* Glass Cards */}
@@ -167,7 +164,7 @@ export default function Home() {
 
         {/* Footer */}
         <p className="mt-20 text-[11px] tracking-[0.12em] text-neutral-400/60 uppercase font-normal">
-          From concept to content
+          Automate your branding & marketing
         </p>
       </main>
     </>
