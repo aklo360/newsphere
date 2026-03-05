@@ -11,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "NewSphere — Agentic Creative Agency",
-  description: "Automate your branding & marketing with a fully agentic creative agency.",
+  description: "Automate your branding & marketing with our fully agentic creative agency.",
   keywords: ["branding", "marketing", "AI", "automation", "creative agency", "brand bible", "content generation"],
   authors: [{ name: "NewSphere" }],
   creator: "NewSphere",
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     url: "https://newsphere.xyz",
     siteName: "NewSphere",
     title: "NewSphere — Agentic Creative Agency",
-    description: "Automate your branding & marketing with a fully agentic creative agency.",
+    description: "Automate your branding & marketing with our fully agentic creative agency.",
     images: [
       {
         url: "/og-image.jpg",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     site: "@newsphere_ai",
     creator: "@newsphere_ai",
     title: "NewSphere — Agentic Creative Agency",
-    description: "Automate your branding & marketing with a fully agentic creative agency.",
+    description: "Automate your branding & marketing with our fully agentic creative agency.",
     images: ["/og-image.jpg"],
   },
   icons: {
