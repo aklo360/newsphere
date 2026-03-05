@@ -9,11 +9,43 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "NewSphere",
-  description: "Where brands come to life",
+  title: "NewSphere — Agentic Creative Agency",
+  description: "Automate your branding & marketing with AI-powered brand creation and content generation.",
+  keywords: ["branding", "marketing", "AI", "automation", "creative agency", "brand bible", "content generation"],
+  authors: [{ name: "NewSphere" }],
+  creator: "NewSphere",
+  metadataBase: new URL("https://newsphere.xyz"),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://newsphere.xyz",
+    siteName: "NewSphere",
+    title: "NewSphere — Agentic Creative Agency",
+    description: "Automate your branding & marketing with AI-powered brand creation and content generation.",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "NewSphere - Agentic Creative Agency",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: "@newsphere_ai",
+    creator: "@newsphere_ai",
+    title: "NewSphere — Agentic Creative Agency",
+    description: "Automate your branding & marketing with AI-powered brand creation and content generation.",
+    images: ["/og-image.jpg"],
+  },
   icons: {
     icon: "/favicon.png",
     apple: "/favicon.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
