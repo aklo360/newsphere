@@ -69,7 +69,7 @@ const fragmentShader = `
     return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
   }
 
-  // Iridescent color based on angle/position
+  // Iridescent color based on angle/position - more subtle
   vec3 iridescence(float angle, float intensity) {
     // Rainbow-ish color cycle
     vec3 col;
@@ -78,8 +78,11 @@ const fragmentShader = `
     col.b = sin(angle * 2.0 + 4.188) * 0.5 + 0.5;
     
     // Shift towards cooler tones (purples, teals)
-    col = mix(col, vec3(0.6, 0.4, 0.9), 0.3);
-    col = mix(col, vec3(0.3, 0.6, 0.8), col.g * 0.2);
+    col = mix(col, vec3(0.5, 0.35, 0.7), 0.4);
+    col = mix(col, vec3(0.25, 0.5, 0.65), col.g * 0.25);
+    
+    // Darken overall to prevent blow-out
+    col *= 0.6;
     
     return col * intensity;
   }
@@ -127,11 +130,11 @@ const fragmentShader = `
     float blob = smoothstep(0.8, 1.2, m);
     float blobEdge = smoothstep(0.7, 1.0, m) - smoothstep(1.0, 1.3, m);
     
-    // Base color - clean off-white
-    vec3 bgColor = vec3(0.94, 0.94, 0.96);
+    // Base color - slightly darker off-white
+    vec3 bgColor = vec3(0.92, 0.92, 0.94);
     
-    // Blob interior - soft grey
-    vec3 blobColor = vec3(0.88, 0.88, 0.92);
+    // Blob interior - more visible grey
+    vec3 blobColor = vec3(0.82, 0.83, 0.87);
     
     // Iridescent edge color
     float angle = atan(uvAspect.y, uvAspect.x) + time * 0.5 + m * 2.0;
@@ -142,17 +145,17 @@ const fragmentShader = `
     vec3 color = bgColor;
     
     // Add blob interior
-    color = mix(color, blobColor, blob * 0.8);
+    color = mix(color, blobColor, blob * 0.7);
     
-    // Add iridescent edge glow
-    color += iridescentColor * blobEdge * 1.2;
+    // Add iridescent edge glow - reduced intensity
+    color += iridescentColor * blobEdge * 0.5;
     
     // Add subtle overall iridescence to blobs
-    color += iridescentColor * blob * 0.15;
+    color += iridescentColor * blob * 0.08;
     
-    // Mouse proximity glow
+    // Mouse proximity glow - subtler
     float mouseDist = length(uvAspect - mouse);
-    float mouseGlow = smoothstep(0.4, 0.0, mouseDist) * 0.3;
+    float mouseGlow = smoothstep(0.35, 0.0, mouseDist) * 0.15;
     color += iridescentColor * mouseGlow;
     
     // Subtle lighter vignette for light mode
