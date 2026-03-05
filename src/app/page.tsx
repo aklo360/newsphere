@@ -24,10 +24,10 @@ export default function Home() {
             className="mb-6"
             priority
           />
-          <h1 className="text-2xl font-medium tracking-[0.08em] text-neutral-400 mb-1">
+          <h1 className="text-[28px] font-semibold tracking-[0.02em] text-neutral-300 mb-2 drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
             NewSphere
           </h1>
-          <p className="text-[10px] tracking-[0.2em] text-neutral-400/70 uppercase">
+          <p className="text-[10px] tracking-[0.25em] text-neutral-400/60 font-light">
             Agentic Creative Agency
           </p>
         </div>
