@@ -132,21 +132,21 @@ const fragmentShader = `
     blobs += noise * blobs;
     
     // Base color - clean off-white
-    vec3 bgColor = vec3(0.965, 0.965, 0.97);
+    vec3 bgColor = vec3(0.97, 0.97, 0.98);
     
-    // Blob color - soft grey with slight gradient
-    vec3 blobColor = vec3(0.88, 0.89, 0.91);
+    // Blob color - more visible grey
+    vec3 blobColor = vec3(0.82, 0.84, 0.88);
     
     // Add subtle inner glow to blobs
-    float glow = pow(blobs, 1.5) * 0.3;
-    vec3 glowColor = vec3(0.92, 0.93, 0.95);
+    float glow = pow(blobs, 1.5) * 0.4;
+    vec3 glowColor = vec3(0.88, 0.90, 0.94);
     
-    // Mix colors
-    vec3 color = mix(bgColor, blobColor, blobs * 0.7);
+    // Mix colors - stronger blend
+    vec3 color = mix(bgColor, blobColor, blobs * 0.85);
     color = mix(color, glowColor, glow);
     
-    // Add very subtle mouse highlight
-    color += vec3(mouseInfluence * 0.5);
+    // Add mouse highlight
+    color += vec3(mouseInfluence * 0.8);
     
     gl_FragColor = vec4(color, 1.0);
   }

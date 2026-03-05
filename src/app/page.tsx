@@ -1,18 +1,29 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import dynamic from "next/dynamic";
-
-const LiquidBackground = dynamic(
-  () => import("@/components/LiquidBackground"),
-  { ssr: false }
-);
+import LiquidBackground from "@/components/LiquidBackground";
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <>
-      <LiquidBackground />
+      {mounted && <LiquidBackground />}
+      
+      {/* Fallback background for SSR/initial load */}
+      <div 
+        className="fixed inset-0 -z-20 bg-gradient-to-br from-neutral-100 via-white to-neutral-50"
+        style={{
+          background: "radial-gradient(ellipse at 30% 40%, rgba(200,200,210,0.4) 0%, transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(190,195,205,0.3) 0%, transparent 50%), linear-gradient(to bottom right, #f5f5f7, #ffffff, #f8f8fa)"
+        }}
+      />
+      
       <main className="min-h-screen flex flex-col items-center justify-center p-6">
         {/* Logo */}
         <div className="mb-16 flex flex-col items-center">
