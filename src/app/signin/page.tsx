@@ -44,14 +44,19 @@ export default function SignIn() {
     setLoading(true);
     
     try {
-      const formData = new FormData();
-      formData.set("email", email);
-      formData.set("password", password);
-      formData.set("flow", mode === "signup" ? "signUp" : "signIn");
+      const result = await signIn("password", { 
+        email, 
+        password,
+        flow: mode === "signup" ? "signUp" : "signIn"
+      });
       
-      await signIn("password", formData);
+      // If we get here without redirect, something might be wrong
+      if (!result) {
+        setLoading(false);
+      }
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      console.error("Sign in error:", err);
+      setError(err.message || "Invalid email or password");
       setLoading(false);
     }
   };
