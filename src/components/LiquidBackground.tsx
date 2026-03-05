@@ -15,8 +15,10 @@ const vertexShader = `
 const fragmentShader = `
   uniform float uTime;
   uniform vec2 uMouse;
+  uniform vec2 uResolution;
   varying vec2 vUv;
 
+  // Simplex noise
   vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
   vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
@@ -68,37 +70,83 @@ const fragmentShader = `
     return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
   }
 
+  // Soft metaball/blob function
+  float blob(vec2 uv, vec2 pos, float size) {
+    float d = length(uv - pos);
+    return smoothstep(size, size * 0.1, d);
+  }
+
   void main() {
     vec2 uv = vUv;
+    float aspect = uResolution.x / uResolution.y;
+    vec2 uvAspect = vec2(uv.x * aspect, uv.y);
     
-    // Mouse influence - very subtle
+    // Mouse position with aspect correction
     vec2 mouse = uMouse * 0.5 + 0.5;
-    float mouseDist = length(uv - mouse);
-    float mouseInfluence = smoothstep(0.6, 0.0, mouseDist) * 0.15;
+    mouse.x *= aspect;
     
-    // Very slow, organic noise
-    float time = uTime * 0.08;
-    float noise1 = snoise(vec3(uv * 1.5 + mouseInfluence, time));
-    float noise2 = snoise(vec3(uv * 2.0 - mouseInfluence * 0.5, time * 0.7));
+    float time = uTime * 0.12;
     
-    float combinedNoise = (noise1 + noise2 * 0.5) / 1.5;
-    combinedNoise = combinedNoise * 0.5 + 0.5;
+    // Animated blob positions
+    vec2 blob1Pos = vec2(
+      0.3 * aspect + sin(time * 0.7) * 0.15 * aspect,
+      0.4 + cos(time * 0.5) * 0.15
+    );
+    vec2 blob2Pos = vec2(
+      0.7 * aspect + cos(time * 0.6) * 0.12 * aspect,
+      0.6 + sin(time * 0.8) * 0.12
+    );
+    vec2 blob3Pos = vec2(
+      0.5 * aspect + sin(time * 0.4 + 1.0) * 0.18 * aspect,
+      0.3 + cos(time * 0.6 + 2.0) * 0.14
+    );
+    vec2 blob4Pos = vec2(
+      0.6 * aspect + cos(time * 0.5 + 3.0) * 0.14 * aspect,
+      0.7 + sin(time * 0.7 + 1.5) * 0.1
+    );
     
-    // Greyscale gradient - very subtle warm to cool grey
-    vec3 warmGrey = vec3(0.96, 0.95, 0.94);   // Warm off-white
-    vec3 coolGrey = vec3(0.92, 0.93, 0.95);   // Cool off-white
-    vec3 midGrey = vec3(0.88, 0.88, 0.90);    // Subtle mid tone
+    // Mouse interaction - blobs are attracted/repelled
+    float mouseDist1 = length(blob1Pos - mouse);
+    float mouseDist2 = length(blob2Pos - mouse);
+    float mouseInfluence = smoothstep(0.4, 0.0, length(uvAspect - mouse)) * 0.08;
     
-    // Create soft, organic shapes
-    float shape1 = smoothstep(0.3, 0.7, combinedNoise + sin(uv.x * 3.14159) * 0.2);
-    float shape2 = smoothstep(0.4, 0.6, combinedNoise + cos(uv.y * 3.14159) * 0.15);
+    // Create soft blobs
+    float b1 = blob(uvAspect, blob1Pos, 0.35);
+    float b2 = blob(uvAspect, blob2Pos, 0.28);
+    float b3 = blob(uvAspect, blob3Pos, 0.32);
+    float b4 = blob(uvAspect, blob4Pos, 0.25);
     
-    vec3 color = mix(warmGrey, coolGrey, shape1);
-    color = mix(color, midGrey, shape2 * 0.3 + mouseInfluence);
+    // Mouse-following blob
+    vec2 mouseBlob = mouse + vec2(
+      sin(time * 2.0) * 0.02,
+      cos(time * 2.0) * 0.02
+    );
+    float bMouse = blob(uvAspect, mouseBlob, 0.2) * 0.5;
     
-    // Very subtle highlight spots for glass to catch
-    float highlight = pow(combinedNoise, 3.0) * 0.08;
-    color += vec3(highlight);
+    // Combine blobs with metaball-like blending
+    float blobs = b1 * 0.6 + b2 * 0.5 + b3 * 0.55 + b4 * 0.45 + bMouse;
+    blobs = smoothstep(0.2, 0.8, blobs);
+    
+    // Add noise for organic movement
+    float noise = snoise(vec3(uv * 2.0, time * 0.5)) * 0.15;
+    blobs += noise * blobs;
+    
+    // Base color - clean off-white
+    vec3 bgColor = vec3(0.965, 0.965, 0.97);
+    
+    // Blob color - soft grey with slight gradient
+    vec3 blobColor = vec3(0.88, 0.89, 0.91);
+    
+    // Add subtle inner glow to blobs
+    float glow = pow(blobs, 1.5) * 0.3;
+    vec3 glowColor = vec3(0.92, 0.93, 0.95);
+    
+    // Mix colors
+    vec3 color = mix(bgColor, blobColor, blobs * 0.7);
+    color = mix(color, glowColor, glow);
+    
+    // Add very subtle mouse highlight
+    color += vec3(mouseInfluence * 0.5);
     
     gl_FragColor = vec4(color, 1.0);
   }
@@ -106,12 +154,13 @@ const fragmentShader = `
 
 function LiquidPlane() {
   const meshRef = useRef<THREE.Mesh>(null);
-  const { viewport, pointer } = useThree();
+  const { viewport, pointer, size } = useThree();
 
   const uniforms = useMemo(
     () => ({
       uTime: { value: 0 },
       uMouse: { value: new THREE.Vector2(0, 0) },
+      uResolution: { value: new THREE.Vector2(1, 1) },
     }),
     []
   );
@@ -122,14 +171,15 @@ function LiquidPlane() {
       material.uniforms.uTime.value = state.clock.elapsedTime;
       material.uniforms.uMouse.value.lerp(
         new THREE.Vector2(pointer.x, pointer.y),
-        0.03
+        0.05
       );
+      material.uniforms.uResolution.value.set(size.width, size.height);
     }
   });
 
   return (
     <mesh ref={meshRef} scale={[viewport.width, viewport.height, 1]}>
-      <planeGeometry args={[1, 1, 32, 32]} />
+      <planeGeometry args={[1, 1, 1, 1]} />
       <shaderMaterial
         vertexShader={vertexShader}
         fragmentShader={fragmentShader}
