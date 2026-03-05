@@ -590,29 +590,40 @@ export default function ImportPage() {
       const data = await res.json();
       
       // Map Creative Director output to ExtractedBrand
+      // API returns: colors.primary/secondary/accent/background/foreground
+      // And _raw.colors.allColors for the full palette
+      const rawColors = data._raw?.colors?.allColors || [];
+      const rawFonts = data._raw?.fonts?.allFonts || [];
+      
       const extracted: ExtractedBrand = {
         name: data.name,
         tagline: data.tagline,
         colors: {
-          extracted: data.colors?.extracted || [],
+          // Use allColors from raw data, or build from named colors
+          extracted: rawColors.length > 0 
+            ? rawColors 
+            : [data.colors?.primary, data.colors?.secondary, data.colors?.accent, data.colors?.background, data.colors?.foreground].filter(Boolean),
           primary: data.colors?.primary,
           secondary: data.colors?.secondary,
           background: data.colors?.background,
           foreground: data.colors?.foreground,
         },
         fonts: {
-          extracted: [data.typography?.heading, data.typography?.body].filter(Boolean),
+          // Use allFonts from raw data for full list
+          extracted: rawFonts.length > 0 
+            ? rawFonts 
+            : [data.typography?.heading, data.typography?.body].filter(Boolean),
           heading: data.typography?.heading,
           body: data.typography?.body,
         },
-        logo: data.logo,
+        logo: data.logo ? { url: data.logo, format: "png" } : undefined,
         sourceUrl: state.url,
         sourceType: state.inputType,
         confidence: {
-          colors: data.confidence?.colors || 0.8,
-          fonts: data.confidence?.typography || 0.7,
+          colors: rawColors.length > 0 ? 0.9 : 0.5,
+          fonts: rawFonts.length > 0 ? 0.9 : 0.6,
           logo: data.logo ? 0.9 : 0,
-          overall: data.confidence?.overall || 0.75,
+          overall: (rawColors.length > 0 && rawFonts.length > 0) ? 0.85 : 0.6,
         },
         // Store full Creative Director output for enhance step
         _raw: data,
