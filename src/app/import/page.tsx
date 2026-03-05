@@ -589,6 +589,7 @@ export default function ImportPage() {
       
       const data = await res.json();
       
+      // Map Creative Director output to ExtractedBrand
       const extracted: ExtractedBrand = {
         name: data.name,
         tagline: data.tagline,
@@ -597,22 +598,23 @@ export default function ImportPage() {
           primary: data.colors?.primary,
           secondary: data.colors?.secondary,
           background: data.colors?.background,
+          foreground: data.colors?.foreground,
         },
         fonts: {
-          extracted: data.fonts?.extracted || [],
-          heading: data.fonts?.heading,
-          body: data.fonts?.body,
+          extracted: [data.typography?.heading, data.typography?.body].filter(Boolean),
+          heading: data.typography?.heading,
+          body: data.typography?.body,
         },
         logo: data.logo,
         sourceUrl: state.url,
         sourceType: state.inputType,
         confidence: {
           colors: data.confidence?.colors || 0.8,
-          fonts: data.confidence?.fonts || 0.7,
+          fonts: data.confidence?.typography || 0.7,
           logo: data.logo ? 0.9 : 0,
           overall: data.confidence?.overall || 0.75,
         },
-        // Store extra data for enhance step
+        // Store full Creative Director output for enhance step
         _raw: data,
       };
 
@@ -637,49 +639,41 @@ export default function ImportPage() {
     const ext = state.extracted;
     const raw = (ext as any)?._raw;
     
-    // Use extracted data to build the brief
-    // Determine render style from extracted style or default
-    const stylePreset = raw?.style?.preset || "gradient";
-    const personality = raw?.personality || ["professional", "innovative"];
+    // The Creative Director already did the heavy lifting
+    // Now we just map to our brief format
+    const colors = raw?.colors || {};
+    const typography = raw?.typography || {};
+    const style = raw?.style || {};
     
-    // Determine light/dark mode from background color
-    const bgColor = ext?.colors?.background || "#ffffff";
-    const isLight = parseInt(bgColor.replace("#", ""), 16) > 0x888888;
-    
-    // Pick accent from extracted colors if available
-    const extractedColors = ext?.colors?.extracted || [];
-    const accent = extractedColors.find((c: string) => 
-      c !== ext?.colors?.primary && 
-      c !== ext?.colors?.secondary && 
-      c !== ext?.colors?.background
-    ) || "#ec4899";
-
     const brief: CreativeDirectorBrief = {
-      brandName: ext?.name || "Brand",
-      generatedName: !ext?.name,
-      tagline: ext?.tagline || null,
-      mission: null,
-      iconConcept: "Extracted from website",
-      iconDescription: "Logo detected from site",
-      headingFont: ext?.fonts?.heading || "Inter",
-      headingWeight: 600,
-      bodyFont: ext?.fonts?.body || "Inter",
-      bodyWeight: 400,
-      fontReasoning: "Extracted from website visual analysis",
-      primaryColor: ext?.colors?.primary || "#6366f1",
-      secondaryColor: ext?.colors?.secondary || "#8b5cf6",
-      accentColor: accent,
-      backgroundColor: ext?.colors?.background || "#ffffff",
-      foregroundColor: ext?.colors?.foreground || (isLight ? "#171717" : "#fafafa"),
-      mode: isLight ? "light" : "dark",
-      colorReasoning: "Extracted from website screenshot",
-      renderStyle: stylePreset as any,
-      styleNotes: raw?.style?.vibe?.join(", ") || "Modern style",
-      personality: personality as PersonalityTrait[],
+      brandName: raw?.name || ext?.name || "Brand",
+      generatedName: !raw?.name,
+      tagline: raw?.tagline || null,
+      mission: raw?.concept || null,
+      iconConcept: "Analyzed from website",
+      iconDescription: style.reasoning || "Brand visual identity",
+      headingFont: typography.heading || "Inter",
+      headingWeight: typography.headingWeight || 600,
+      bodyFont: typography.body || "Inter",
+      bodyWeight: typography.bodyWeight || 400,
+      fontReasoning: typography.reasoning || "Selected by AI Creative Director",
+      primaryColor: colors.primary || "#6366f1",
+      secondaryColor: colors.secondary || "#8b5cf6",
+      accentColor: colors.accent || "#ec4899",
+      backgroundColor: colors.background || "#ffffff",
+      foregroundColor: colors.foreground || "#171717",
+      mode: colors.mode || "light",
+      colorReasoning: "Analyzed by AI Creative Director",
+      renderStyle: style.preset || "gradient",
+      styleNotes: style.reasoning || "Modern style",
+      personality: (raw?.personality || ["professional", "innovative"]) as PersonalityTrait[],
       toneProfile: { formal: 50, playful: 50, technical: 50 },
       mustHaveFeatures: [],
-      brandVibe: raw?.style?.vibe || ["modern"],
+      brandVibe: raw?.personality || ["modern"],
     };
+
+    // Small delay to show the "enhancing" state
+    await new Promise(r => setTimeout(r, 500));
 
     updateState({ 
       step: "preview", 
