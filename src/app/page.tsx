@@ -27,7 +27,7 @@ export default function Home() {
             alt="NewSphere"
             width={80}
             height={80}
-            className="mb-4"
+            className="mb-4 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)]"
             priority
           />
           <h1 className="text-[28px] font-semibold tracking-[0.02em] text-neutral-400 mb-1.5">
