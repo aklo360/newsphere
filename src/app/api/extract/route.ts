@@ -62,22 +62,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "URL required" }, { status: 400 });
     }
 
-    // Run screenshot and logo search in parallel
-    const [screenshotResult, logoResult] = await Promise.all([
-      (async () => {
-        const screenshotApiUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false`;
-        const screenshotRes = await fetch(screenshotApiUrl);
-        return screenshotRes.json();
-      })(),
-      findLogoUrl(url),
-    ]);
+    // Use Microlink to get screenshot + metadata (including logo)
+    const microlinkUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true`;
+    const microlinkRes = await fetch(microlinkUrl);
+    const microlinkData = await microlinkRes.json();
     
-    if (!screenshotResult.data?.screenshot?.url) {
-      console.error("Screenshot failed:", screenshotResult);
+    if (!microlinkData.data?.screenshot?.url) {
+      console.error("Screenshot failed:", microlinkData);
       return NextResponse.json({ error: "Failed to capture screenshot" }, { status: 500 });
     }
 
-    const imageUrl = screenshotResult.data.screenshot.url;
+    const imageUrl = microlinkData.data.screenshot.url;
+    
+    // Get logo from Microlink (it's smart about finding the best one)
+    // Falls back to our manual search if Microlink doesn't find one
+    let logoResult = microlinkData.data?.logo 
+      ? { url: microlinkData.data.logo.url, format: microlinkData.data.logo.type || "png" }
+      : await findLogoUrl(url);
 
     // Fetch the image and convert to base64
     const imageRes = await fetch(imageUrl);
