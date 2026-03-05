@@ -281,6 +281,7 @@ export interface ExtractedBrand {
     primary?: string;
     secondary?: string;
     background?: string;
+    foreground?: string;
   };
   fonts: {
     extracted: string[];  // Raw font names found
@@ -295,6 +296,7 @@ export interface ExtractedBrand {
   // Source info
   sourceUrl?: string;
   sourceType: "url" | "pdf" | "image";
+  screenshotUrl?: string;
   
   // Confidence scores
   confidence: {
@@ -303,6 +305,9 @@ export interface ExtractedBrand {
     logo: number;     // 0-1
     overall: number;  // 0-1
   };
+  
+  // Raw API response for enhance step
+  _raw?: any;
 }
 
 // ═══════════════════════════════════════════════════════════════════

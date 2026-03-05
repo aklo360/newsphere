@@ -203,6 +203,13 @@ function InputStep({
         </div>
       )}
 
+      {/* Error display */}
+      {state.error && (
+        <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-sm text-red-600">
+          {state.error}
+        </div>
+      )}
+
       <button
         onClick={onExtract}
         disabled={!canExtract}
@@ -566,78 +573,117 @@ export default function ImportPage() {
   };
 
   const handleExtract = async () => {
-    updateState({ step: "extracting", isExtracting: true });
+    updateState({ step: "extracting", isExtracting: true, error: undefined });
     
-    // TODO: Call actual extraction API
-    await new Promise(r => setTimeout(r, 3000));
-    
-    const mockExtracted: ExtractedBrand = {
-      name: "Acme Corp",
-      tagline: "Building the future",
-      colors: {
-        extracted: ["#6366f1", "#8b5cf6", "#f5f5f5", "#171717"],
-        primary: "#6366f1",
-        secondary: "#8b5cf6",
-        background: "#f5f5f5",
-      },
-      fonts: {
-        extracted: ["Inter", "Space Grotesk"],
-        heading: "Space Grotesk",
-        body: "Inter",
-      },
-      sourceUrl: state.url,
-      sourceType: state.inputType,
-      confidence: {
-        colors: 0.9,
-        fonts: 0.85,
-        logo: 0.7,
-        overall: 0.82,
-      },
-    };
+    try {
+      const res = await fetch("/api/extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: state.url }),
+      });
+      
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Extraction failed");
+      }
+      
+      const data = await res.json();
+      
+      const extracted: ExtractedBrand = {
+        name: data.name,
+        tagline: data.tagline,
+        colors: {
+          extracted: data.colors?.extracted || [],
+          primary: data.colors?.primary,
+          secondary: data.colors?.secondary,
+          background: data.colors?.background,
+        },
+        fonts: {
+          extracted: data.fonts?.extracted || [],
+          heading: data.fonts?.heading,
+          body: data.fonts?.body,
+        },
+        logo: data.logo,
+        sourceUrl: state.url,
+        sourceType: state.inputType,
+        confidence: {
+          colors: data.confidence?.colors || 0.8,
+          fonts: data.confidence?.fonts || 0.7,
+          logo: data.logo ? 0.9 : 0,
+          overall: data.confidence?.overall || 0.75,
+        },
+        // Store extra data for enhance step
+        _raw: data,
+      };
 
-    updateState({ 
-      step: "verify", 
-      extracted: mockExtracted,
-      isExtracting: false 
-    });
+      updateState({ 
+        step: "verify", 
+        extracted,
+        isExtracting: false 
+      });
+    } catch (error) {
+      console.error("Extraction error:", error);
+      updateState({ 
+        step: "input",
+        isExtracting: false,
+        error: error instanceof Error ? error.message : "Extraction failed"
+      });
+    }
   };
 
   const handleEnhance = async () => {
     updateState({ step: "enhance", isEnhancing: true });
     
-    // TODO: Call AI enhancement API
-    await new Promise(r => setTimeout(r, 2000));
+    const ext = state.extracted;
+    const raw = (ext as any)?._raw;
     
-    const mockBrief: CreativeDirectorBrief = {
-      brandName: state.extracted?.name || "Acme Corp",
-      generatedName: false,
-      tagline: state.extracted?.tagline || "Building the future",
-      mission: "To innovate and build",
-      iconConcept: "Abstract geometric shape",
-      iconDescription: "Modern abstract form",
-      headingFont: state.extracted?.fonts.heading || "Space Grotesk",
+    // Use extracted data to build the brief
+    // Determine render style from extracted style or default
+    const stylePreset = raw?.style?.preset || "gradient";
+    const personality = raw?.personality || ["professional", "innovative"];
+    
+    // Determine light/dark mode from background color
+    const bgColor = ext?.colors?.background || "#ffffff";
+    const isLight = parseInt(bgColor.replace("#", ""), 16) > 0x888888;
+    
+    // Pick accent from extracted colors if available
+    const extractedColors = ext?.colors?.extracted || [];
+    const accent = extractedColors.find((c: string) => 
+      c !== ext?.colors?.primary && 
+      c !== ext?.colors?.secondary && 
+      c !== ext?.colors?.background
+    ) || "#ec4899";
+
+    const brief: CreativeDirectorBrief = {
+      brandName: ext?.name || "Brand",
+      generatedName: !ext?.name,
+      tagline: ext?.tagline || null,
+      mission: null,
+      iconConcept: "Extracted from website",
+      iconDescription: "Logo detected from site",
+      headingFont: ext?.fonts?.heading || "Inter",
       headingWeight: 600,
-      bodyFont: state.extracted?.fonts.body || "Inter",
+      bodyFont: ext?.fonts?.body || "Inter",
       bodyWeight: 400,
-      fontReasoning: "Extracted from website",
-      primaryColor: state.extracted?.colors.primary || "#6366f1",
-      secondaryColor: state.extracted?.colors.secondary || "#8b5cf6",
-      accentColor: "#ec4899",
-      backgroundColor: state.extracted?.colors.background || "#f5f5f5",
-      foregroundColor: "#171717",
-      mode: "light",
-      colorReasoning: "Extracted from website CSS",
-      renderStyle: "gradient",
-      styleNotes: "Modern gradient style",
-      personality: ["professional", "innovative"] as PersonalityTrait[],
-      toneProfile: { formal: 50, playful: 40, technical: 60 },
+      fontReasoning: "Extracted from website visual analysis",
+      primaryColor: ext?.colors?.primary || "#6366f1",
+      secondaryColor: ext?.colors?.secondary || "#8b5cf6",
+      accentColor: accent,
+      backgroundColor: ext?.colors?.background || "#ffffff",
+      foregroundColor: ext?.colors?.foreground || (isLight ? "#171717" : "#fafafa"),
+      mode: isLight ? "light" : "dark",
+      colorReasoning: "Extracted from website screenshot",
+      renderStyle: stylePreset as any,
+      styleNotes: raw?.style?.vibe?.join(", ") || "Modern style",
+      personality: personality as PersonalityTrait[],
+      toneProfile: { formal: 50, playful: 50, technical: 50 },
       mustHaveFeatures: [],
-      brandVibe: ["modern", "professional"],
+      brandVibe: raw?.style?.vibe || ["modern"],
     };
 
     updateState({ 
       step: "preview", 
-      brief: mockBrief,
+      brief,
       isEnhancing: false 
     });
   };
