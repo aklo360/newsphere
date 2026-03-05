@@ -44,15 +44,16 @@ export default function SignIn() {
     setLoading(true);
     
     try {
-      await signIn("password", { 
-        email, 
-        password,
-        flow: mode === "signup" ? "signUp" : "signIn"
-      });
+      const formData = new FormData();
+      formData.set("email", email);
+      formData.set("password", password);
+      formData.set("flow", mode === "signup" ? "signUp" : "signIn");
+      
+      await signIn("password", formData);
     } catch (err: any) {
       setError(err.message || "Something went wrong");
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (isLoading) {

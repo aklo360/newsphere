@@ -3,5 +3,14 @@ import Google from "@auth/core/providers/google";
 import { Password } from "@convex-dev/auth/providers/Password";
 
 export const { auth, signIn, signOut, store } = convexAuth({
-  providers: [Google, Password],
+  providers: [
+    Google,
+    Password({
+      profile(params) {
+        return {
+          email: params.email as string,
+        };
+      },
+    }),
+  ],
 });
