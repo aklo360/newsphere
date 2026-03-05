@@ -103,20 +103,18 @@ const fragmentShader = `
     
     float time = uTime * 0.1;
     
-    // Animated metaball positions - fewer, larger, slower
-    vec2 p1 = vec2(sin(time * 0.4) * 0.4, cos(time * 0.3) * 0.35);
-    vec2 p2 = vec2(cos(time * 0.35) * 0.45, sin(time * 0.45) * 0.3);
-    vec2 p3 = vec2(sin(time * 0.25 + 2.0) * 0.35, cos(time * 0.35 + 1.0) * 0.4);
+    // Just 2 large, slow metaballs
+    vec2 p1 = vec2(sin(time * 0.3) * 0.5, cos(time * 0.25) * 0.4);
+    vec2 p2 = vec2(cos(time * 0.25) * 0.5, sin(time * 0.3) * 0.4);
     
-    // Mouse-following blob - subtle
-    vec2 pMouse = mouse * 0.6;
+    // Mouse-following blob - very subtle
+    vec2 pMouse = mouse * 0.5;
     
-    // Calculate metaball field - larger radius values
+    // Calculate metaball field
     float m = 0.0;
-    m += metaball(uvAspect, p1, 0.18);
-    m += metaball(uvAspect, p2, 0.15);
-    m += metaball(uvAspect, p3, 0.16);
-    m += metaball(uvAspect, pMouse, 0.08);
+    m += metaball(uvAspect, p1, 0.22);
+    m += metaball(uvAspect, p2, 0.20);
+    m += metaball(uvAspect, pMouse, 0.06);
     
     // Add noise for organic movement - subtle
     float noise = snoise(vec3(uvAspect * 2.0, time)) * 0.08;
