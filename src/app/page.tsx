@@ -57,10 +57,8 @@ export default function Home() {
               
               <div className="relative">
                 {/* Icon */}
-                <div className="w-8 h-8 mb-5 rounded-lg bg-white/60 border border-white/50 flex items-center justify-center shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]">
-                  <svg className="w-4 h-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                  </svg>
+                <div className="w-8 h-8 mb-5 flex items-center justify-center text-lg">
+                  🎨
                 </div>
 
                 <h2 className="text-sm font-medium text-neutral-600 mb-1.5 tracking-wide">
