@@ -14,11 +14,11 @@ export const metadata: Metadata = {
   keywords: ["branding", "marketing", "AI", "automation", "creative agency", "brand bible", "content generation"],
   authors: [{ name: "NewSphere" }],
   creator: "NewSphere",
-  metadataBase: new URL("https://newsphere-d1t.pages.dev"),
+  metadataBase: new URL("https://newsphere.xyz"),
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://newsphere-d1t.pages.dev",
+    url: "https://newsphere.xyz",
     siteName: "NewSphere",
     title: "NewSphere — Agentic Creative Agency",
     description: "Automate your branding & marketing with AI-powered brand creation and content generation.",
