@@ -708,8 +708,8 @@ export default function ImportPage() {
       {mounted && <LiquidBackground />}
       <div className="fixed inset-0 -z-20 bg-[#f0f0f4]" />
       
-      <main className="min-h-screen p-6">
-        <div className="max-w-lg mx-auto pt-8">
+      <main className="min-h-screen p-6 flex items-center justify-center">
+        <div className="max-w-lg w-full">
           {/* Back link */}
           <Link 
             href="/"

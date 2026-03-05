@@ -3,6 +3,57 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
+// ═══════════════════════════════════════════════════════════════════
+// LOGO FINDER (from OpenGFX)
+// ═══════════════════════════════════════════════════════════════════
+
+async function findLogoUrl(url: string): Promise<{ url: string; format: string } | null> {
+  const baseUrl = new URL(url).origin;
+  const paths = [
+    "/logo.png", "/logo.svg", "/logo.webp",
+    "/favicon.svg", "/apple-touch-icon.png", "/apple-touch-icon-180x180.png",
+    "/icon.png", "/icon-512.png",
+    "/android-chrome-512x512.png", "/android-chrome-192x192.png",
+    "/favicon-32x32.png", "/favicon.png",
+    "/assets/logo.png", "/assets/logo.svg",
+    "/images/logo.png", "/images/logo.svg",
+    "/img/logo.png", "/img/logo.svg",
+    "/static/logo.png", "/static/logo.svg",
+  ];
+
+  // Probe common paths
+  for (const p of paths) {
+    try {
+      const logoUrl = baseUrl + p;
+      const res = await fetch(logoUrl, { method: "HEAD", signal: AbortSignal.timeout(3_000) });
+      if (res.ok) {
+        const ct = res.headers.get("content-type") || "";
+        if (ct.includes("image") || p.endsWith(".svg") || p.endsWith(".png") || p.endsWith(".webp")) {
+          const format = p.endsWith(".svg") ? "svg" : p.endsWith(".webp") ? "webp" : "png";
+          return { url: logoUrl, format };
+        }
+      }
+    } catch {}
+  }
+
+  // Clearbit fallback (high quality logos)
+  try {
+    const domain = new URL(url).hostname;
+    const clearbitUrl = `https://logo.clearbit.com/${domain}`;
+    const res = await fetch(clearbitUrl, { method: "HEAD", signal: AbortSignal.timeout(3_000) });
+    if (res.ok) return { url: clearbitUrl, format: "png" };
+  } catch {}
+
+  // Google Favicon fallback (last resort)
+  try {
+    const domain = new URL(url).hostname;
+    const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+    return { url: faviconUrl, format: "png" };
+  } catch {}
+
+  return null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { url } = await req.json();
@@ -11,19 +62,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "URL required" }, { status: 400 });
     }
 
-    // Step 1: Take a screenshot using a free screenshot API
-    const screenshotApiUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false`;
-    const screenshotRes = await fetch(screenshotApiUrl);
-    const screenshotData = await screenshotRes.json();
+    // Run screenshot and logo search in parallel
+    const [screenshotResult, logoResult] = await Promise.all([
+      (async () => {
+        const screenshotApiUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false`;
+        const screenshotRes = await fetch(screenshotApiUrl);
+        return screenshotRes.json();
+      })(),
+      findLogoUrl(url),
+    ]);
     
-    if (!screenshotData.data?.screenshot?.url) {
-      console.error("Screenshot failed:", screenshotData);
+    if (!screenshotResult.data?.screenshot?.url) {
+      console.error("Screenshot failed:", screenshotResult);
       return NextResponse.json({ error: "Failed to capture screenshot" }, { status: 500 });
     }
 
-    const imageUrl = screenshotData.data.screenshot.url;
+    const imageUrl = screenshotResult.data.screenshot.url;
 
-    // Step 2: Fetch the image and convert to base64
+    // Fetch the image and convert to base64
     const imageRes = await fetch(imageUrl);
     const imageBuffer = await imageRes.arrayBuffer();
     const base64Image = Buffer.from(imageBuffer).toString("base64");
@@ -87,18 +143,6 @@ Return ONLY the JSON, no markdown or explanation.`;
 
     const extracted = JSON.parse(jsonStr);
 
-    // Step 4: Try to fetch favicon/logo
-    let logo = null;
-    try {
-      const faviconUrl = `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`;
-      logo = {
-        url: faviconUrl,
-        format: "png",
-      };
-    } catch (e) {
-      // Ignore favicon errors
-    }
-
     return NextResponse.json({
       name: extracted.name,
       tagline: extracted.tagline,
@@ -106,7 +150,7 @@ Return ONLY the JSON, no markdown or explanation.`;
       fonts: extracted.fonts,
       style: extracted.style,
       personality: extracted.personality,
-      logo,
+      logo: logoResult,
       sourceUrl: url,
       sourceType: "url",
       confidence: extracted.confidence,
