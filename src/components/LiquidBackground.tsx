@@ -106,8 +106,8 @@ const fragmentShader = `
     // Single large centered blob with gentle drift
     vec2 p1 = vec2(sin(time * 0.15) * 0.08, cos(time * 0.12) * 0.06);
     
-    // Mouse-following blob - subtle
-    vec2 pMouse = mouse * 0.4;
+    // Mouse-following blob - directly at cursor position
+    vec2 pMouse = mouse;
     
     // Calculate metaball field
     float m = 0.0;
@@ -145,9 +145,9 @@ const fragmentShader = `
     // Add subtle overall iridescence to blobs
     color += iridescentColor * blob * 0.08;
     
-    // Mouse proximity glow - subtler
+    // Mouse proximity glow - localized like finger on water
     float mouseDist = length(uvAspect - mouse);
-    float mouseGlow = smoothstep(0.35, 0.0, mouseDist) * 0.15;
+    float mouseGlow = smoothstep(0.15, 0.0, mouseDist) * 0.25;
     color += iridescentColor * mouseGlow;
     
     // Subtle lighter vignette for light mode
@@ -189,7 +189,7 @@ function LiquidPlane() {
     if (meshRef.current) {
       const material = meshRef.current.material as THREE.ShaderMaterial;
       material.uniforms.uTime.value = state.clock.elapsedTime;
-      material.uniforms.uMouse.value.lerp(mouseRef.current, 0.08);
+      material.uniforms.uMouse.value.lerp(mouseRef.current, 0.15);
       material.uniforms.uResolution.value.set(size.width, size.height);
     }
   });
