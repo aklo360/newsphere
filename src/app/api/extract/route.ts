@@ -12,11 +12,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Step 1: Take a screenshot using a free screenshot API
-    const screenshotUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false&embed=screenshot.url`;
-    const screenshotRes = await fetch(screenshotUrl);
+    const screenshotApiUrl = `https://api.microlink.io/?url=${encodeURIComponent(url)}&screenshot=true&meta=false`;
+    const screenshotRes = await fetch(screenshotApiUrl);
     const screenshotData = await screenshotRes.json();
     
     if (!screenshotData.data?.screenshot?.url) {
+      console.error("Screenshot failed:", screenshotData);
       return NextResponse.json({ error: "Failed to capture screenshot" }, { status: 500 });
     }
 
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     const base64Image = Buffer.from(imageBuffer).toString("base64");
 
     // Step 3: Use Gemini Vision to analyze the screenshot
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `Analyze this website screenshot and extract the brand identity. Return a JSON object with:
 
