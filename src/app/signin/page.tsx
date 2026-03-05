@@ -14,6 +14,12 @@ const LiquidBackground = dynamic(
 
 export default function SignIn() {
   const [mounted, setMounted] = useState(false);
+  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  
   const { signIn } = useAuthActions();
   const { isAuthenticated, isLoading } = useConvexAuth();
   const router = useRouter();
@@ -30,6 +36,23 @@ export default function SignIn() {
 
   const handleGoogleSignIn = () => {
     signIn("google");
+  };
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    
+    try {
+      await signIn("password", { 
+        email, 
+        password,
+        flow: mode === "signup" ? "signUp" : "signIn"
+      });
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
+    }
+    setLoading(false);
   };
 
   if (isLoading) {
@@ -74,13 +97,17 @@ export default function SignIn() {
           ">
             <div className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
             
-            <h2 className="text-lg font-medium text-neutral-600 mb-1 text-center">Welcome</h2>
-            <p className="text-xs text-neutral-400 mb-6 text-center">Sign in to continue</p>
+            <h2 className="text-lg font-medium text-neutral-600 mb-1 text-center">
+              {mode === "signin" ? "Welcome back" : "Create account"}
+            </h2>
+            <p className="text-xs text-neutral-400 mb-6 text-center">
+              {mode === "signin" ? "Sign in to continue" : "Sign up to get started"}
+            </p>
 
             {/* Google Sign In */}
             <button
               onClick={handleGoogleSignIn}
-              className="w-full h-11 rounded-lg bg-white border border-neutral-200/80 text-sm font-medium text-neutral-700 flex items-center justify-center gap-2.5 hover:bg-neutral-50 hover:border-neutral-300/80 transition-all shadow-sm"
+              className="w-full h-11 rounded-lg bg-white border border-neutral-200/80 text-sm font-medium text-neutral-700 flex items-center justify-center gap-2.5 hover:bg-neutral-50 hover:border-neutral-300/80 transition-all shadow-sm mb-4"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -90,6 +117,78 @@ export default function SignIn() {
               </svg>
               Continue with Google
             </button>
+
+            {/* Divider */}
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-neutral-200/60"></div>
+              </div>
+              <div className="relative flex justify-center">
+                <span className="px-3 text-[10px] text-neutral-400 bg-white/50">or</span>
+              </div>
+            </div>
+
+            {/* Email/Password Form */}
+            <form onSubmit={handleEmailSubmit} className="space-y-3">
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full h-11 px-3 rounded-lg bg-white border border-neutral-200/80 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200 transition-all"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                className="w-full h-11 px-3 rounded-lg bg-white border border-neutral-200/80 text-sm text-neutral-700 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200 transition-all"
+              />
+              
+              {error && (
+                <p className="text-xs text-red-500 text-center">{error}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 rounded-lg bg-neutral-700/90 text-sm font-medium text-white/90 flex items-center justify-center hover:bg-neutral-600/90 transition-colors disabled:opacity-50"
+              >
+                {loading ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  mode === "signin" ? "Sign In" : "Sign Up"
+                )}
+              </button>
+            </form>
+
+            {/* Toggle Mode */}
+            <p className="text-xs text-neutral-400 text-center mt-4">
+              {mode === "signin" ? (
+                <>
+                  Don't have an account?{" "}
+                  <button
+                    onClick={() => setMode("signup")}
+                    className="text-neutral-600 hover:text-neutral-800 font-medium"
+                  >
+                    Sign up
+                  </button>
+                </>
+              ) : (
+                <>
+                  Already have an account?{" "}
+                  <button
+                    onClick={() => setMode("signin")}
+                    className="text-neutral-600 hover:text-neutral-800 font-medium"
+                  >
+                    Sign in
+                  </button>
+                </>
+              )}
+            </p>
           </div>
 
           <p className="text-[10px] text-neutral-400/60 text-center mt-6">
