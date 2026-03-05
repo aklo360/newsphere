@@ -127,11 +127,11 @@ const fragmentShader = `
     float blob = smoothstep(0.8, 1.2, m);
     float blobEdge = smoothstep(0.7, 1.0, m) - smoothstep(1.0, 1.3, m);
     
-    // Base color - dark charcoal grey
-    vec3 bgColor = vec3(0.08, 0.08, 0.10);
+    // Base color - clean off-white
+    vec3 bgColor = vec3(0.94, 0.94, 0.96);
     
-    // Blob interior - slightly lighter
-    vec3 blobColor = vec3(0.12, 0.12, 0.15);
+    // Blob interior - soft grey
+    vec3 blobColor = vec3(0.88, 0.88, 0.92);
     
     // Iridescent edge color
     float angle = atan(uvAspect.y, uvAspect.x) + time * 0.5 + m * 2.0;
@@ -155,12 +155,12 @@ const fragmentShader = `
     float mouseGlow = smoothstep(0.4, 0.0, mouseDist) * 0.3;
     color += iridescentColor * mouseGlow;
     
-    // Add subtle vignette
-    float vignette = 1.0 - length(uvAspect) * 0.5;
+    // Subtle lighter vignette for light mode
+    float vignette = 1.0 - length(uvAspect) * 0.15;
     color *= vignette;
     
-    // Subtle film grain
-    float grain = snoise(vec3(uv * 500.0, time * 10.0)) * 0.02;
+    // Very subtle film grain
+    float grain = snoise(vec3(uv * 500.0, time * 10.0)) * 0.01;
     color += grain;
     
     gl_FragColor = vec4(color, 1.0);
