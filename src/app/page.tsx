@@ -15,19 +15,19 @@ export default function Home() {
       <LiquidBackground />
       <main className="min-h-screen flex flex-col items-center justify-center p-6">
         {/* Logo */}
-        <div className="mb-20 flex flex-col items-center">
+        <div className="mb-16 flex flex-col items-center">
           <Image
             src="/logomark.png"
             alt="NewSphere"
             width={80}
             height={80}
-            className="mb-6"
+            className="mb-4"
             priority
           />
-          <h1 className="text-[28px] font-semibold tracking-[0.02em] text-neutral-300 mb-2 drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
+          <h1 className="text-[28px] font-semibold tracking-[0.02em] text-neutral-300 mb-1.5 drop-shadow-[0_1px_1px_rgba(255,255,255,0.8)]">
             NewSphere
           </h1>
-          <p className="text-[10px] tracking-[0.25em] text-neutral-400/60 font-light">
+          <p className="text-[11px] tracking-[0.2em] text-neutral-400/70 font-light">
             Agentic Creative Agency
           </p>
         </div>
