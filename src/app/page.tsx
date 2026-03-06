@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -18,6 +19,18 @@ export default function LandingPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   
   const subscribe = useMutation(api.waitlist.subscribe);
+  const router = useRouter();
+
+  // Secret: Press Enter when not focused on input to access dev mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && document.activeElement?.tagName !== "INPUT") {
+        router.push("/access?redirect=/dashboard");
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,13 +218,6 @@ export default function LandingPage() {
             className="hover:text-neutral-500 transition-colors"
           >
             AKLO Labs
-          </a>
-          {" · "}
-          <a 
-            href="/access?redirect=/dashboard"
-            className="hover:text-neutral-500 transition-colors"
-          >
-            Team
           </a>
         </p>
       </main>
