@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+// Use Opus 4.5 when available, fallback to Gemini
+const USE_OPUS = !!process.env.ANTHROPIC_API_KEY;
+const anthropic = USE_OPUS ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! }) : null;
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 const EXTRACTOR_URL = process.env.EXTRACTOR_URL || "https://mac-mini.tailb4dd25.ts.net";
@@ -35,9 +39,10 @@ async function extractViaPuppeteer(url: string): Promise<any> {
 
 const CREATIVE_DIRECTOR_PROMPT = `You are an expert AI Creative Director analyzing a website's brand identity.
 
-You have TWO sources of information:
-1. A SCREENSHOT of the website (attached image)
-2. RAW CSS DATA extracted via Puppeteer
+You have THREE sources of information:
+1. A SCREENSHOT of the website (attached image) — TRUST THIS MOST
+2. DOMINANT COLORS from pixel analysis (colors.dominantColors) — sorted by visual coverage
+3. RAW CSS DATA extracted via Puppeteer (colors.allColors, fonts)
 
 Your job is to determine the TRUE BRAND COLORS by analyzing VISUAL DOMINANCE in the screenshot:
 - What colors APPEAR MOST on the page? (by visual area coverage)
@@ -98,8 +103,6 @@ CRITICAL RULES:
 - If fonts aren't Google Fonts, find closest matches`;
 
 async function synthesizeWithCreativeDirector(extractionData: any, screenshot: string): Promise<any> {
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
   const prompt = CREATIVE_DIRECTOR_PROMPT.replace(
     "{EXTRACTION_DATA}",
     JSON.stringify({
@@ -115,25 +118,59 @@ async function synthesizeWithCreativeDirector(extractionData: any, screenshot: s
   // Extract base64 data from data URL
   const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, "");
 
-  // Send both text prompt AND screenshot image
-  const result = await model.generateContent([
-    { text: prompt },
-    {
-      inlineData: {
-        mimeType: "image/png",
-        data: base64Data,
+  let responseText: string;
+
+  if (USE_OPUS && anthropic) {
+    // Use Claude Opus 4.5 with vision (best quality)
+    console.log(`[extract] Using Claude Opus 4.5...`);
+    const response = await anthropic.messages.create({
+      model: "claude-opus-4-5-20250220",
+      max_tokens: 4096,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/png",
+                data: base64Data,
+              },
+            },
+            {
+              type: "text",
+              text: prompt,
+            },
+          ],
+        },
+      ],
+    });
+    
+    const textContent = response.content.find(c => c.type === "text");
+    responseText = textContent?.type === "text" ? textContent.text : "";
+  } else {
+    // Fallback to Gemini Flash with vision
+    console.log(`[extract] Using Gemini Flash (Opus not configured)...`);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const result = await model.generateContent([
+      { text: prompt },
+      {
+        inlineData: {
+          mimeType: "image/png",
+          data: base64Data,
+        },
       },
-    },
-  ]);
-  
-  const response = result.response.text();
+    ]);
+    responseText = result.response.text();
+  }
   
   // Parse JSON
-  let jsonStr = response;
-  if (response.includes("```json")) {
-    jsonStr = response.split("```json")[1].split("```")[0].trim();
-  } else if (response.includes("```")) {
-    jsonStr = response.split("```")[1].split("```")[0].trim();
+  let jsonStr = responseText;
+  if (responseText.includes("```json")) {
+    jsonStr = responseText.split("```json")[1].split("```")[0].trim();
+  } else if (responseText.includes("```")) {
+    jsonStr = responseText.split("```")[1].split("```")[0].trim();
   }
 
   return JSON.parse(jsonStr);
