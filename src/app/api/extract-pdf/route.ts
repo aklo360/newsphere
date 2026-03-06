@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
     let embeddedImages: Array<{ filename: string; data: string; size: number }> = [];
     let mainLogoData: string | null = null;
     
+    // Extractor call - no timeout, we need all images
     const extractorPromise = (EXTRACTOR_URL && EXTRACTOR_API_KEY) 
       ? fetch(`${EXTRACTOR_URL}/extract-pdf`, {
           method: "POST",
@@ -47,13 +48,15 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({
             pdfBase64: buffer.toString("base64"),
             filename: file.name,
-            skipPageImages: true, // Only need embedded images (logos), not page renders
+            skipPageImages: true,
           }),
         }).then(async (res) => {
           if (res.ok) {
             const data = await res.json();
             embeddedImages = data.data?.embeddedImages || [];
             console.log(`[extract-pdf] Got ${embeddedImages.length} embedded images`);
+          } else {
+            console.error(`[extract-pdf] Extractor returned ${res.status}`);
           }
         }).catch(err => console.error(`[extract-pdf] Extractor failed:`, err))
       : Promise.resolve();
@@ -125,40 +128,34 @@ export async function POST(request: NextRequest) {
 
     if (embeddedImages.length > 0) {
       try {
-        console.log(`[extract-pdf] Classifying ${embeddedImages.length} images with Gemini Vision...`);
+        console.log(`[extract-pdf] Classifying ALL ${embeddedImages.length} images with Gemini Vision...`);
         
-        // Use flash model for speed
         const visionModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         
-        // Send up to 10 images for classification
-        const imagesToClassify = embeddedImages.slice(0, 10);
-        const imagePrompt = `Analyze these ${imagesToClassify.length} images extracted from a brand style guide PDF.
+        const imagePrompt = `You are analyzing ${embeddedImages.length} images extracted from a brand style guide PDF.
 
-For EACH image, classify it as one of:
-- "logo" - Company logo, wordmark, icon mark, or logo variant
-- "photography" - Photo used for brand examples/mood
-- "illustration" - Illustrated graphics or icons
-- "discard" - Decorative elements, patterns, UI elements, or irrelevant images
+For EACH image (in order), classify as:
+- "logo" - Company logo, wordmark, icon mark, logo variant, or brand mark
+- "photography" - Photograph used for brand mood/examples
+- "illustration" - Illustrated graphics, icons, or artwork
+- "discard" - Decorative patterns, UI elements, screenshots, or irrelevant
 
-Return JSON array with one object per image (in order):
+Return a JSON array with one object per image (matching the order):
 [
-  { "index": 0, "type": "logo", "subtype": "primary|secondary|icon|wordmark", "confidence": 0.95 },
-  { "index": 1, "type": "photography", "description": "brief description", "confidence": 0.8 },
+  { "index": 0, "type": "logo", "subtype": "primary", "confidence": 0.95 },
+  { "index": 1, "type": "photography", "description": "person smiling", "confidence": 0.8 },
   { "index": 2, "type": "discard", "reason": "decorative pattern", "confidence": 0.9 }
 ]
 
-Return ONLY valid JSON array, no markdown.`;
+Logo subtypes: primary, secondary, icon, wordmark, monochrome, reversed
+Return ONLY valid JSON array, no markdown code blocks.`;
 
-        const imageParts = imagesToClassify.map(img => {
-          // Extract base64 data from data URL
-          const base64Data = img.data.split(",")[1];
-          return {
-            inlineData: {
-              mimeType: "image/png",
-              data: base64Data,
-            },
-          };
-        });
+        const imageParts = embeddedImages.map(img => ({
+          inlineData: {
+            mimeType: "image/png",
+            data: img.data.split(",")[1],
+          },
+        }));
 
         const classifyResult = await visionModel.generateContent([
           ...imageParts,
@@ -166,21 +163,23 @@ Return ONLY valid JSON array, no markdown.`;
         ]);
 
         const classifyText = classifyResult.response.text();
-        let classifications = [];
+        let classifications: any[] = [];
         try {
-          // Parse JSON (handle potential markdown)
           let jsonStr = classifyText;
-          if (classifyText.includes("```")) {
-            jsonStr = classifyText.split("```")[1].replace(/^json\n?/, "").trim();
+          if (classifyText.includes("```json")) {
+            jsonStr = classifyText.split("```json")[1].split("```")[0].trim();
+          } else if (classifyText.includes("```")) {
+            jsonStr = classifyText.split("```")[1].split("```")[0].trim();
           }
           classifications = JSON.parse(jsonStr);
+          console.log(`[extract-pdf] Parsed ${classifications.length} classifications`);
         } catch (e) {
-          console.error(`[extract-pdf] Failed to parse classifications:`, e);
+          console.error(`[extract-pdf] Failed to parse classifications`);
         }
 
-        // Sort classified images
+        // Process all classifications
         for (const cls of classifications) {
-          const img = imagesToClassify[cls.index];
+          const img = embeddedImages[cls.index];
           if (!img) continue;
           
           if (cls.type === "logo") {
@@ -200,22 +199,26 @@ Return ONLY valid JSON array, no markdown.`;
               description: cls.description || "",
             });
           }
-          // Discard type is ignored
+          // "discard" type is ignored
         }
 
-        // Sort logos by confidence, pick main
+        // Sort logos by confidence
         classifiedImages.logos.sort((a, b) => b.confidence - a.confidence);
+        
         if (classifiedImages.logos.length > 0) {
           mainLogoData = classifiedImages.logos[0].data;
-          console.log(`[extract-pdf] Identified ${classifiedImages.logos.length} logos, main type: ${classifiedImages.logos[0].type}`);
+          console.log(`[extract-pdf] Found ${classifiedImages.logos.length} logos, ${classifiedImages.photography.length} photos, ${classifiedImages.illustrations.length} illustrations`);
         }
       } catch (err) {
         console.error(`[extract-pdf] Image classification failed:`, err);
-        // Fallback to largest image
-        if (embeddedImages.length > 0) {
-          const sorted = [...embeddedImages].sort((a, b) => b.size - a.size);
-          mainLogoData = sorted[0].data;
-        }
+      }
+      
+      // Fallback if no logos found
+      if (!mainLogoData && embeddedImages.length > 0) {
+        // Pick smallest image (logos tend to be smaller than photos)
+        const sorted = [...embeddedImages].sort((a, b) => a.size - b.size);
+        mainLogoData = sorted[0].data;
+        console.log(`[extract-pdf] Fallback: using smallest image as likely logo`);
       }
     }
 
@@ -232,15 +235,15 @@ Return ONLY valid JSON array, no markdown.`;
         format: "png",
         source: "embedded" 
       } : null,
-      // Include classified images
+      // Include ALL classified images
       _classifiedImages: {
-        logos: classifiedImages.logos.slice(0, 5),
-        photography: classifiedImages.photography.slice(0, 5),
-        illustrations: classifiedImages.illustrations.slice(0, 3),
+        logos: classifiedImages.logos,
+        photography: classifiedImages.photography,
+        illustrations: classifiedImages.illustrations,
       },
       // Fallback: raw embedded images if classification failed
       _embeddedImages: classifiedImages.logos.length === 0 
-        ? embeddedImages.slice(0, 5).map(img => ({
+        ? embeddedImages.map(img => ({
             filename: img.filename,
             data: img.data,
             size: img.size,
