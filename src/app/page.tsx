@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import { useMutation } from "convex/react";
@@ -15,6 +15,7 @@ export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
   
   const subscribe = useMutation(api.waitlist.subscribe);
 
@@ -34,6 +35,14 @@ export default function LandingPage() {
       setMessage("Something went wrong");
     }
   };
+
+  // Animate success state in
+  useEffect(() => {
+    if (status === "success") {
+      const timer = setTimeout(() => setShowSuccess(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [status]);
 
   return (
     <>
@@ -79,17 +88,72 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {status === "success" ? (
-              <div className="text-center py-4">
-                <div className="w-10 h-10 rounded-full bg-white/60 border border-white/50 flex items-center justify-center mx-auto mb-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]">
-                  <svg className="w-5 h-5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            <div className="relative min-h-[104px]">
+              {/* Success State */}
+              <div 
+                className={`
+                  absolute inset-0 flex flex-col items-center justify-center
+                  transition-all duration-500 ease-out
+                  ${status === "success" 
+                    ? "opacity-100 translate-y-0" 
+                    : "opacity-0 translate-y-4 pointer-events-none"}
+                `}
+              >
+                <div 
+                  className={`
+                    w-10 h-10 rounded-full bg-white/60 border border-white/50 
+                    flex items-center justify-center mb-3 
+                    shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]
+                    transition-all duration-500 ease-out delay-150
+                    ${showSuccess ? "scale-100 opacity-100" : "scale-75 opacity-0"}
+                  `}
+                >
+                  <svg 
+                    className={`
+                      w-5 h-5 text-neutral-500
+                      transition-all duration-300 delay-300
+                      ${showSuccess ? "opacity-100" : "opacity-0"}
+                    `}
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor" 
+                    strokeWidth={1.5}
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      d="M4.5 12.75l6 6 9-13.5"
+                      className={showSuccess ? "animate-draw-check" : ""}
+                      style={{
+                        strokeDasharray: 30,
+                        strokeDashoffset: showSuccess ? 0 : 30,
+                        transition: "stroke-dashoffset 0.4s ease-out 0.4s"
+                      }}
+                    />
                   </svg>
                 </div>
-                <p className="text-[11px] text-neutral-500">{message}</p>
+                <p 
+                  className={`
+                    text-[11px] text-neutral-500
+                    transition-all duration-400 ease-out delay-200
+                    ${showSuccess ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}
+                  `}
+                >
+                  {message}
+                </p>
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-3">
+
+              {/* Form State */}
+              <form 
+                onSubmit={handleSubmit} 
+                className={`
+                  space-y-3
+                  transition-all duration-300 ease-out
+                  ${status === "success" 
+                    ? "opacity-0 -translate-y-4 pointer-events-none" 
+                    : "opacity-100 translate-y-0"}
+                `}
+              >
                 <input
                   type="email"
                   value={email}
@@ -120,10 +184,10 @@ export default function LandingPage() {
                   {status === "loading" ? "Joining..." : "Join Waitlist"}
                 </button>
                 {status === "error" && (
-                  <p className="text-[10px] text-red-400 text-center">{message}</p>
+                  <p className="text-[10px] text-red-400 text-center animate-fade-in">{message}</p>
                 )}
               </form>
-            )}
+            </div>
           </div>
         </div>
 
