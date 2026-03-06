@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     await fs.writeFile(tempPath, buffer);
 
     // Run BOTH in parallel: Mac Mini extractor (logos) + Gemini upload
-    let embeddedImages: Array<{ filename: string; data: string; size: number }> = [];
+    let embeddedImages: Array<{ filename: string; data: string; size: number; page?: number; isFromLogoSection?: boolean }> = [];
     let mainLogoData: string | null = null;
     
     // Extractor call - no timeout, we need all images
@@ -127,16 +127,33 @@ export async function POST(request: NextRequest) {
     } = { logos: [], photography: [], illustrations: [] };
 
     if (embeddedImages.length > 0) {
+      // Sort images: logo section first, then by size
+      const logoSectionImages = embeddedImages.filter(img => img.isFromLogoSection);
+      const otherImages = embeddedImages.filter(img => !img.isFromLogoSection);
+      const sortedImages = [...logoSectionImages, ...otherImages];
+      
+      console.log(`[extract-pdf] ${logoSectionImages.length} images from logo section, ${otherImages.length} from other pages`);
+      
       try {
-        console.log(`[extract-pdf] Classifying ALL ${embeddedImages.length} images with Gemini Vision...`);
+        console.log(`[extract-pdf] Classifying ${sortedImages.length} images with Gemini Vision...`);
         
         const visionModel = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         
-        const imagePrompt = `You are analyzing ${embeddedImages.length} images extracted from a brand style guide PDF.
+        // Build context about which images are from logo section
+        const imageContext = sortedImages.map((img, i) => 
+          img.isFromLogoSection ? `Image ${i}: FROM LOGO SECTION (page ${img.page})` : `Image ${i}: page ${img.page || '?'}`
+        ).join('\n');
+        
+        const imagePrompt = `You are analyzing ${sortedImages.length} images extracted from a brand style guide PDF.
+
+PAGE CONTEXT (use this to help classify):
+${imageContext}
+
+Images marked "FROM LOGO SECTION" are from pages that contain logo guidelines - these are VERY LIKELY to be actual logos.
 
 For EACH image (in order), classify as:
 - "logo" - Company logo, wordmark, icon mark, logo variant, or brand mark
-- "photography" - Photograph used for brand mood/examples
+- "photography" - Photograph used for brand mood/examples  
 - "illustration" - Illustrated graphics, icons, or artwork
 - "discard" - Decorative patterns, UI elements, screenshots, or irrelevant
 
@@ -150,7 +167,7 @@ Return a JSON array with one object per image (matching the order):
 Logo subtypes: primary, secondary, icon, wordmark, monochrome, reversed
 Return ONLY valid JSON array, no markdown code blocks.`;
 
-        const imageParts = embeddedImages.map(img => ({
+        const imageParts = sortedImages.map(img => ({
           inlineData: {
             mimeType: "image/png",
             data: img.data.split(",")[1],
@@ -179,14 +196,20 @@ Return ONLY valid JSON array, no markdown code blocks.`;
 
         // Process all classifications
         for (const cls of classifications) {
-          const img = embeddedImages[cls.index];
+          const img = sortedImages[cls.index];
           if (!img) continue;
+          
+          // Boost confidence for images from logo section
+          let confidence = cls.confidence || 0.8;
+          if (img.isFromLogoSection && cls.type === "logo") {
+            confidence = Math.min(1.0, confidence + 0.15);
+          }
           
           if (cls.type === "logo") {
             classifiedImages.logos.push({
               data: img.data,
               type: cls.subtype || "primary",
-              confidence: cls.confidence || 0.8,
+              confidence,
             });
           } else if (cls.type === "photography") {
             classifiedImages.photography.push({
@@ -199,10 +222,9 @@ Return ONLY valid JSON array, no markdown code blocks.`;
               description: cls.description || "",
             });
           }
-          // "discard" type is ignored
         }
 
-        // Sort logos by confidence
+        // Sort logos by confidence (logo section images should rank higher)
         classifiedImages.logos.sort((a, b) => b.confidence - a.confidence);
         
         if (classifiedImages.logos.length > 0) {
@@ -213,12 +235,17 @@ Return ONLY valid JSON array, no markdown code blocks.`;
         console.error(`[extract-pdf] Image classification failed:`, err);
       }
       
-      // Fallback if no logos found
-      if (!mainLogoData && embeddedImages.length > 0) {
-        // Pick smallest image (logos tend to be smaller than photos)
-        const sorted = [...embeddedImages].sort((a, b) => a.size - b.size);
-        mainLogoData = sorted[0].data;
-        console.log(`[extract-pdf] Fallback: using smallest image as likely logo`);
+      // Fallback: prioritize images from logo section
+      if (!mainLogoData) {
+        const logoSectionImg = embeddedImages.find(img => img.isFromLogoSection);
+        if (logoSectionImg) {
+          mainLogoData = logoSectionImg.data;
+          console.log(`[extract-pdf] Fallback: using first image from logo section`);
+        } else if (embeddedImages.length > 0) {
+          const sorted = [...embeddedImages].sort((a, b) => a.size - b.size);
+          mainLogoData = sorted[0].data;
+          console.log(`[extract-pdf] Fallback: using smallest image`);
+        }
       }
     }
 
