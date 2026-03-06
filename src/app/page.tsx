@@ -88,8 +88,7 @@ export default function LandingPage() {
                 Coming Soon
               </h2>
               <p className="text-[11px] text-neutral-400 leading-relaxed">
-                AI-powered brand creation platform.<br />
-                Join the waitlist for early access.
+                Automate your branding, marketing & advertising
               </p>
             </div>
 
