@@ -1,0 +1,1066 @@
+{
+  "metadata": {
+    "brandName": "Merck / MSD",
+    "version": "V1.5 / September 2020",
+    "sourceType": "pdf"
+  },
+  "strategy": {
+    "mission": "We exist to discover and innovate to save and improve lives.",
+    "anthemOrTagline": "INVENTING FOR LIFE",
+    "coreValues": [
+      "Inventive",
+      "Empathetic",
+      "Relentless"
+    ],
+    "personalityTraits": [
+      "Inventive",
+      "Empathetic",
+      "Relentless"
+    ],
+    "positioning": "At heart we're a creative company. We invent things. We come up with new ways to make human and animal lives healthier and happier. We work together to solve challenges with new thinking.",
+    "targetAudience": [
+      "Employees",
+      "Healthcare providers",
+      "Patients",
+      "Caregivers",
+      "Customers",
+      "Investors",
+      "Future employees",
+      "Policy makers",
+      "Advocacy groups"
+    ]
+  },
+  "naming": {
+    "corporateNames": [
+      {
+        "region": "U.S./Canada",
+        "allowedName": "Merck",
+        "usageRules": "Use 'Merck' alone. Use 'Merck' along with a Division, functional area or business unit. 'Merck & Co., Inc.' may be used. 'Merck Sharp & Dohme' may be used."
+      },
+      {
+        "region": "Outside of the U.S. and Canada",
+        "allowedName": "MSD",
+        "usageRules": "Use 'MSD' alone. Use 'MSD' along with a Division. 'Merck & Co., Inc.' may be used as a firm or corporate name but only if it includes full location. 'Merck Sharp & Dohme' may be used except for Germany. Germany: 'MSD Sharp & Dohme GmbH'."
+      }
+    ],
+    "trademarks": [
+      "Merck & Co., Inc.",
+      "Merck Sharp & Dohme",
+      "MSD Sharp & Dohme GmbH"
+    ],
+    "disclaimers": [
+      "Branding with both Merck and MSD in any form is not permitted. For internal use only, you may use the icon without the wordmark to represent both."
+    ]
+  },
+  "logos": {
+    "overview": "Our logo system includes primary and secondary variants, with or without the anthem 'Inventing for life'. The icon and wordmark have fixed relationships.",
+    "variants": [
+      {
+        "type": "primary",
+        "name": "Primary logo",
+        "usageContext": "Default logo. Icon on the left, wordmark on the right."
+      },
+      {
+        "type": "secondary",
+        "name": "Secondary logo",
+        "usageContext": "Stacked and centered. For use in restricted spaces only where horizontal logo cannot be accommodated."
+      },
+      {
+        "type": "withAnthem",
+        "name": "Primary logo with anthem",
+        "usageContext": "Standard primary layout with 'INVENTING FOR LIFE' underneath wordmark."
+      },
+      {
+        "type": "withAnthem",
+        "name": "Secondary logo with anthem",
+        "usageContext": "Stacked and centered layout with anthem. For restricted spaces."
+      },
+      {
+        "type": "iconOnly",
+        "name": "Icon only",
+        "usageContext": "Externally, only as social media channel icons. Internally, can be used freely."
+      },
+      {
+        "type": "primary",
+        "name": "Primary icon and anthem",
+        "usageContext": "Internal use only."
+      },
+      {
+        "type": "secondary",
+        "name": "Secondary icon and anthem",
+        "usageContext": "Internal use only. Restricted spaces."
+      }
+    ],
+    "clearSpace": {
+      "formula": "Proportional to 50% of the icon size"
+    },
+    "minimumSize": {
+      "print": {
+        "value": 0.7,
+        "unit": "inches"
+      },
+      "screen": {
+        "value": 100,
+        "unit": "px"
+      }
+    },
+    "colorways": [
+      {
+        "name": "Primary",
+        "description": "Teal icon with dark gray wordmark and anthem",
+        "backgroundSuitability": [
+          "bright white backgrounds",
+          "light areas of photography"
+        ]
+      },
+      {
+        "name": "Secondary",
+        "description": "Teal icon with white wordmark and anthem",
+        "backgroundSuitability": [
+          "dark backgrounds",
+          "dark areas of photography"
+        ]
+      },
+      {
+        "name": "Alternative",
+        "description": "White icon with white wordmark and anthem",
+        "backgroundSuitability": [
+          "color saturated backgrounds",
+          "Merck Teal backgrounds"
+        ]
+      }
+    ],
+    "animation": {
+      "durationSeconds": 8,
+      "usageContexts": [
+        "end frames",
+        "brand films",
+        "social content",
+        "digital billboards",
+        "online advertising"
+      ]
+    },
+    "dosAndDonts": [
+      {
+        "type": "dont",
+        "description": "Don't swap out the words Inventing for Life with a program, department, or franchise"
+      },
+      {
+        "type": "dont",
+        "description": "Don't change the anthem font"
+      },
+      {
+        "type": "dont",
+        "description": "Don't change the opacity or tint of our logo"
+      },
+      {
+        "type": "dont",
+        "description": "Don't stretch our logo"
+      },
+      {
+        "type": "dont",
+        "description": "Don't outline our Icon"
+      },
+      {
+        "type": "dont",
+        "description": "Don't recolor our logo"
+      },
+      {
+        "type": "dont",
+        "description": "Don't use our logo in all teal"
+      },
+      {
+        "type": "dont",
+        "description": "Don't crop the logo"
+      },
+      {
+        "type": "dont",
+        "description": "Don't run the logo vertically"
+      },
+      {
+        "type": "dont",
+        "description": "Don't use our logo in white and gray on teal"
+      },
+      {
+        "type": "dont",
+        "description": "Don't use our icon as a graphic language"
+      }
+    ]
+  },
+  "colors": {
+    "mode": "both",
+    "palettes": {
+      "primary": [
+        {
+          "name": "Merck Teal",
+          "role": "primary",
+          "values": {
+            "hex": "#00857C",
+            "rgb": {
+              "r": 0,
+              "g": 133,
+              "b": 124
+            },
+            "cmyk": {
+              "c": 100,
+              "m": 0,
+              "y": 54,
+              "k": 15
+            },
+            "pantone": "3282 C"
+          },
+          "usageProportionPercentage": 30,
+          "usage": "Core brand color. Most important elements on digital such as CTAs, highlights."
+        },
+        {
+          "name": "White",
+          "role": "primary",
+          "values": {
+            "hex": "#FFFFFF",
+            "rgb": {
+              "r": 255,
+              "g": 255,
+              "b": 255
+            },
+            "cmyk": {
+              "c": 0,
+              "m": 0,
+              "y": 0,
+              "k": 0
+            }
+          },
+          "usageProportionPercentage": 30,
+          "usage": "Background color, creates a light, modern and clean design."
+        }
+      ],
+      "secondary": [
+        {
+          "name": "Merck Blue",
+          "role": "secondary",
+          "values": {
+            "hex": "#0C2340",
+            "rgb": {
+              "r": 12,
+              "g": 35,
+              "b": 64
+            },
+            "cmyk": {
+              "c": 100,
+              "m": 66,
+              "y": 0,
+              "k": 76
+            },
+            "pantone": "289 C"
+          },
+          "usageProportionPercentage": 20,
+          "usage": "Supports primary palette. Used sparingly."
+        },
+        {
+          "name": "Merck Light Teal",
+          "role": "secondary",
+          "values": {
+            "hex": "#6ECEB2",
+            "rgb": {
+              "r": 110,
+              "g": 206,
+              "b": 178
+            },
+            "cmyk": {
+              "c": 52,
+              "m": 0,
+              "y": 36,
+              "k": 0
+            },
+            "pantone": "338 C"
+          },
+          "usageProportionPercentage": 10,
+          "usage": "Supports primary palette. Used sparingly."
+        },
+        {
+          "name": "Merck Off-White",
+          "role": "secondary",
+          "values": {
+            "hex": "#F7F7F7",
+            "rgb": {
+              "r": 247,
+              "g": 247,
+              "b": 247
+            },
+            "cmyk": {
+              "c": 2,
+              "m": 3,
+              "y": 2,
+              "k": 0
+            },
+            "pantone": "656 C"
+          },
+          "usageProportionPercentage": 5,
+          "usage": "Supports primary palette."
+        }
+      ],
+      "accent": [
+        {
+          "name": "Merck Lime",
+          "role": "accent",
+          "values": {
+            "hex": "#BFED33",
+            "rgb": {
+              "r": 191,
+              "g": 237,
+              "b": 51
+            },
+            "cmyk": {
+              "c": 26,
+              "m": 0,
+              "y": 95,
+              "k": 0
+            },
+            "pantone": "2297 C"
+          },
+          "usage": "Used in advanced visualization, infographics and charts."
+        },
+        {
+          "name": "Merck Lemon",
+          "role": "accent",
+          "values": {
+            "hex": "#FFF063",
+            "rgb": {
+              "r": 255,
+              "g": 240,
+              "b": 99
+            },
+            "cmyk": {
+              "c": 1,
+              "m": 0,
+              "y": 70,
+              "k": 0
+            },
+            "pantone": "100 C"
+          },
+          "usage": "Used in advanced visualization, infographics and charts."
+        },
+        {
+          "name": "Merck Pastel Blue",
+          "role": "accent",
+          "values": {
+            "hex": "#69B8F7",
+            "rgb": {
+              "r": 105,
+              "g": 184,
+              "b": 247
+            },
+            "cmyk": {
+              "c": 55,
+              "m": 13,
+              "y": 0,
+              "k": 0
+            },
+            "pantone": "292 C"
+          },
+          "usage": "Used in advanced visualization, infographics and charts."
+        },
+        {
+          "name": "Merck Vista Blue",
+          "role": "accent",
+          "values": {
+            "hex": "#688CE8",
+            "rgb": {
+              "r": 104,
+              "g": 140,
+              "b": 232
+            },
+            "cmyk": {
+              "c": 63,
+              "m": 37,
+              "y": 0,
+              "k": 0
+            },
+            "pantone": "2129 C"
+          },
+          "usage": "Used in advanced visualization, infographics and charts."
+        },
+        {
+          "name": "Merck Rich Blue",
+          "role": "accent",
+          "values": {
+            "hex": "#5450E4",
+            "rgb": {
+              "r": 84,
+              "g": 80,
+              "b": 228
+            },
+            "cmyk": {
+              "c": 83,
+              "m": 66,
+              "y": 0,
+              "k": 0
+            },
+            "pantone": "2726 C"
+          },
+          "usage": "Used in advanced visualization, infographics and charts."
+        }
+      ],
+      "ui": [
+        {
+          "name": "Merck Teal Hover",
+          "role": "ui",
+          "values": {
+            "hex": "#005C55"
+          },
+          "usage": "Digital interaction hover state."
+        },
+        {
+          "name": "Black",
+          "role": "ui",
+          "values": {
+            "hex": "#000000"
+          },
+          "usage": "Digital screen use only."
+        },
+        {
+          "name": "Gray text",
+          "role": "ui",
+          "values": {
+            "hex": "#757575"
+          },
+          "usage": "Digital screen use only."
+        },
+        {
+          "name": "HR / Divider 20%",
+          "role": "ui",
+          "values": {
+            "hex": "#CFD2D7"
+          },
+          "usage": "Digital divider lines."
+        },
+        {
+          "name": "HR / Divider 10%",
+          "role": "ui",
+          "values": {
+            "hex": "#E7E8EA"
+          },
+          "usage": "Digital divider lines."
+        }
+      ]
+    },
+    "technicalNotes": {
+      "conversionRules": "Our RGB values have been optically adjusted for best results on screen and to adhere to legibility standards. They will not match the Pantone Matching System. Please only reference the values shown here.",
+      "adobeColorProfiles": "North America General Purpose 2"
+    },
+    "dosAndDonts": [
+      {
+        "type": "dont",
+        "description": "Don't use accent colors when primary colors aren't present. Always establish primary colors first."
+      },
+      {
+        "type": "dont",
+        "description": "Don't use secondary colors as backgrounds in top-level communications."
+      },
+      {
+        "type": "dont",
+        "description": "Don't use accent colors in large amounts."
+      },
+      {
+        "type": "dont",
+        "description": "Don't use accent colors to highlight text."
+      },
+      {
+        "type": "dont",
+        "description": "Don't use UI colors as primary colors."
+      }
+    ]
+  },
+  "typography": {
+    "typefaces": [
+      {
+        "name": "Invention",
+        "role": "primary",
+        "source": "custom",
+        "weights": [
+          "Light",
+          "Regular",
+          "Bold"
+        ],
+        "styles": [
+          "Normal",
+          "Italic"
+        ],
+        "usageDescription": "Primary custom typeface for expressing ourselves in a bold and unique way. Light for large headlines. Regular mainly for body copy. Bold for body copy headings and very small text."
+      },
+      {
+        "name": "Arial",
+        "role": "systemFallback",
+        "source": "system",
+        "weights": [
+          "Regular",
+          "Bold"
+        ],
+        "styles": [
+          "Normal"
+        ],
+        "usageDescription": "Default fallback typeface only when Invention is not available (e.g. handed off to a third-party). Arial Narrow should be avoided."
+      }
+    ],
+    "specifications": {
+      "case": "sentence",
+      "leadingBody": "120% of point size",
+      "trackingBody": 0,
+      "kerning": "optical",
+      "alignment": "left"
+    },
+    "hierarchy": [
+      {
+        "name": "Expressive Heading 1",
+        "tag": "h1",
+        "typeface": "Invention",
+        "weight": "Light",
+        "size": {
+          "value": 32,
+          "unit": "pt"
+        },
+        "lineHeight": {
+          "value": 36,
+          "unit": "pt"
+        },
+        "color": "Merck Blue",
+        "contextUsage": "Large expressive headings to create impact in marketing materials."
+      },
+      {
+        "name": "Formal Heading 1",
+        "tag": "h1",
+        "typeface": "Invention",
+        "weight": "Regular",
+        "size": {
+          "value": 20,
+          "unit": "pt"
+        },
+        "lineHeight": {
+          "value": 22,
+          "unit": "pt"
+        },
+        "color": "Merck Blue",
+        "contextUsage": "Brochures, reports or whitepapers to divide up sections of content."
+      },
+      {
+        "name": "Intro Text",
+        "tag": "p",
+        "typeface": "Invention",
+        "weight": "Light",
+        "size": {
+          "value": 12,
+          "unit": "pt"
+        },
+        "lineHeight": {
+          "value": 14.4,
+          "unit": "pt"
+        },
+        "color": "Merck Teal",
+        "contextUsage": "Introduction paragraphs."
+      },
+      {
+        "name": "Body text",
+        "tag": "p",
+        "typeface": "Invention",
+        "weight": "Regular",
+        "size": {
+          "value": 9,
+          "unit": "pt"
+        },
+        "lineHeight": {
+          "value": 11,
+          "unit": "pt"
+        },
+        "color": "Merck Dark blue",
+        "contextUsage": "Long form continuous body copy."
+      },
+      {
+        "name": "Desktop H1",
+        "tag": "h1",
+        "typeface": "Invention",
+        "weight": "Light",
+        "size": {
+          "value": 46,
+          "unit": "px"
+        },
+        "lineHeight": {
+          "value": 60,
+          "unit": "px"
+        },
+        "contextUsage": "Website Desktop H1"
+      },
+      {
+        "name": "Desktop H2",
+        "tag": "h2",
+        "typeface": "Invention",
+        "weight": "Light",
+        "size": {
+          "value": 38,
+          "unit": "px"
+        },
+        "lineHeight": {
+          "value": 52,
+          "unit": "px"
+        },
+        "contextUsage": "Website Desktop H2"
+      }
+    ],
+    "dosAndDonts": [
+      {
+        "type": "dont",
+        "description": "Avoid using italics in headlines."
+      },
+      {
+        "type": "dont",
+        "description": "Don't color headlines in Merck Teal with Merck Blue intro text."
+      },
+      {
+        "type": "dont",
+        "description": "Don't right align text."
+      },
+      {
+        "type": "dont",
+        "description": "Don't compress different layers of hierarchy together, give them space."
+      },
+      {
+        "type": "dont",
+        "description": "Don't run body copy in long lines, it becomes hard to read."
+      },
+      {
+        "type": "dont",
+        "description": "Don't run body copy in narrow columns."
+      },
+      {
+        "type": "dont",
+        "description": "Don't set Merck Blue text on Merck Teal backgrounds."
+      },
+      {
+        "type": "dont",
+        "description": "Don't set text in our accent colors."
+      }
+    ]
+  },
+  "voice": {
+    "overview": "Our tone of voice helps us to sound human and projects our personality. It is flexible and can be infused into almost all communications, with the exception of medical writing.",
+    "traits": [
+      {
+        "name": "Inventive",
+        "description": "We invent things. We come up with new ways to make lives healthier and happier.",
+        "howToSound": [
+          "Display creative curiosity",
+          "Show our ingenuity",
+          "Be collegiate"
+        ]
+      },
+      {
+        "name": "Empathetic",
+        "description": "We exist to serve others. We are driven by care and compassion.",
+        "howToSound": [
+          "Use warm, friendly language",
+          "Tell human stories",
+          "Address your reader/listener"
+        ]
+      },
+      {
+        "name": "Relentless",
+        "description": "We have the confidence to take on the world's biggest challenges. We never give up.",
+        "howToSound": [
+          "Be brave",
+          "Use bold language",
+          "Take a stand"
+        ]
+      }
+    ],
+    "writingTips": [
+      "Write the way you speak. Play the dialogue in your head, then write it down.",
+      "Write less, edit more. Think about what your reader needs to know.",
+      "Adjust to your readers. Tailor vocabulary to your reader."
+    ],
+    "channelSpecificRules": [
+      {
+        "channel": "Social Media",
+        "rules": [
+          "Your headline must be compelling.",
+          "Include a visual with every post.",
+          "Short posts work best. Use Tiny URLs to shorten links.",
+          "Use hashtags to connect to larger discussions, but in moderation (one to three).",
+          "Stay professional. Avoid casual posts about inconsequential things.",
+          "Stay on brand. Reflect personality."
+        ]
+      }
+    ],
+    "examples": [
+      {
+        "principle": "Display creative curiosity",
+        "before": "Will we ever find a cure to Alzheimer's?",
+        "after": "Why is Alzheimer's so hard to defeat?"
+      },
+      {
+        "principle": "Use warm, friendly language",
+        "before": "You completed all the assigned tasks today.",
+        "after": "Thanks for everything you did today."
+      },
+      {
+        "principle": "Be brave",
+        "before": "We need to move forward proactively.",
+        "after": "Let's do this."
+      }
+    ]
+  },
+  "imagery": {
+    "artDirectionCorePrinciples": [
+      "We use natural lighting, rather than flash.",
+      "We capture candid moments, never overtly posing or staging.",
+      "We favor a natural eye-level viewpoint.",
+      "We favor normal lenses, rather than ultra wide angles.",
+      "We frame straight, not at jaunty angles.",
+      "We use a shallow depth of field to make it a focal point."
+    ],
+    "photography": {
+      "tiers": [
+        {
+          "name": "Tier 1: For life",
+          "subCategories": [
+            "Global impact",
+            "Patient & caregiver",
+            "Celebration of life (out of category)"
+          ],
+          "artDirectionPointers": [
+            "A candid, documentary feel",
+            "People captured in their natural environments",
+            "Focus on emotion",
+            "A human interaction"
+          ]
+        },
+        {
+          "name": "Tier 2: Invention",
+          "subCategories": [
+            "Scientists",
+            "Scientists (creative)",
+            "Lab equipment",
+            "Lab equipment (creative)",
+            "Science visuals"
+          ],
+          "artDirectionPointers": [
+            "Scientists are the focus, not the labs",
+            "Two or more scientists together shows collaboration",
+            "Use lab equipment as a frame around the subject",
+            "Shoot through glass partitions"
+          ]
+        },
+        {
+          "name": "Tier 3: Values & culture",
+          "subCategories": [
+            "Senior leadership",
+            "Employees (out of lab)",
+            "Environments",
+            "Environments (creative)"
+          ],
+          "artDirectionPointers": [
+            "Subject should never look directly into camera",
+            "Presentable clothing",
+            "Show the environment as realistically as possible",
+            "Use lines on buildings to help image composition"
+          ]
+        }
+      ],
+      "diversityAndInclusion": {
+        "overview": "Diversity and inclusion must be evident in all we communicate.",
+        "requiredTraitsToRepresent": [
+          "Ages and stages of life",
+          "Race",
+          "Gender",
+          "Ethnicity",
+          "Culture",
+          "Nationality",
+          "Economic inclusion",
+          "Sexual orientation",
+          "Family structure",
+          "Religious affiliation",
+          "Veteran status",
+          "Disability status",
+          "Body type",
+          "Job level and function"
+        ],
+        "bestPractices": [
+          "Consider your audience",
+          "If showing more than one person, account for diversity among the group",
+          "Utilize photos of actual Merck employees"
+        ]
+      },
+      "croppingGuidance": [
+        {
+          "subject": "people",
+          "rules": [
+            "Do not crop out details that offer essential context.",
+            "Try using the rule of thirds.",
+            "Crop at eye level if you can.",
+            "Leave breathing room around faces.",
+            "Don't crop out horizons."
+          ]
+        },
+        {
+          "subject": "objects",
+          "rules": [
+            "Leave out unnecessary details.",
+            "Ensure the hero subject and focus point remain.",
+            "Use the rule of thirds to add a dynamic composition."
+          ]
+        }
+      ]
+    },
+    "illustration": {
+      "overview": "Allows us to express our ideas in a creative and inventive way on a White, Merck Teal or Merck Blue background.",
+      "ratioVsPhotography": "30/70",
+      "styles": [
+        {
+          "type": "Hero",
+          "usage": "Top-level brand messaging. Abstract, metaphorical or conceptual.",
+          "characteristics": [
+            "Richer illustrated worlds"
+          ]
+        },
+        {
+          "type": "Spot",
+          "usage": "Topic specific. Singular messaging.",
+          "characteristics": [
+            "Simpler, less detailed"
+          ]
+        }
+      ]
+    }
+  },
+  "dataVisualization": {
+    "overview": "Visualize our world of data in a colorful way that is unique to us.",
+    "chartTypes": [
+      "Basic bar chart",
+      "Detailed bar chart",
+      "Donut chart",
+      "Line graph",
+      "Fact & figure pull-outs"
+    ],
+    "colorSequence": {
+      "order": [
+        "Merck Teal",
+        "Merck Light Teal",
+        "Merck Lime",
+        "Merck Lemon",
+        "Merck Blue",
+        "Merck Rich Blue",
+        "Merck Vista Blue",
+        "Merck Pastel Blue"
+      ],
+      "rules": [
+        "Merck Teal is always present",
+        "Maintain good contrast between the colors",
+        "We don't use tints of our colors",
+        "Run the sequence again if more than eight data points"
+      ]
+    }
+  },
+  "designSystem": {
+    "overview": "Our cellular grid system represents the idea of cellular growth, connecting images and copy to tell stories that grow organically.",
+    "grid": {
+      "name": "Cellular Grid",
+      "columns": 12
+    },
+    "expressions": [
+      {
+        "level": "primary",
+        "description": "Top-level applications (brochure covers, banners, advertising). Imagery grows organically from the Merck Teal Square on a white background.",
+        "requiresBrandDevice": true
+      },
+      {
+        "level": "secondary",
+        "description": "Full bleed imagery for maximum impact. Uses the Teal Container to hold copy over the image.",
+        "requiresBrandDevice": true
+      },
+      {
+        "level": "internal",
+        "description": "Within communications (inside pages of reports/presentations). Grid is used to lay out content.",
+        "requiresBrandDevice": false
+      }
+    ],
+    "brandDevice": {
+      "name": "Merck Teal Square",
+      "usageRules": [
+        "Used on top-level communication only",
+        "Always square",
+        "Always Merck Teal",
+        "Only used with photography",
+        "Never use within internal communications (secondary level)"
+      ],
+      "placementRules": [
+        "Place it on the corner of the image",
+        "Place it on the corner of the teal container (secondary expression)",
+        "Avoid placing it on faces within photography"
+      ],
+      "sizingFormula": "Should match the width of your margin"
+    },
+    "spacing": [
+      4,
+      8,
+      16,
+      24,
+      32,
+      40,
+      48,
+      56,
+      64
+    ]
+  },
+  "digital": {
+    "overview": "A consistent, functional and scalable digital design system built on a 4px baseline grid.",
+    "breakpoints": [
+      {
+        "name": "Desktop Large 1280+",
+        "minWidthPx": 1280,
+        "columns": 12,
+        "gutterPx": 44,
+        "marginPx": 44
+      },
+      {
+        "name": "Desktop Small 940 to 1100+",
+        "minWidthPx": 940,
+        "columns": 12,
+        "gutterPx": 24,
+        "marginPx": 24
+      },
+      {
+        "name": "Tablet 760+",
+        "minWidthPx": 760,
+        "columns": 8,
+        "gutterPx": 28,
+        "marginPx": 28
+      },
+      {
+        "name": "Mobile 370+",
+        "minWidthPx": 370,
+        "columns": 4,
+        "gutterPx": 26,
+        "marginPx": 28
+      }
+    ],
+    "spacing": {
+      "baseUnitPx": 4,
+      "scale": [
+        4,
+        8,
+        16,
+        24,
+        32,
+        40,
+        48,
+        56,
+        64
+      ]
+    },
+    "components": [
+      {
+        "name": "Primary Button",
+        "variants": [
+          {
+            "name": "Default",
+            "states": [
+              {
+                "state": "default",
+                "backgroundColor": "#00857C",
+                "textColor": "#FFFFFF"
+              },
+              {
+                "state": "hover",
+                "backgroundColor": "#005C55",
+                "textColor": "#FFFFFF"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Secondary Button",
+        "variants": [
+          {
+            "name": "Default",
+            "states": [
+              {
+                "state": "default"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "social": {
+    "overview": "Social media content uses grids for a consistent look across platforms, adapting to square, vertical 16:9, and horizontal formats.",
+    "postTypes": [
+      {
+        "type": "photography",
+        "usage": "Full bleed imagery allows us to create simple, bold and emotive posts."
+      },
+      {
+        "type": "illustration",
+        "usage": "Used to create environments which immediately feel Merck branded. Full bleed."
+      },
+      {
+        "type": "typography",
+        "usage": "Impactful, hero statements with type. Kept short. Use full bleed color format."
+      }
+    ],
+    "formats": [
+      {
+        "name": "Square",
+        "aspectRatio": "1:1"
+      },
+      {
+        "name": "Landscape short",
+        "aspectRatio": "16:9"
+      },
+      {
+        "name": "Landscape tall",
+        "aspectRatio": "4:5"
+      },
+      {
+        "name": "Story, full-screen",
+        "aspectRatio": "9:16"
+      }
+    ],
+    "brandingScale": {
+      "levels": [
+        "Less branded (pure photography)",
+        "More branded (Typography/illustration with color/style)",
+        "Most branded (Direct logo inclusion)"
+      ],
+      "guidance": "Do not over-brand our world. Start without a logo in social designs and only add it if needed."
+    },
+    "profileBranding": {
+      "avatarRules": "The Merck icon should be used consistently across all platforms as the profile image. Use plenty of padding.",
+      "bannerRules": "Use full bleed photography and illustration. Ensure no key content becomes obstructed by the profile image."
+    }
+  },
+  "applicationExamples": [
+    {
+      "context": "Print advertisement",
+      "description": "Secondary expression using full bleed image and teal text container"
+    },
+    {
+      "context": "Internal banner",
+      "description": "Vertical roller banner using primary expression"
+    },
+    {
+      "context": "Social media",
+      "description": "Instagram grid showcasing full bleed photos, illustrations, and typography"
+    },
+    {
+      "context": "Digital advertisement",
+      "description": "Fixed size digital display ads"
+    },
+    {
+      "context": "Copy and infographic spread",
+      "description": "Brochure spread utilizing secondary colors, data visualization and Invention type"
+    },
+    {
+      "context": "Posters",
+      "description": "Large format posters using primary expression and cellular grid"
+    }
+  ]
+}
