@@ -206,6 +206,13 @@ export default function LandingPage() {
           >
             AKLO Labs
           </a>
+          {" · "}
+          <a 
+            href="/access?redirect=/dashboard"
+            className="hover:text-neutral-500 transition-colors"
+          >
+            Team
+          </a>
         </p>
       </main>
     </>
