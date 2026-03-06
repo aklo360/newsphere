@@ -1,57 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { GoogleAIFileManager } from "@google/generative-ai/server";
+import { PDF_EXTRACTION_PROMPT } from "@/lib/extraction-prompts";
 
 const API_KEY = process.env.GEMINI_API_KEY!;
 const fileManager = new GoogleAIFileManager(API_KEY);
 const genAI = new GoogleGenerativeAI(API_KEY);
-
-const BRAND_EXTRACTION_PROMPT = `Analyze this brand style guide PDF and extract the complete brand identity.
-
-Return JSON only (no markdown, no code blocks):
-{
-  "name": "Brand name",
-  "tagline": "Brand tagline/anthem if present, or null",
-  "concept": "1-2 sentence description of what this brand represents",
-  
-  "colors": {
-    "primary": { "name": "Color name", "hex": "#hex" },
-    "secondary": [{ "name": "Name", "hex": "#hex" }],
-    "accent": [{ "name": "Name", "hex": "#hex" }],
-    "background": "#hex (typical background color)",
-    "foreground": "#hex (typical text color)",
-    "mode": "light or dark"
-  },
-  
-  "typography": {
-    "primary": {
-      "family": "Primary font family name",
-      "weights": ["Light", "Regular", "Bold"],
-      "usage": "How it's used (headlines, body, etc.)"
-    },
-    "secondary": {
-      "family": "Secondary/fallback font",
-      "usage": "When used"
-    },
-    "heading": "Font for headings",
-    "body": "Font for body text"
-  },
-  
-  "logo": {
-    "description": "Describe the logo",
-    "variants": ["Primary", "Secondary", "Icon only"],
-    "colorVariants": ["On light", "On dark"]
-  },
-  
-  "personality": ["trait1", "trait2", "trait3"],
-  
-  "guidelines": {
-    "dos": ["Key brand dos from the guide"],
-    "donts": ["Key brand don'ts from the guide"]
-  },
-  
-  "confidence": 0.95
-}`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -105,8 +59,8 @@ export async function POST(request: NextRequest) {
 
     console.log(`[extract-pdf] File ready. Analyzing brand guide...`);
 
-    // Use Gemini to analyze the entire PDF
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // Use Gemini 3.1 Pro for the most accurate extraction
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
 
     const result = await model.generateContent([
       {
@@ -115,7 +69,7 @@ export async function POST(request: NextRequest) {
           fileUri: uploadResult.file.uri,
         },
       },
-      { text: BRAND_EXTRACTION_PROMPT },
+      { text: PDF_EXTRACTION_PROMPT },
     ]);
 
     const responseText = result.response.text();
