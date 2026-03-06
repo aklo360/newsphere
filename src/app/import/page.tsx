@@ -81,16 +81,14 @@ function InputStep({
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      const type = file.type.includes("pdf") ? "pdf" : "image";
-      onUpdate({ inputType: type, files: [file] });
+      onUpdate({ inputType: "file", files: [file] });
     }
   }, [onUpdate]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const type = file.type.includes("pdf") ? "pdf" : "image";
-      onUpdate({ inputType: type, files: [file] });
+      onUpdate({ inputType: "file", files: [file] });
     }
   };
 
@@ -116,9 +114,9 @@ function InputStep({
           Website URL
         </button>
         <button
-          onClick={() => onUpdate({ inputType: "pdf", url: undefined })}
+          onClick={() => onUpdate({ inputType: "file", url: undefined })}
           className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-            state.inputType === "pdf" || state.inputType === "image"
+            state.inputType === "file"
               ? "bg-white text-neutral-700 shadow-sm" 
               : "text-neutral-500 hover:text-neutral-700"
           }`}
@@ -147,7 +145,7 @@ function InputStep({
       )}
 
       {/* File Upload */}
-      {(state.inputType === "pdf" || state.inputType === "image") && (
+      {state.inputType === "file" && (
         <div>
           <label className="block text-xs font-medium text-neutral-500 mb-2">
             Brand Guidelines (PDF) or Logo (Image)
@@ -771,24 +769,61 @@ export default function ImportPage() {
     updateState({ step: "extracting", isExtracting: true, error: undefined });
     
     try {
-      const res = await fetch("/api/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: state.url }),
-      });
+      let data: any;
       
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Extraction failed");
+      // Handle PDF file upload
+      if (state.inputType === "file" && state.files?.[0]) {
+        const file = state.files[0];
+        const isPdf = file.name.toLowerCase().endsWith(".pdf");
+        
+        if (isPdf) {
+          // Use PDF extraction endpoint
+          const formData = new FormData();
+          formData.append("file", file);
+          
+          const res = await fetch("/api/extract-pdf", {
+            method: "POST",
+            body: formData,
+          });
+          
+          if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || "PDF extraction failed");
+          }
+          
+          data = await res.json();
+        } else {
+          // TODO: Handle logo/image file upload
+          throw new Error("Image upload not yet supported. Please use URL or PDF.");
+        }
+      } else {
+        // URL extraction
+        const res = await fetch("/api/extract", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: state.url }),
+        });
+        
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error || "Extraction failed");
+        }
+        
+        data = await res.json();
       }
-      
-      const data = await res.json();
       
       // Map Creative Director output to ExtractedBrand
       // API returns: colors.primary/secondary/accent/background/foreground
       // And _raw.colors.allColors for the full palette
-      const rawColors = data._raw?.colors?.allColors || [];
-      const rawFonts = data._raw?.fonts?.allFonts || [];
+      // PDF extraction returns colors.palette as array of {name, hex, role}
+      const rawColors = data._raw?.colors?.allColors 
+        || data.colors?.palette?.map((c: any) => c.hex || c)
+        || data._raw?.colors?.hexValues
+        || [];
+      const rawFonts = data._raw?.fonts?.allFonts 
+        || [data.typography?.primary?.family, data.typography?.secondary?.family].filter(Boolean)
+        || data._raw?.fonts
+        || [];
       
       const extracted: ExtractedBrand = {
         name: data.name,

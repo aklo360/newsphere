@@ -296,7 +296,7 @@ export interface ExtractedBrand {
   
   // Source info
   sourceUrl?: string;
-  sourceType: "url" | "pdf" | "image";
+  sourceType: "url" | "file";
   screenshotUrl?: string;
   
   // Confidence scores
@@ -338,7 +338,7 @@ export interface ImportWizardState {
   step: "input" | "extracting" | "verify" | "enhance" | "preview";
   
   // User inputs
-  inputType: "url" | "pdf" | "image";
+  inputType: "url" | "file";
   url?: string;
   files?: File[];
   
