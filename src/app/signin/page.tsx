@@ -30,7 +30,7 @@ export default function SignIn() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      router.push("/");
+      router.push("/onboard");
     }
   }, [isLoading, isAuthenticated, router]);
 

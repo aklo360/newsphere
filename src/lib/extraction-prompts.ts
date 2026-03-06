@@ -145,27 +145,29 @@ Return JSON matching this structure (omit empty sections, include everything you
   },
   
   "imagery": {
-    "artDirectionCorePrinciples": ["Principle 1", "Principle 2"],
+    "overview": "Overall imagery philosophy/approach",
     "photography": {
-      "tiers": [
-        { "name": "Tier 1", "subCategories": ["Global Impact", "Patient stories"], "artDirectionPointers": ["Authentic moments"] }
+      "themes": [
+        { 
+          "name": "Theme name (e.g., 'For Life', 'Innovation')", 
+          "description": "What this theme represents and focuses on",
+          "examples": ["Example subject 1", "Example subject 2"]
+        }
       ],
-      "diversityAndInclusion": {
-        "overview": "Our commitment to representation",
-        "requiredTraitsToRepresent": ["Age", "Race", "Gender", "Ability"],
-        "bestPractices": ["Show real diversity", "Avoid tokenism"]
-      },
-      "croppingGuidance": [
-        { "subject": "people", "rules": ["Crop at eye level", "Leave breathing room"] }
-      ]
+      "positiveTags": ["smiling faces", "authentic moments", "diverse representation", "natural lighting"],
+      "negativeTags": ["staged poses", "backs to camera", "overly corporate", "stock photo feel"],
+      "styleNotes": "Any specific style guidance (warm tones, documentary style, etc.)"
     },
     "illustration": {
-      "overview": "How we use illustration",
-      "ratioVsPhotography": "30/70",
-      "styles": [
-        { "type": "hero", "usage": "Large feature illustrations", "characteristics": ["Bold colors", "Simple shapes"] }
-      ]
-    }
+      "overview": "How illustration is used",
+      "ratioVsPhotography": "30/70 or similar ratio",
+      "positiveTags": ["bold colors", "simple shapes", "human-centered"],
+      "negativeTags": ["overly detailed", "clip art style", "generic icons"]
+    },
+    "dosAndDonts": [
+      { "type": "do", "description": "Show real, diverse people" },
+      { "type": "dont", "description": "Use overly staged stock photography" }
+    ]
   },
   
   "dataVisualization": {

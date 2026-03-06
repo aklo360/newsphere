@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useMutation } from "convex/react";
+import { useConvexAuth } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 const LiquidBackground = dynamic(
@@ -20,17 +21,16 @@ export default function LandingPage() {
   
   const subscribe = useMutation(api.waitlist.subscribe);
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useConvexAuth();
 
-  // Secret: Press Enter when not focused on input to access dev mode
+  // Local dev: skip to signin/onboard
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter" && document.activeElement?.tagName !== "INPUT") {
-        router.push("/access?redirect=/dashboard");
+    if (process.env.NODE_ENV === "development") {
+      if (!isLoading) {
+        router.push(isAuthenticated ? "/onboard" : "/signin");
       }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [router]);
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

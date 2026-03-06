@@ -4,9 +4,11 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { useConvexAuth } from "convex/react";
+import { useConvexAuth, useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { IMPORT_STEPS, PERSONALITY_TRAITS, RENDER_STYLES } from "@/lib/constants";
 import type { ImportWizardState, ExtractedBrand, CreativeDirectorBrief, PersonalityTrait } from "@/lib/types";
+import VerifyStep from "@/components/VerifyStep";
 
 const LiquidBackground = dynamic(
   () => import("@/components/LiquidBackground"),
@@ -301,344 +303,6 @@ function ExtractingStep({ state }: { state: ImportWizardState }) {
   );
 }
 
-function VerifyStep({ 
-  state, 
-  onUpdate, 
-  onNext,
-  onBack 
-}: { 
-  state: ImportWizardState;
-  onUpdate: (updates: Partial<ImportWizardState>) => void;
-  onNext: () => void;
-  onBack: () => void;
-}) {
-  const extracted = state.extracted;
-  const [newColor, setNewColor] = useState("#6366f1");
-  const [newFont, setNewFont] = useState("");
-  const [logoUrl, setLogoUrl] = useState("");
-  
-  if (!extracted) return null;
-
-  // Color management
-  const removeColor = (idx: number) => {
-    const newColors = [...extracted.colors.extracted];
-    newColors.splice(idx, 1);
-    onUpdate({
-      extracted: { ...extracted, colors: { ...extracted.colors, extracted: newColors } }
-    });
-  };
-
-  const addColor = () => {
-    if (!newColor) return;
-    const newColors = [...extracted.colors.extracted, newColor];
-    onUpdate({
-      extracted: { ...extracted, colors: { ...extracted.colors, extracted: newColors } }
-    });
-  };
-
-  const setColorRole = (color: string, role: "primary" | "secondary" | "accent" | "background" | "foreground") => {
-    onUpdate({
-      extracted: { ...extracted, colors: { ...extracted.colors, [role]: color } }
-    });
-  };
-
-  // Font management
-  const removeFont = (idx: number) => {
-    const newFonts = [...extracted.fonts.extracted];
-    newFonts.splice(idx, 1);
-    onUpdate({
-      extracted: { ...extracted, fonts: { ...extracted.fonts, extracted: newFonts } }
-    });
-  };
-
-  const addFont = () => {
-    if (!newFont.trim()) return;
-    const newFonts = [...extracted.fonts.extracted, newFont.trim()];
-    onUpdate({
-      extracted: { ...extracted, fonts: { ...extracted.fonts, extracted: newFonts } }
-    });
-    setNewFont("");
-  };
-
-  const setFontRole = (font: string, role: "heading" | "body") => {
-    onUpdate({
-      extracted: { ...extracted, fonts: { ...extracted.fonts, [role]: font } }
-    });
-  };
-
-  // Logo management
-  const removeLogo = () => {
-    onUpdate({
-      extracted: { ...extracted, logo: undefined }
-    });
-  };
-
-  const addLogo = () => {
-    if (!logoUrl.trim()) return;
-    onUpdate({
-      extracted: { ...extracted, logo: { url: logoUrl.trim(), format: "png" } }
-    });
-    setLogoUrl("");
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-medium text-neutral-700 mb-2">Verify extracted brand</h2>
-        <p className="text-sm text-neutral-400">Review and refine what we found</p>
-      </div>
-
-      <div className="space-y-4">
-        {/* Name */}
-        <div className="p-4 rounded-xl bg-white border border-neutral-100">
-          <span className="text-xs font-medium text-neutral-400 uppercase">Brand Name</span>
-          <input
-            type="text"
-            value={extracted.name || ""}
-            onChange={(e) => onUpdate({
-              extracted: { ...extracted, name: e.target.value }
-            })}
-            placeholder="Enter brand name"
-            className="w-full h-10 px-3 mt-2 rounded-lg bg-neutral-50 border border-neutral-200 text-sm"
-          />
-        </div>
-
-        {/* Colors - Enhanced */}
-        <div className="p-4 rounded-xl bg-white border border-neutral-100">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-neutral-400 uppercase">Brand Colors</span>
-            <span className="text-xs text-neutral-400">{extracted.colors.extracted.length} colors</span>
-          </div>
-          
-          {/* Color swatches with remove + role assignment */}
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              {extracted.colors.extracted.map((color, idx) => (
-                <div key={idx} className="relative group">
-                  <div 
-                    className="w-12 h-12 rounded-lg border-2 border-neutral-200 cursor-pointer transition-all hover:scale-105"
-                    style={{ backgroundColor: color }}
-                    title={color}
-                  />
-                  {/* Remove button */}
-                  <button
-                    onClick={() => removeColor(idx)}
-                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    ×
-                  </button>
-                  {/* Role indicator */}
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-                    {extracted.colors.primary === color && <div className="w-2 h-2 rounded-full bg-blue-500" title="Primary" />}
-                    {extracted.colors.secondary === color && <div className="w-2 h-2 rounded-full bg-purple-500" title="Secondary" />}
-                    {extracted.colors.accent === color && <div className="w-2 h-2 rounded-full bg-pink-500" title="Accent" />}
-                  </div>
-                </div>
-              ))}
-              
-              {/* Add color */}
-              <div className="flex items-center gap-1">
-                <input 
-                  type="color" 
-                  value={newColor}
-                  onChange={(e) => setNewColor(e.target.value)}
-                  className="w-12 h-12 rounded-lg border border-neutral-200 cursor-pointer"
-                />
-                <button
-                  onClick={addColor}
-                  className="w-8 h-12 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-500 text-lg"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Role assignment */}
-            {extracted.colors.extracted.length > 0 && (
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-neutral-100">
-                <div>
-                  <label className="text-[10px] text-neutral-400 uppercase">Primary</label>
-                  <select 
-                    value={extracted.colors.primary || ""}
-                    onChange={(e) => setColorRole(e.target.value, "primary")}
-                    className="w-full h-8 text-xs rounded border border-neutral-200 bg-white"
-                  >
-                    <option value="">Select...</option>
-                    {extracted.colors.extracted.map((c, i) => (
-                      <option key={i} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] text-neutral-400 uppercase">Secondary</label>
-                  <select 
-                    value={extracted.colors.secondary || ""}
-                    onChange={(e) => setColorRole(e.target.value, "secondary")}
-                    className="w-full h-8 text-xs rounded border border-neutral-200 bg-white"
-                  >
-                    <option value="">Select...</option>
-                    {extracted.colors.extracted.map((c, i) => (
-                      <option key={i} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] text-neutral-400 uppercase">Accent</label>
-                  <select 
-                    value={extracted.colors.accent || ""}
-                    onChange={(e) => setColorRole(e.target.value, "accent")}
-                    className="w-full h-8 text-xs rounded border border-neutral-200 bg-white"
-                  >
-                    <option value="">Select...</option>
-                    {extracted.colors.extracted.map((c, i) => (
-                      <option key={i} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Fonts - Enhanced */}
-        <div className="p-4 rounded-xl bg-white border border-neutral-100">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-neutral-400 uppercase">Typography</span>
-            <span className="text-xs text-neutral-400">{extracted.fonts.extracted.length} fonts</span>
-          </div>
-          
-          <div className="space-y-3">
-            {/* Font list with remove */}
-            <div className="flex flex-wrap gap-2">
-              {extracted.fonts.extracted.map((font, idx) => (
-                <div key={idx} className="relative group">
-                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-100 text-xs text-neutral-600">
-                    {font}
-                    {extracted.fonts.heading === font && <span className="text-[10px] text-blue-500">(H)</span>}
-                    {extracted.fonts.body === font && <span className="text-[10px] text-green-500">(B)</span>}
-                  </span>
-                  <button
-                    onClick={() => removeFont(idx)}
-                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-              
-              {/* Add font */}
-              <div className="flex items-center gap-1">
-                <input 
-                  type="text"
-                  value={newFont}
-                  onChange={(e) => setNewFont(e.target.value)}
-                  placeholder="Add font..."
-                  className="w-24 h-8 px-2 text-xs rounded-lg border border-neutral-200"
-                  onKeyDown={(e) => e.key === "Enter" && addFont()}
-                />
-                <button
-                  onClick={addFont}
-                  className="w-8 h-8 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-500"
-                >
-                  +
-                </button>
-              </div>
-            </div>
-
-            {/* Font role assignment */}
-            {extracted.fonts.extracted.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-100">
-                <div>
-                  <label className="text-[10px] text-neutral-400 uppercase">Heading Font</label>
-                  <select 
-                    value={extracted.fonts.heading || ""}
-                    onChange={(e) => setFontRole(e.target.value, "heading")}
-                    className="w-full h-8 text-xs rounded border border-neutral-200 bg-white"
-                  >
-                    <option value="">Select...</option>
-                    {extracted.fonts.extracted.map((f, i) => (
-                      <option key={i} value={f}>{f}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="text-[10px] text-neutral-400 uppercase">Body Font</label>
-                  <select 
-                    value={extracted.fonts.body || ""}
-                    onChange={(e) => setFontRole(e.target.value, "body")}
-                    className="w-full h-8 text-xs rounded border border-neutral-200 bg-white"
-                  >
-                    <option value="">Select...</option>
-                    {extracted.fonts.extracted.map((f, i) => (
-                      <option key={i} value={f}>{f}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Logo - Enhanced */}
-        <div className="p-4 rounded-xl bg-white border border-neutral-100">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-neutral-400 uppercase">Logo</span>
-          </div>
-          
-          {extracted.logo ? (
-            <div className="flex items-center gap-3">
-              <div className="relative group">
-                <img 
-                  src={extracted.logo.url} 
-                  alt="Logo" 
-                  className="h-16 object-contain rounded-lg border border-neutral-200 p-2 bg-neutral-50"
-                />
-                <button
-                  onClick={removeLogo}
-                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  ×
-                </button>
-              </div>
-              <span className="text-xs text-neutral-400 truncate max-w-[200px]">{extracted.logo.url}</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <input 
-                type="text"
-                value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                placeholder="Enter logo URL..."
-                className="flex-1 h-10 px-3 text-sm rounded-lg border border-neutral-200"
-              />
-              <button
-                onClick={addLogo}
-                className="h-10 px-4 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-600 text-sm"
-              >
-                Add
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="flex gap-3">
-        <button
-          onClick={onBack}
-          className="flex-1 h-11 rounded-xl bg-white border border-neutral-200 text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-colors"
-        >
-          Re-import
-        </button>
-        <button
-          onClick={onNext}
-          className="flex-1 h-11 rounded-xl bg-neutral-700 text-sm font-medium text-white hover:bg-neutral-600 transition-colors"
-        >
-          Approve
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function PreviewStep({ 
   state, 
@@ -812,50 +476,82 @@ export default function ImportPage() {
         data = await res.json();
       }
       
-      // Map Creative Director output to ExtractedBrand
-      // API returns: colors.primary/secondary/accent/background/foreground
-      // And _raw.colors.allColors for the full palette
-      // PDF extraction returns colors.palette as array of {name, hex, role}
-      const rawColors = data._raw?.colors?.allColors 
-        || data.colors?.palette?.map((c: any) => c.hex || c)
-        || data._raw?.colors?.hexValues
-        || [];
-      const rawFonts = data._raw?.fonts?.allFonts 
-        || [data.typography?.primary?.family, data.typography?.secondary?.family].filter(Boolean)
-        || data._raw?.fonts
-        || [];
+      // Map to ExtractedBrand - handle both URL and PDF extraction formats
+      const isPdfSource = data._source === "pdf";
+      
+      // Extract colors based on source
+      let primaryColor, secondaryColor, accentColor, allColors: string[] = [];
+      if (isPdfSource) {
+        // PDF format: colors.palettes.primary[0].values.hex
+        const palettes = data.colors?.palettes || {};
+        primaryColor = palettes.primary?.[0]?.values?.hex;
+        secondaryColor = palettes.secondary?.[0]?.values?.hex;
+        accentColor = palettes.accent?.[0]?.values?.hex;
+        // Collect all colors from all palettes
+        allColors = [
+          ...(palettes.primary || []).map((c: any) => c.values?.hex),
+          ...(palettes.secondary || []).map((c: any) => c.values?.hex),
+          ...(palettes.accent || []).map((c: any) => c.values?.hex),
+        ].filter(Boolean);
+      } else {
+        // URL format: colors.primary directly
+        primaryColor = data.colors?.primary;
+        secondaryColor = data.colors?.secondary;
+        accentColor = data.colors?.accent;
+        allColors = data._raw?.colors?.allColors || [];
+      }
+
+      // Extract fonts based on source
+      let headingFont, bodyFont, allFonts: string[] = [];
+      if (isPdfSource) {
+        // PDF format: typography.typefaces[0].name
+        const typefaces = data.typography?.typefaces || [];
+        headingFont = typefaces[0]?.name;
+        bodyFont = typefaces[1]?.name || typefaces[0]?.name;
+        allFonts = typefaces.map((t: any) => t.name).filter(Boolean);
+      } else {
+        // URL format: typography.heading/body
+        headingFont = data.typography?.heading;
+        bodyFont = data.typography?.body;
+        allFonts = data._raw?.fonts?.allFonts || [];
+      }
+
+      // Extract brand name
+      const brandName = isPdfSource 
+        ? data.metadata?.brandName || data.naming?.primaryName
+        : data.name;
+      
+      // Extract tagline
+      const tagline = isPdfSource
+        ? data.naming?.taglines?.[0]
+        : data.tagline;
       
       const extracted: ExtractedBrand = {
-        name: data.name,
-        tagline: data.tagline,
+        name: brandName,
+        tagline,
         colors: {
-          // Use allColors from raw data, or build from named colors
-          extracted: rawColors.length > 0 
-            ? rawColors 
-            : [data.colors?.primary, data.colors?.secondary, data.colors?.accent, data.colors?.background, data.colors?.foreground].filter(Boolean),
-          primary: data.colors?.primary,
-          secondary: data.colors?.secondary,
-          background: data.colors?.background,
-          foreground: data.colors?.foreground,
+          extracted: allColors.length > 0 ? allColors : [primaryColor, secondaryColor, accentColor].filter(Boolean),
+          primary: primaryColor,
+          secondary: secondaryColor,
+          accent: accentColor,
+          background: data.colors?.background || "#ffffff",
+          foreground: data.colors?.foreground || "#171717",
         },
         fonts: {
-          // Use allFonts from raw data for full list
-          extracted: rawFonts.length > 0 
-            ? rawFonts 
-            : [data.typography?.heading, data.typography?.body].filter(Boolean),
-          heading: data.typography?.heading,
-          body: data.typography?.body,
+          extracted: allFonts.length > 0 ? allFonts : [headingFont, bodyFont].filter(Boolean),
+          heading: headingFont,
+          body: bodyFont,
         },
         logo: data.logo ? { url: data.logo, format: "png" } : undefined,
         sourceUrl: state.url,
         sourceType: state.inputType,
         confidence: {
-          colors: rawColors.length > 0 ? 0.9 : 0.5,
-          fonts: rawFonts.length > 0 ? 0.9 : 0.6,
+          colors: allColors.length > 0 ? 0.9 : 0.5,
+          fonts: allFonts.length > 0 ? 0.9 : 0.6,
           logo: data.logo ? 0.9 : 0,
-          overall: (rawColors.length > 0 && rawFonts.length > 0) ? 0.85 : 0.6,
+          overall: (allColors.length > 0 && allFonts.length > 0) ? 0.85 : 0.6,
         },
-        // Store full Creative Director output for enhance step
+        // Store full extraction output
         _raw: data,
       };
 
@@ -874,45 +570,45 @@ export default function ImportPage() {
     }
   };
 
+  const createBrand = useMutation(api.brands.create);
+
   const handleApprove = async () => {
-    // Convert extracted data to brief and save
     const ext = state.extracted;
-    const raw = (ext as any)?._raw;
+    const raw = (ext as any)?._raw || {};
     
-    const colors = raw?.colors || {};
-    const typography = raw?.typography || {};
-    const style = raw?.style || {};
-    
-    const brief: CreativeDirectorBrief = {
-      brandName: raw?.name || ext?.name || "Brand",
-      generatedName: !raw?.name,
-      tagline: raw?.tagline || null,
-      mission: raw?.concept || null,
-      iconConcept: "Analyzed from website",
-      iconDescription: style.reasoning || "Brand visual identity",
-      headingFont: typography.heading || "Inter",
-      headingWeight: typography.headingWeight || 600,
-      bodyFont: typography.body || "Inter",
-      bodyWeight: typography.bodyWeight || 400,
-      fontReasoning: typography.reasoning || "Selected by AI Creative Director",
-      primaryColor: colors.primary || "#6366f1",
-      secondaryColor: colors.secondary || "#8b5cf6",
-      accentColor: colors.accent || "#ec4899",
-      backgroundColor: colors.background || "#ffffff",
-      foregroundColor: colors.foreground || "#171717",
-      mode: colors.mode || "light",
-      colorReasoning: colors.reasoning || "Analyzed by AI Creative Director",
-      renderStyle: style.preset || "gradient",
-      styleNotes: style.reasoning || "Modern style",
-      personality: (raw?.personality || ["professional", "innovative"]) as PersonalityTrait[],
-      toneProfile: { formal: 50, playful: 50, technical: 50 },
-      mustHaveFeatures: [],
-      brandVibe: raw?.personality || ["modern"],
+    // Build the brand bible from extracted + raw data
+    const bible = {
+      // Core identity
+      name: ext?.name || raw.metadata?.brandName || "Brand",
+      tagline: ext?.tagline || raw.naming?.taglines?.[0] || null,
+      
+      // Colors
+      primaryColor: ext?.colors?.primary || raw.colors?.primary?.[0]?.hex || "#6366f1",
+      secondaryColor: ext?.colors?.secondary || raw.colors?.secondary?.[0]?.hex || "#8b5cf6",
+      accentColor: ext?.colors?.accent || raw.colors?.accent?.[0]?.hex || "#ec4899",
+      backgroundColor: ext?.colors?.background || "#ffffff",
+      foregroundColor: ext?.colors?.foreground || "#171717",
+      
+      // Typography  
+      headingFont: ext?.fonts?.heading || raw.typography?.typefaces?.[0]?.name || "Inter",
+      bodyFont: ext?.fonts?.body || raw.typography?.typefaces?.[1]?.name || "Inter",
+      
+      // Full extracted data for brand detail page
+      _raw: raw,
     };
 
-    // TODO: Save to Convex
-    console.log("Saving brand:", brief);
-    router.push("/");
+    try {
+      const brandId = await createBrand({
+        name: bible.name,
+        tagline: bible.tagline || undefined,
+        bible,
+      });
+      
+      router.push(`/brand/${brandId}`);
+    } catch (error) {
+      console.error("Failed to save brand:", error);
+      updateState({ error: "Failed to save brand" });
+    }
   };
 
   if (isLoading) {
