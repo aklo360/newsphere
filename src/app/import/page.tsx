@@ -440,7 +440,7 @@ function VerifyStep({
           onClick={onNext}
           className="flex-1 h-11 rounded-xl bg-neutral-700 text-sm font-medium text-white hover:bg-neutral-600 transition-colors"
         >
-          Enhance with AI
+          Approve
         </button>
       </div>
     </div>
@@ -644,14 +644,11 @@ export default function ImportPage() {
     }
   };
 
-  const handleEnhance = async () => {
-    updateState({ step: "enhance", isEnhancing: true });
-    
+  const handleApprove = async () => {
+    // Convert extracted data to brief and save
     const ext = state.extracted;
     const raw = (ext as any)?._raw;
     
-    // The Creative Director already did the heavy lifting
-    // Now we just map to our brief format
     const colors = raw?.colors || {};
     const typography = raw?.typography || {};
     const style = raw?.style || {};
@@ -674,7 +671,7 @@ export default function ImportPage() {
       backgroundColor: colors.background || "#ffffff",
       foregroundColor: colors.foreground || "#171717",
       mode: colors.mode || "light",
-      colorReasoning: "Analyzed by AI Creative Director",
+      colorReasoning: colors.reasoning || "Analyzed by AI Creative Director",
       renderStyle: style.preset || "gradient",
       styleNotes: style.reasoning || "Modern style",
       personality: (raw?.personality || ["professional", "innovative"]) as PersonalityTrait[],
@@ -683,18 +680,8 @@ export default function ImportPage() {
       brandVibe: raw?.personality || ["modern"],
     };
 
-    // Small delay to show the "enhancing" state
-    await new Promise(r => setTimeout(r, 500));
-
-    updateState({ 
-      step: "preview", 
-      brief,
-      isEnhancing: false 
-    });
-  };
-
-  const handleSave = async () => {
     // TODO: Save to Convex
+    console.log("Saving brand:", brief);
     router.push("/");
   };
 
@@ -754,29 +741,8 @@ export default function ImportPage() {
               <VerifyStep 
                 state={state}
                 onUpdate={updateState}
-                onNext={handleEnhance}
+                onNext={handleApprove}
                 onBack={() => updateState({ step: "input" })}
-              />
-            )}
-            
-            {(state.step === "enhance" || state.isEnhancing) && (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 rounded-full bg-neutral-400 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <svg className="w-8 h-8 text-white animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                </div>
-                <h2 className="text-lg font-medium text-neutral-700 mb-2">Enhancing with AI...</h2>
-                <p className="text-sm text-neutral-400">Filling in missing details</p>
-              </div>
-            )}
-            
-            {state.step === "preview" && !state.isEnhancing && (
-              <PreviewStep 
-                state={state}
-                onNext={handleSave}
-                onBack={() => updateState({ step: "verify" })}
               />
             )}
           </div>

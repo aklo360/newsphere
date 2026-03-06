@@ -374,7 +374,5 @@ export const CREATE_STEPS = [
 export const IMPORT_STEPS = [
   { id: "input", label: "Input", description: "URL or file" },
   { id: "extracting", label: "Extracting", description: "Analyzing" },
-  { id: "verify", label: "Verify", description: "Review extracted" },
-  { id: "enhance", label: "Enhance", description: "Fill gaps" },
-  { id: "preview", label: "Preview", description: "Final review" },
+  { id: "verify", label: "Verify", description: "Review & approve" },
 ] as const;
