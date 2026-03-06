@@ -309,6 +309,13 @@ export interface ExtractedBrand {
   
   // Raw API response for enhance step
   _raw?: any;
+  
+  // Embedded images from PDF (for logo selection)
+  _embeddedImages?: Array<{
+    filename: string;
+    data: string;
+    size: number;
+  }>;
 }
 
 // ═══════════════════════════════════════════════════════════════════

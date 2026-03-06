@@ -17,11 +17,10 @@ Return JSON matching this structure (omit empty sections, include everything you
   },
   
   "strategy": {
-    "mission": "Mission statement if found",
+    "missionStatement": "A single paragraph combining the brand's mission, vision, positioning, and purpose. Synthesize all strategic statements into one cohesive summary.",
     "anthemOrTagline": "Tagline/anthem if found",
     "coreValues": ["value1", "value2"],
     "personalityTraits": ["trait1", "trait2", "trait3"],
-    "positioning": "Brand positioning if found",
     "targetAudience": ["audience1", "audience2"]
   },
   

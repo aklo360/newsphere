@@ -116,7 +116,7 @@ export default function VerifyStep({
       case "social":
         return `${data.formats?.length || 0} formats`;
       case "strategy":
-        return data.mission ? "Complete" : "Partial";
+        return data.missionStatement || data.mission ? "Complete" : "Partial";
       default:
         return `${countItems(data)} items`;
     }
@@ -202,16 +202,40 @@ export default function VerifyStep({
         </div>
 
         {/* Logo */}
-        {extracted.logo && (
-          <div>
-            <label className="text-[10px] text-neutral-400 uppercase mb-2 block">Logo</label>
-            <img 
-              src={extracted.logo.url} 
-              alt="Logo" 
-              className="h-12 object-contain"
-            />
-          </div>
-        )}
+        <div>
+          <label className="text-[10px] text-neutral-400 uppercase mb-2 block">Main Logo</label>
+          {extracted.logo?.url ? (
+            <div className="p-3 rounded-lg bg-neutral-50 inline-block">
+              <img 
+                src={extracted.logo.url} 
+                alt="Logo" 
+                className="h-16 object-contain"
+              />
+            </div>
+          ) : (extracted as any)._embeddedImages?.length > 0 ? (
+            <div className="flex gap-2 flex-wrap">
+              {(extracted as any)._embeddedImages.slice(0, 3).map((img: any, i: number) => (
+                <button
+                  key={i}
+                  onClick={() => onUpdate({
+                    extracted: { ...extracted, logo: { url: img.data, format: "png" } }
+                  })}
+                  className="p-2 rounded-lg bg-neutral-50 hover:bg-neutral-100 border border-transparent hover:border-neutral-200 transition-all"
+                >
+                  <img 
+                    src={img.data} 
+                    alt={`Logo option ${i + 1}`} 
+                    className="h-12 object-contain"
+                  />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="p-3 rounded-lg bg-neutral-50 text-xs text-neutral-400">
+              No logo extracted
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ADVANCED SECTIONS - Collapsible */}
@@ -222,40 +246,42 @@ export default function VerifyStep({
         </div>
 
         {hasData("strategy") && (
-          <Section title="Strategy" summary={getSummary("strategy")}>
-            <div className="space-y-2 text-sm text-neutral-600">
-              {raw.strategy?.mission && <p><strong>Mission:</strong> {raw.strategy.mission}</p>}
-              {raw.strategy?.vision && <p><strong>Vision:</strong> {raw.strategy.vision}</p>}
-              {raw.strategy?.positioning && <p><strong>Positioning:</strong> {raw.strategy.positioning}</p>}
-            </div>
+          <Section title="Mission" summary="Brand purpose">
+            <p className="text-sm text-neutral-600 leading-relaxed">
+              {raw.strategy?.missionStatement || 
+               [raw.strategy?.mission, raw.strategy?.vision, raw.strategy?.positioning]
+                 .filter(Boolean)
+                 .join(" ") ||
+               "No mission statement extracted."}
+            </p>
           </Section>
         )}
 
         {hasData("colors") && (
           <Section title="Color System" summary={getSummary("colors")}>
-            <div className="space-y-3">
-              {/* Handle both formats: palettes.primary or direct primary array */}
-              {(raw.colors?.palettes?.primary || raw.colors?.primary)?.map((c: any, i: number) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded" style={{ backgroundColor: c.values?.hex || c.hex }} />
-                  <div>
-                    <p className="text-xs text-neutral-700">{c.name}</p>
-                    <p className="text-[10px] text-neutral-400 font-mono">{c.values?.hex || c.hex}</p>
+            <div className="grid grid-cols-2 gap-3">
+              {/* Collect all colors from palettes, max 10 */}
+              {(() => {
+                const palettes = raw.colors?.palettes || raw.colors || {};
+                const allColors = [
+                  ...(palettes.primary || []),
+                  ...(palettes.secondary || []),
+                  ...(palettes.accent || []),
+                ].slice(0, 10);
+                
+                return allColors.map((c: any, i: number) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div 
+                      className="w-8 h-8 rounded flex-shrink-0" 
+                      style={{ backgroundColor: c.values?.hex || c.hex }} 
+                    />
+                    <div className="min-w-0">
+                      <p className="text-xs text-neutral-700 truncate">{c.name}</p>
+                      <p className="text-[10px] text-neutral-400 font-mono">{c.values?.hex || c.hex}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-              {(raw.colors?.palettes?.secondary || raw.colors?.secondary)?.slice(0, 3).map((c: any, i: number) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded" style={{ backgroundColor: c.values?.hex || c.hex }} />
-                  <div>
-                    <p className="text-xs text-neutral-700">{c.name}</p>
-                    <p className="text-[10px] text-neutral-400 font-mono">{c.values?.hex || c.hex}</p>
-                  </div>
-                </div>
-              ))}
-              {(raw.colors?.palettes?.secondary || raw.colors?.secondary)?.length > 3 && (
-                <p className="text-[10px] text-neutral-400">+{(raw.colors?.palettes?.secondary || raw.colors?.secondary).length - 3} more colors</p>
-              )}
+                ));
+              })()}
             </div>
           </Section>
         )}

@@ -7,6 +7,9 @@ const API_KEY = process.env.GEMINI_API_KEY!;
 const fileManager = new GoogleAIFileManager(API_KEY);
 const genAI = new GoogleGenerativeAI(API_KEY);
 
+const EXTRACTOR_URL = process.env.EXTRACTOR_URL;
+const EXTRACTOR_API_KEY = process.env.EXTRACTOR_API_KEY;
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -22,11 +25,48 @@ export async function POST(request: NextRequest) {
 
     console.log(`[extract-pdf] Processing ${file.name} (${file.size} bytes)`);
 
-    // Convert File to Buffer for upload
+    // Convert File to Buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
-    // Write to temp file (Gemini File API needs a file path)
+    // Step 1: Call Mac Mini extractor to get embedded images (logos)
+    let embeddedImages: Array<{ filename: string; data: string; size: number }> = [];
+    let mainLogoData: string | null = null;
+    
+    if (EXTRACTOR_URL && EXTRACTOR_API_KEY) {
+      try {
+        console.log(`[extract-pdf] Calling Mac Mini extractor for embedded images...`);
+        const extractorRes = await fetch(`${EXTRACTOR_URL}/extract-pdf`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${EXTRACTOR_API_KEY}`,
+          },
+          body: JSON.stringify({
+            pdfBase64: buffer.toString("base64"),
+            filename: file.name,
+          }),
+        });
+        
+        if (extractorRes.ok) {
+          const extractorData = await extractorRes.json();
+          embeddedImages = extractorData.data?.embeddedImages || [];
+          console.log(`[extract-pdf] Got ${embeddedImages.length} embedded images from extractor`);
+          
+          // Pick the largest image as likely the main logo
+          if (embeddedImages.length > 0) {
+            const sorted = [...embeddedImages].sort((a, b) => b.size - a.size);
+            mainLogoData = sorted[0].data;
+            console.log(`[extract-pdf] Selected main logo: ${sorted[0].filename} (${sorted[0].size} bytes)`);
+          }
+        }
+      } catch (err) {
+        console.error(`[extract-pdf] Extractor call failed:`, err);
+        // Continue without embedded images
+      }
+    }
+    
+    // Step 2: Write to temp file for Gemini upload
     const tempPath = `/tmp/newsphere-${Date.now()}.pdf`;
     const fs = await import("fs/promises");
     await fs.writeFile(tempPath, buffer);
@@ -93,6 +133,18 @@ export async function POST(request: NextRequest) {
       ...brandIdentity,
       _source: "pdf",
       _filename: file.name,
+      // Include extracted logo
+      logo: mainLogoData ? { 
+        url: mainLogoData, 
+        format: "png",
+        source: "embedded" 
+      } : null,
+      // Include all embedded images for logo selection
+      _embeddedImages: embeddedImages.slice(0, 5).map(img => ({
+        filename: img.filename,
+        data: img.data,
+        size: img.size,
+      })),
     });
 
   } catch (error) {
