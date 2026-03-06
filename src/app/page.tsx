@@ -51,22 +51,27 @@ export default function LandingPage() {
       
       <main className="min-h-screen flex flex-col items-center justify-center p-6">
         {/* Logo */}
-        <div className="mb-12 flex flex-col items-center">
+        <a 
+          href="https://x.com/newSphere_ai"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-12 flex flex-col items-center group"
+        >
           <Image
             src="/logomark.png"
             alt="NewSphere"
             width={80}
             height={80}
-            className="mb-4 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)]"
+            className="mb-4 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)] group-hover:scale-105 transition-transform duration-300"
             priority
           />
-          <h1 className="text-[28px] font-semibold tracking-[0.02em] text-neutral-400 mb-1.5">
+          <h1 className="text-[28px] font-semibold tracking-[0.02em] text-neutral-400 mb-1.5 group-hover:text-neutral-500 transition-colors">
             NewSphere
           </h1>
           <p className="text-[12px] tracking-[0.15em] text-neutral-400/70 font-normal">
             Agentic Creative Agency
           </p>
-        </div>
+        </a>
 
         {/* Glass Card */}
         <div className="w-full max-w-sm">
