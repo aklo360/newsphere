@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Use Opus 4.5 when available, fallback to Gemini
-const USE_OPUS = !!process.env.ANTHROPIC_API_KEY;
-const anthropic = USE_OPUS ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! }) : null;
+// Gemini 2.5 Pro for visual design analysis
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 const EXTRACTOR_URL = process.env.EXTRACTOR_URL || "https://mac-mini.tailb4dd25.ts.net";
@@ -118,52 +115,19 @@ async function synthesizeWithCreativeDirector(extractionData: any, screenshot: s
   // Extract base64 data from data URL
   const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, "");
 
-  let responseText: string;
-
-  if (USE_OPUS && anthropic) {
-    // Use Claude Opus 4.5 with vision (best quality)
-    console.log(`[extract] Using Claude Opus 4.5...`);
-    const response = await anthropic.messages.create({
-      model: "claude-opus-4-5-20250220",
-      max_tokens: 4096,
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "image",
-              source: {
-                type: "base64",
-                media_type: "image/png",
-                data: base64Data,
-              },
-            },
-            {
-              type: "text",
-              text: prompt,
-            },
-          ],
-        },
-      ],
-    });
-    
-    const textContent = response.content.find(c => c.type === "text");
-    responseText = textContent?.type === "text" ? textContent.text : "";
-  } else {
-    // Fallback to Gemini Flash with vision
-    console.log(`[extract] Using Gemini Flash (Opus not configured)...`);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const result = await model.generateContent([
-      { text: prompt },
-      {
-        inlineData: {
-          mimeType: "image/png",
-          data: base64Data,
-        },
+  // Use Gemini 2.5 Pro for best visual design analysis
+  console.log(`[extract] Using Gemini 2.5 Pro for visual analysis...`);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro-preview-05-06" });
+  const result = await model.generateContent([
+    { text: prompt },
+    {
+      inlineData: {
+        mimeType: "image/png",
+        data: base64Data,
       },
-    ]);
-    responseText = result.response.text();
-  }
+    },
+  ]);
+  const responseText = result.response.text();
   
   // Parse JSON
   let jsonStr = responseText;
