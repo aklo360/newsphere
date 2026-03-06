@@ -88,11 +88,13 @@ ANALYZE THE SCREENSHOT and CSS DATA, then return JSON (no markdown):
 }
 
 CRITICAL RULES:
-- LOOK AT THE SCREENSHOT to determine visual importance of colors
+- LOOK AT THE SCREENSHOT to determine visual importance AND actual hex values
 - Primary color = the DISTINCTIVE brand color (e.g., Coca-Cola red, Spotify green, Stripe purple)
 - Background colors (black/white) are important but often NOT the "primary brand color"
 - Order the palette by VISUAL DOMINANCE — what you actually see
-- Use the CSS extraction to get exact hex values
+- DERIVE HEX VALUES from what you SEE in the screenshot, not just the CSS data
+- CSS data may be incomplete or wrong — trust your eyes for the actual rendered colors
+- Common brand colors: amber/gold (#F59E0B), purple (#A855F7), blue (#3B82F6), green (#22C55E)
 - If fonts aren't Google Fonts, find closest matches`;
 
 async function synthesizeWithCreativeDirector(extractionData: any, screenshot: string): Promise<any> {
