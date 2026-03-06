@@ -315,27 +315,85 @@ function VerifyStep({
   onBack: () => void;
 }) {
   const extracted = state.extracted;
+  const [newColor, setNewColor] = useState("#6366f1");
+  const [newFont, setNewFont] = useState("");
+  const [logoUrl, setLogoUrl] = useState("");
+  
   if (!extracted) return null;
+
+  // Color management
+  const removeColor = (idx: number) => {
+    const newColors = [...extracted.colors.extracted];
+    newColors.splice(idx, 1);
+    onUpdate({
+      extracted: { ...extracted, colors: { ...extracted.colors, extracted: newColors } }
+    });
+  };
+
+  const addColor = () => {
+    if (!newColor) return;
+    const newColors = [...extracted.colors.extracted, newColor];
+    onUpdate({
+      extracted: { ...extracted, colors: { ...extracted.colors, extracted: newColors } }
+    });
+  };
+
+  const setColorRole = (color: string, role: "primary" | "secondary" | "accent" | "background" | "foreground") => {
+    onUpdate({
+      extracted: { ...extracted, colors: { ...extracted.colors, [role]: color } }
+    });
+  };
+
+  // Font management
+  const removeFont = (idx: number) => {
+    const newFonts = [...extracted.fonts.extracted];
+    newFonts.splice(idx, 1);
+    onUpdate({
+      extracted: { ...extracted, fonts: { ...extracted.fonts, extracted: newFonts } }
+    });
+  };
+
+  const addFont = () => {
+    if (!newFont.trim()) return;
+    const newFonts = [...extracted.fonts.extracted, newFont.trim()];
+    onUpdate({
+      extracted: { ...extracted, fonts: { ...extracted.fonts, extracted: newFonts } }
+    });
+    setNewFont("");
+  };
+
+  const setFontRole = (font: string, role: "heading" | "body") => {
+    onUpdate({
+      extracted: { ...extracted, fonts: { ...extracted.fonts, [role]: font } }
+    });
+  };
+
+  // Logo management
+  const removeLogo = () => {
+    onUpdate({
+      extracted: { ...extracted, logo: undefined }
+    });
+  };
+
+  const addLogo = () => {
+    if (!logoUrl.trim()) return;
+    onUpdate({
+      extracted: { ...extracted, logo: { url: logoUrl.trim(), format: "png" } }
+    });
+    setLogoUrl("");
+  };
 
   return (
     <div className="space-y-6">
       <div className="text-center mb-6">
         <h2 className="text-xl font-medium text-neutral-700 mb-2">Verify extracted brand</h2>
-        <p className="text-sm text-neutral-400">Review what we found</p>
+        <p className="text-sm text-neutral-400">Review and refine what we found</p>
       </div>
 
-      {/* Extracted Data */}
       <div className="space-y-4">
         {/* Name */}
         <div className="p-4 rounded-xl bg-white border border-neutral-100">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-neutral-400 uppercase">Brand Name</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              extracted.name ? "bg-sky-50 text-sky-600" : "bg-amber-100 text-amber-600"
-            }`}>
-              {extracted.name ? "Detected" : "Not found"}
-            </span>
-          </div>
+          <span className="text-xs font-medium text-neutral-400 uppercase">Brand Name</span>
           <input
             type="text"
             value={extracted.name || ""}
@@ -343,89 +401,226 @@ function VerifyStep({
               extracted: { ...extracted, name: e.target.value }
             })}
             placeholder="Enter brand name"
-            className="w-full h-10 px-3 rounded-lg bg-neutral-50 border border-neutral-200 text-sm"
+            className="w-full h-10 px-3 mt-2 rounded-lg bg-neutral-50 border border-neutral-200 text-sm"
           />
         </div>
 
-        {/* Colors */}
+        {/* Colors - Enhanced */}
         <div className="p-4 rounded-xl bg-white border border-neutral-100">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-neutral-400 uppercase">Colors</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              extracted.colors.extracted.length > 0 ? "bg-sky-50 text-sky-600" : "bg-amber-100 text-amber-600"
-            }`}>
-              {extracted.colors.extracted.length} found
-            </span>
+            <span className="text-xs font-medium text-neutral-400 uppercase">Brand Colors</span>
+            <span className="text-xs text-neutral-400">{extracted.colors.extracted.length} colors</span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {extracted.colors.extracted.map((color, idx) => (
-              <div 
-                key={idx}
-                className="w-10 h-10 rounded-lg border border-neutral-200"
-                style={{ backgroundColor: color }}
-                title={color}
-              />
-            ))}
-            {extracted.colors.extracted.length === 0 && (
-              <p className="text-sm text-neutral-400">No colors detected</p>
+          
+          {/* Color swatches with remove + role assignment */}
+          <div className="space-y-3">
+            <div className="flex flex-wrap gap-2">
+              {extracted.colors.extracted.map((color, idx) => (
+                <div key={idx} className="relative group">
+                  <div 
+                    className="w-12 h-12 rounded-lg border-2 border-neutral-200 cursor-pointer transition-all hover:scale-105"
+                    style={{ backgroundColor: color }}
+                    title={color}
+                  />
+                  {/* Remove button */}
+                  <button
+                    onClick={() => removeColor(idx)}
+                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
+                  {/* Role indicator */}
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
+                    {extracted.colors.primary === color && <div className="w-2 h-2 rounded-full bg-blue-500" title="Primary" />}
+                    {extracted.colors.secondary === color && <div className="w-2 h-2 rounded-full bg-purple-500" title="Secondary" />}
+                    {extracted.colors.accent === color && <div className="w-2 h-2 rounded-full bg-pink-500" title="Accent" />}
+                  </div>
+                </div>
+              ))}
+              
+              {/* Add color */}
+              <div className="flex items-center gap-1">
+                <input 
+                  type="color" 
+                  value={newColor}
+                  onChange={(e) => setNewColor(e.target.value)}
+                  className="w-12 h-12 rounded-lg border border-neutral-200 cursor-pointer"
+                />
+                <button
+                  onClick={addColor}
+                  className="w-8 h-12 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-500 text-lg"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Role assignment */}
+            {extracted.colors.extracted.length > 0 && (
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-neutral-100">
+                <div>
+                  <label className="text-[10px] text-neutral-400 uppercase">Primary</label>
+                  <select 
+                    value={extracted.colors.primary || ""}
+                    onChange={(e) => setColorRole(e.target.value, "primary")}
+                    className="w-full h-8 text-xs rounded border border-neutral-200 bg-white"
+                  >
+                    <option value="">Select...</option>
+                    {extracted.colors.extracted.map((c, i) => (
+                      <option key={i} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-neutral-400 uppercase">Secondary</label>
+                  <select 
+                    value={extracted.colors.secondary || ""}
+                    onChange={(e) => setColorRole(e.target.value, "secondary")}
+                    className="w-full h-8 text-xs rounded border border-neutral-200 bg-white"
+                  >
+                    <option value="">Select...</option>
+                    {extracted.colors.extracted.map((c, i) => (
+                      <option key={i} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-neutral-400 uppercase">Accent</label>
+                  <select 
+                    value={extracted.colors.accent || ""}
+                    onChange={(e) => setColorRole(e.target.value, "accent")}
+                    className="w-full h-8 text-xs rounded border border-neutral-200 bg-white"
+                  >
+                    <option value="">Select...</option>
+                    {extracted.colors.extracted.map((c, i) => (
+                      <option key={i} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Fonts */}
+        {/* Fonts - Enhanced */}
         <div className="p-4 rounded-xl bg-white border border-neutral-100">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium text-neutral-400 uppercase">Fonts</span>
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              extracted.fonts.extracted.length > 0 ? "bg-sky-50 text-sky-600" : "bg-amber-100 text-amber-600"
-            }`}>
-              {extracted.fonts.extracted.length} found
-            </span>
+            <span className="text-xs font-medium text-neutral-400 uppercase">Typography</span>
+            <span className="text-xs text-neutral-400">{extracted.fonts.extracted.length} fonts</span>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {extracted.fonts.extracted.map((font, idx) => (
-              <span 
-                key={idx}
-                className="px-2 py-1 rounded-lg bg-neutral-100 text-xs text-neutral-600"
-              >
-                {font}
-              </span>
-            ))}
-            {extracted.fonts.extracted.length === 0 && (
-              <p className="text-sm text-neutral-400">No fonts detected</p>
+          
+          <div className="space-y-3">
+            {/* Font list with remove */}
+            <div className="flex flex-wrap gap-2">
+              {extracted.fonts.extracted.map((font, idx) => (
+                <div key={idx} className="relative group">
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-neutral-100 text-xs text-neutral-600">
+                    {font}
+                    {extracted.fonts.heading === font && <span className="text-[10px] text-blue-500">(H)</span>}
+                    {extracted.fonts.body === font && <span className="text-[10px] text-green-500">(B)</span>}
+                  </span>
+                  <button
+                    onClick={() => removeFont(idx)}
+                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              
+              {/* Add font */}
+              <div className="flex items-center gap-1">
+                <input 
+                  type="text"
+                  value={newFont}
+                  onChange={(e) => setNewFont(e.target.value)}
+                  placeholder="Add font..."
+                  className="w-24 h-8 px-2 text-xs rounded-lg border border-neutral-200"
+                  onKeyDown={(e) => e.key === "Enter" && addFont()}
+                />
+                <button
+                  onClick={addFont}
+                  className="w-8 h-8 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-500"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Font role assignment */}
+            {extracted.fonts.extracted.length > 0 && (
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-neutral-100">
+                <div>
+                  <label className="text-[10px] text-neutral-400 uppercase">Heading Font</label>
+                  <select 
+                    value={extracted.fonts.heading || ""}
+                    onChange={(e) => setFontRole(e.target.value, "heading")}
+                    className="w-full h-8 text-xs rounded border border-neutral-200 bg-white"
+                  >
+                    <option value="">Select...</option>
+                    {extracted.fonts.extracted.map((f, i) => (
+                      <option key={i} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-neutral-400 uppercase">Body Font</label>
+                  <select 
+                    value={extracted.fonts.body || ""}
+                    onChange={(e) => setFontRole(e.target.value, "body")}
+                    className="w-full h-8 text-xs rounded border border-neutral-200 bg-white"
+                  >
+                    <option value="">Select...</option>
+                    {extracted.fonts.extracted.map((f, i) => (
+                      <option key={i} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             )}
           </div>
         </div>
 
-        {/* Logo */}
-        {extracted.logo && (
-          <div className="p-4 rounded-xl bg-white border border-neutral-100">
+        {/* Logo - Enhanced */}
+        <div className="p-4 rounded-xl bg-white border border-neutral-100">
+          <div className="flex items-center justify-between mb-3">
             <span className="text-xs font-medium text-neutral-400 uppercase">Logo</span>
-            <div className="mt-2 flex items-center gap-3">
-              <img 
-                src={extracted.logo.url} 
-                alt="Logo" 
-                className="h-12 object-contain"
-              />
-              <span className="text-xs text-sky-600">Detected</span>
-            </div>
           </div>
-        )}
-
-        {/* Confidence */}
-        <div className="p-4 rounded-xl bg-neutral-50 border border-neutral-100">
-          <span className="text-xs font-medium text-neutral-400 uppercase">Extraction Confidence</span>
-          <div className="mt-2 flex items-center gap-2">
-            <div className="flex-1 h-2 rounded-full bg-neutral-200 overflow-hidden">
-              <div 
-                className="h-full bg-neutral-500 rounded-full"
-                style={{ width: `${extracted.confidence.overall * 100}%` }}
-              />
+          
+          {extracted.logo ? (
+            <div className="flex items-center gap-3">
+              <div className="relative group">
+                <img 
+                  src={extracted.logo.url} 
+                  alt="Logo" 
+                  className="h-16 object-contain rounded-lg border border-neutral-200 p-2 bg-neutral-50"
+                />
+                <button
+                  onClick={removeLogo}
+                  className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  ×
+                </button>
+              </div>
+              <span className="text-xs text-neutral-400 truncate max-w-[200px]">{extracted.logo.url}</span>
             </div>
-            <span className="text-sm font-medium text-neutral-700">
-              {Math.round(extracted.confidence.overall * 100)}%
-            </span>
-          </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input 
+                type="text"
+                value={logoUrl}
+                onChange={(e) => setLogoUrl(e.target.value)}
+                placeholder="Enter logo URL..."
+                className="flex-1 h-10 px-3 text-sm rounded-lg border border-neutral-200"
+              />
+              <button
+                onClick={addLogo}
+                className="h-10 px-4 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-600 text-sm"
+              >
+                Add
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

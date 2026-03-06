@@ -280,6 +280,7 @@ export interface ExtractedBrand {
     extracted: string[];  // Raw hex values found
     primary?: string;
     secondary?: string;
+    accent?: string;
     background?: string;
     foreground?: string;
   };
