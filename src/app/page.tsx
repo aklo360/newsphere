@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 const LiquidBackground = dynamic(
   () => import("@/components/LiquidBackground"),
@@ -13,6 +15,8 @@ export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  
+  const subscribe = useMutation(api.waitlist.subscribe);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,20 +25,10 @@ export default function LandingPage() {
     setStatus("loading");
     
     try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-      
-      if (res.ok) {
-        setStatus("success");
-        setMessage("You're on the list");
-        setEmail("");
-      } else {
-        setStatus("error");
-        setMessage("Something went wrong");
-      }
+      await subscribe({ email: email.trim() });
+      setStatus("success");
+      setMessage("You're on the list");
+      setEmail("");
     } catch {
       setStatus("error");
       setMessage("Something went wrong");

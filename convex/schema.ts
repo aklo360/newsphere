@@ -15,6 +15,13 @@ export default defineSchema({
     updatedAt: v.number(),
   }).index("by_user", ["userId"]),
 
+  // Waitlist signups
+  waitlist: defineTable({
+    email: v.string(),
+    subscribedAt: v.number(),
+    unsubscribed: v.optional(v.boolean()),
+  }).index("by_email", ["email"]),
+
   // Brand Bibles
   brands: defineTable({
     userId: v.id("users"),
