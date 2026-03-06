@@ -205,16 +205,58 @@ export default function VerifyStep({
         <div>
           <label className="text-[10px] text-neutral-400 uppercase mb-2 block">Main Logo</label>
           {extracted.logo?.url ? (
-            <div className="p-3 rounded-lg bg-neutral-50 inline-block">
-              <img 
-                src={extracted.logo.url} 
-                alt="Logo" 
-                className="h-16 object-contain"
-              />
+            <div className="flex items-start gap-3">
+              <div className="p-3 rounded-lg bg-neutral-50">
+                <img 
+                  src={extracted.logo.url} 
+                  alt="Logo" 
+                  className="h-16 object-contain"
+                />
+              </div>
+              {/* Show other logo options if available */}
+              {extracted._classifiedImages?.logos && extracted._classifiedImages.logos.length > 1 && (
+                <div className="flex gap-2">
+                  {extracted._classifiedImages.logos.slice(1, 4).map((logo, i) => (
+                    <button
+                      key={i}
+                      onClick={() => onUpdate({
+                        extracted: { ...extracted, logo: { url: logo.data, format: "png" } }
+                      })}
+                      className="p-2 rounded-lg bg-neutral-50 hover:bg-neutral-100 border border-transparent hover:border-neutral-200 transition-all opacity-60 hover:opacity-100"
+                      title={`${logo.type} logo`}
+                    >
+                      <img 
+                        src={logo.data} 
+                        alt={`${logo.type} logo`} 
+                        className="h-10 object-contain"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          ) : (extracted as any)._embeddedImages?.length > 0 ? (
+          ) : extracted._classifiedImages?.logos?.length ? (
             <div className="flex gap-2 flex-wrap">
-              {(extracted as any)._embeddedImages.slice(0, 3).map((img: any, i: number) => (
+              {extracted._classifiedImages.logos.map((logo, i) => (
+                <button
+                  key={i}
+                  onClick={() => onUpdate({
+                    extracted: { ...extracted, logo: { url: logo.data, format: "png" } }
+                  })}
+                  className="p-2 rounded-lg bg-neutral-50 hover:bg-neutral-100 border border-transparent hover:border-neutral-200 transition-all"
+                  title={`${logo.type} logo`}
+                >
+                  <img 
+                    src={logo.data} 
+                    alt={`${logo.type} logo`} 
+                    className="h-12 object-contain"
+                  />
+                </button>
+              ))}
+            </div>
+          ) : extracted._embeddedImages?.length ? (
+            <div className="flex gap-2 flex-wrap">
+              {extracted._embeddedImages.slice(0, 3).map((img, i) => (
                 <button
                   key={i}
                   onClick={() => onUpdate({

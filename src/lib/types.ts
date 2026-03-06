@@ -310,7 +310,14 @@ export interface ExtractedBrand {
   // Raw API response for enhance step
   _raw?: any;
   
-  // Embedded images from PDF (for logo selection)
+  // Classified images from PDF
+  _classifiedImages?: {
+    logos: Array<{ data: string; type: string; confidence: number }>;
+    photography: Array<{ data: string; description: string }>;
+    illustrations: Array<{ data: string; description: string }>;
+  };
+  
+  // Fallback: raw embedded images if classification failed
   _embeddedImages?: Array<{
     filename: string;
     data: string;

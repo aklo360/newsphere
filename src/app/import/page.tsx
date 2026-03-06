@@ -543,7 +543,8 @@ export default function ImportPage() {
           body: bodyFont,
         },
         logo: data.logo?.url ? data.logo : (data.logo ? { url: data.logo, format: "png" } : undefined),
-        // Store all embedded images for logo selection
+        // Store classified images
+        _classifiedImages: data._classifiedImages,
         _embeddedImages: data._embeddedImages,
         sourceUrl: state.url,
         sourceType: state.inputType,
