@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import dynamic from "next/dynamic";
 
 const LiquidBackground = dynamic(
@@ -43,53 +44,90 @@ function AccessForm() {
   };
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center p-6">
+    <>
       <LiquidBackground />
+      <div className="fixed inset-0 -z-20 bg-[#f0f0f4]" />
       
-      <div className="relative z-10 w-full max-w-sm">
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl shadow-neutral-200/50 border border-white/50">
-          <div className="text-center mb-6">
-            <h1 className="text-xl font-medium text-neutral-800 mb-2">
-              Developer Access
-            </h1>
-            <p className="text-sm text-neutral-500">
-              This site is in development
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
-              autoFocus
-              className="w-full h-12 px-4 rounded-xl bg-white border border-neutral-200 text-neutral-800 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-300 transition-all"
-            />
-            
-            {error && (
-              <p className="text-sm text-red-500 text-center">{error}</p>
-            )}
-            
-            <button
-              type="submit"
-              disabled={loading || !password}
-              className="w-full h-12 rounded-xl bg-neutral-800 text-white font-medium hover:bg-neutral-700 disabled:bg-neutral-400 disabled:cursor-not-allowed transition-colors"
-            >
-              {loading ? "..." : "Enter"}
-            </button>
-          </form>
+      <main className="min-h-screen flex flex-col items-center justify-center p-6">
+        {/* Logo */}
+        <div className="mb-12 flex flex-col items-center">
+          <Image
+            src="/logomark.png"
+            alt="NewSphere"
+            width={64}
+            height={64}
+            className="mb-4 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)]"
+            priority
+          />
         </div>
-      </div>
-    </main>
+
+        {/* Glass Card */}
+        <div className="w-full max-w-sm">
+          <div className="
+            relative p-8 rounded-2xl
+            bg-white/50 backdrop-blur-xl
+            border border-white/60
+            shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.06),inset_0_1px_1px_rgba(255,255,255,0.8)]
+          ">
+            <div className="absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent" />
+            
+            <div className="text-center mb-6">
+              <h2 className="text-sm font-medium text-neutral-600 mb-2 tracking-wide">
+                Team Access
+              </h2>
+              <p className="text-[11px] text-neutral-400 leading-relaxed">
+                Enter password to continue
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                autoFocus
+                className="
+                  w-full h-11 px-4 rounded-xl
+                  bg-white/60 border border-white/50
+                  text-[13px] text-neutral-600 placeholder:text-neutral-400
+                  shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]
+                  focus:outline-none focus:ring-1 focus:ring-neutral-300/50
+                  transition-all
+                "
+              />
+              
+              {error && (
+                <p className="text-[10px] text-red-400 text-center">{error}</p>
+              )}
+              
+              <button
+                type="submit"
+                disabled={loading || !password}
+                className="
+                  w-full h-11 rounded-xl
+                  bg-neutral-500/90 hover:bg-neutral-500
+                  text-[12px] font-medium text-white tracking-wide
+                  shadow-[0_2px_8px_rgba(0,0,0,0.1)]
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  transition-all duration-200
+                "
+              >
+                {loading ? "..." : "Enter"}
+              </button>
+            </form>
+          </div>
+        </div>
+      </main>
+    </>
   );
 }
 
 export default function AccessPage() {
   return (
     <Suspense fallback={
-      <main className="relative min-h-screen flex items-center justify-center p-6">
-        <div className="text-neutral-400">Loading...</div>
+      <main className="min-h-screen flex items-center justify-center bg-[#f0f0f4]">
+        <div className="w-6 h-6 border-2 border-neutral-300 border-t-neutral-500 rounded-full animate-spin" />
       </main>
     }>
       <AccessForm />
