@@ -193,7 +193,15 @@ export default function LandingPage() {
 
         {/* Footer */}
         <p className="mt-8 text-[10px] text-neutral-400/60 tracking-wide">
-          Built by AKLO Labs
+          Built by{" "}
+          <a 
+            href="https://x.com/aklolabs"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-neutral-500 transition-colors"
+          >
+            AKLO Labs
+          </a>
         </p>
       </main>
     </>
