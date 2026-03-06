@@ -115,9 +115,9 @@ async function synthesizeWithCreativeDirector(extractionData: any, screenshot: s
   // Extract base64 data from data URL
   const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, "");
 
-  // Use Gemini 2.5 Pro for best visual design analysis
-  console.log(`[extract] Using Gemini 2.5 Pro for visual analysis...`);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-pro-preview-05-06" });
+  // Use Gemini 3.1 Pro for best visual design analysis
+  console.log(`[extract] Using Gemini 3.1 Pro for visual analysis...`);
+  const model = genAI.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
   const result = await model.generateContent([
     { text: prompt },
     {
