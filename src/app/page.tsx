@@ -65,7 +65,7 @@ export default function LandingPage() {
             className="mb-4 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)] group-hover:scale-105 transition-transform duration-300"
             priority
           />
-          <h1 className="text-[28px] font-semibold tracking-[0.02em] text-neutral-400 mb-1.5 group-hover:text-neutral-500 transition-colors">
+          <h1 className="text-[28px] font-semibold tracking-[0.02em] text-neutral-400 mb-1.5">
             NewSphere
           </h1>
           <p className="text-[12px] tracking-[0.15em] text-neutral-400/70 font-normal">
