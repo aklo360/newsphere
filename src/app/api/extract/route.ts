@@ -33,43 +33,49 @@ async function extractViaPuppeteer(url: string): Promise<any> {
 // AI CREATIVE DIRECTOR (synthesizes raw data into brand identity)
 // ═══════════════════════════════════════════════════════════════════
 
-const CREATIVE_DIRECTOR_PROMPT = `You are an expert AI Creative Director. You've been given ACTUAL CSS DATA extracted from a website via Puppeteer — real hex colors, real font names, real content.
+const CREATIVE_DIRECTOR_PROMPT = `You are an expert AI Creative Director analyzing a website's brand identity.
 
-Your job is to SYNTHESIZE this raw data into a cohesive brand identity, making intelligent creative decisions:
-- Which extracted color is THE primary brand color?
-- How do the fonts reflect the brand personality?
-- What render style matches their aesthetic?
+You have TWO sources of information:
+1. A SCREENSHOT of the website (attached image)
+2. RAW CSS DATA extracted via Puppeteer
 
-RAW EXTRACTION DATA:
+Your job is to determine the TRUE BRAND COLORS by analyzing VISUAL DOMINANCE in the screenshot:
+- What colors APPEAR MOST on the page? (by visual area coverage)
+- What is the PRIMARY brand color? (the distinctive, memorable color — NOT just the background)
+- What are SECONDARY colors? (supporting palette)
+- What are ACCENT colors? (highlights, CTAs, badges)
+
+RAW CSS EXTRACTION DATA:
 {EXTRACTION_DATA}
 
-ANALYZE AND RETURN JSON (no markdown):
+ANALYZE THE SCREENSHOT and CSS DATA, then return JSON (no markdown):
 {
-  "name": "Brand name (from title or hero)",
-  "tagline": "Their tagline if found, or null",
+  "name": "Brand name",
+  "tagline": "Tagline if found, or null",
   "concept": "1-2 sentence description of what they do",
   
   "colors": {
-    "primary": "#hex - THE brand color (pick the most distinctive)",
-    "secondary": "#hex - supporting color",
+    "primary": "#hex - THE distinctive brand color (the memorable one, often NOT the background)",
+    "secondary": "#hex - major supporting color",
     "accent": "#hex - highlight/CTA color",
-    "background": "#hex - their background",
-    "foreground": "#hex - their text color",
-    "mode": "light or dark (based on bg color)",
-    "reasoning": "Why you chose these colors"
+    "background": "#hex - page background",
+    "foreground": "#hex - main text color",
+    "palette": ["#hex", "#hex", "#hex", "#hex", "#hex", "#hex"] - ALL brand colors in order of visual importance,
+    "mode": "light or dark",
+    "reasoning": "Explain the color hierarchy based on what you SEE in the screenshot"
   },
   
   "typography": {
-    "heading": "Exact font from extraction (or Google Font match)",
+    "heading": "Font name (from extraction or closest Google Font)",
     "headingWeight": 600,
-    "body": "Exact font from extraction (or Google Font match)",
+    "body": "Font name",
     "bodyWeight": 400,
-    "reasoning": "Why these fonts fit the brand"
+    "reasoning": "How the typography reflects brand personality"
   },
   
   "style": {
     "preset": "flat|gradient|glass|gavin|chrome|gold|silver|neon|3d|holographic",
-    "reasoning": "Why this style matches the brand"
+    "reasoning": "Why this style matches based on visual design"
   },
   
   "personality": ["trait1", "trait2", "trait3"],
@@ -81,22 +87,43 @@ ANALYZE AND RETURN JSON (no markdown):
   }
 }
 
-RULES:
-- USE THE ACTUAL EXTRACTED DATA — don't guess!
-- The extracted colors.allColors array contains REAL CSS colors from the site
-- The fonts.allFonts array contains REAL font-family values
-- If a font isn't a Google Font, find the closest match (Inter, DM Sans, Space Grotesk, etc.)
-- Primary color = the most distinctive brand color, NOT necessarily the background`;
+CRITICAL RULES:
+- LOOK AT THE SCREENSHOT to determine visual importance of colors
+- Primary color = the DISTINCTIVE brand color (e.g., Coca-Cola red, Spotify green, Stripe purple)
+- Background colors (black/white) are important but often NOT the "primary brand color"
+- Order the palette by VISUAL DOMINANCE — what you actually see
+- Use the CSS extraction to get exact hex values
+- If fonts aren't Google Fonts, find closest matches`;
 
-async function synthesizeWithCreativeDirector(extractionData: any): Promise<any> {
+async function synthesizeWithCreativeDirector(extractionData: any, screenshot: string): Promise<any> {
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
   const prompt = CREATIVE_DIRECTOR_PROMPT.replace(
     "{EXTRACTION_DATA}",
-    JSON.stringify(extractionData, null, 2)
+    JSON.stringify({
+      title: extractionData.title,
+      metaDescription: extractionData.metaDescription,
+      hero: extractionData.hero,
+      fonts: extractionData.fonts,
+      colors: extractionData.colors,
+      logo: extractionData.logo,
+    }, null, 2)
   );
 
-  const result = await model.generateContent([{ text: prompt }]);
+  // Extract base64 data from data URL
+  const base64Data = screenshot.replace(/^data:image\/\w+;base64,/, "");
+
+  // Send both text prompt AND screenshot image
+  const result = await model.generateContent([
+    { text: prompt },
+    {
+      inlineData: {
+        mimeType: "image/png",
+        data: base64Data,
+      },
+    },
+  ]);
+  
   const response = result.response.text();
   
   // Parse JSON
@@ -131,9 +158,9 @@ export async function POST(req: NextRequest) {
     console.log(`[extract] Got raw data. Fonts: ${rawData.fonts?.allFonts?.join(", ")}`);
     console.log(`[extract] Logo: ${rawData.logo ? "found" : "none"}`);
 
-    // Stage 2: AI Creative Director synthesizes the data
-    console.log(`[extract] Running AI Creative Director...`);
-    const brandIdentity = await synthesizeWithCreativeDirector(rawData);
+    // Stage 2: AI Creative Director analyzes screenshot + CSS data
+    console.log(`[extract] Running AI Creative Director with vision...`);
+    const brandIdentity = await synthesizeWithCreativeDirector(rawData, rawData.screenshot);
     
     console.log(`[extract] Brand: ${brandIdentity.name}, Style: ${brandIdentity.style?.preset}`);
 
@@ -156,7 +183,11 @@ export async function POST(req: NextRequest) {
       // Raw data for debugging/advanced use
       _raw: {
         fonts: rawData.fonts,
-        colors: rawData.colors,
+        colors: {
+          ...rawData.colors,
+          // Add the AI-determined palette as the primary color source
+          allColors: brandIdentity.colors?.palette || rawData.colors?.allColors || [],
+        },
         title: rawData.title,
         metaDescription: rawData.metaDescription,
       },
