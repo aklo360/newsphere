@@ -1,0 +1,12 @@
+{
+  "brands": {
+    "agentcoin": {
+      "systemPath": "./output/agentcoin/brand-system.json",
+      "description": "Crypto coin, dark mode, Space Grotesk + Inter"
+    },
+    "pvpicks": {
+      "systemPath": "./output/pvpicks/brand-system.json",
+      "description": "Gamified sports prediction platform, emerald on white/off-white, TitlingGothicFBWide + Inter"
+    }
+  }
+}

@@ -25,8 +25,8 @@ if (!apiKey) {
 }
 
 export const ai = new GoogleGenAI({ apiKey });
-export const IMAGE_MODEL = "gemini-3-pro-image-preview";
-export const TEXT_MODEL = "gemini-2.0-flash";
+export const IMAGE_MODEL = "gemini-3.1-flash-image-preview";
+export const TEXT_MODEL = "gemini-3.1-pro-preview";
 export const UPSCALE_MODEL = "imagen-4.0-upscale-preview";
 
 // ═══════════════════════════════════════════════════════════════════
