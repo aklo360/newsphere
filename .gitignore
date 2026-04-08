@@ -1,3 +1,7 @@
+# Workspace config (not repo code)
+.claude/
+.codex/
+
 # Dependencies
 node_modules/
 
