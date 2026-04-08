@@ -17,7 +17,6 @@ Thumbs.db
 # Environment
 .env
 .env.local
-.dev.vars
 
 # Logs
 *.log
@@ -31,6 +30,3 @@ npm-debug.log*
 
 # TypeScript cache
 *.tsbuildinfo
-
-# Astro
-.astro/
