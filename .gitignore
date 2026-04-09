@@ -38,3 +38,8 @@ npm-debug.log*
 
 # Astro
 .astro/
+
+# Next.js (web/)
+web/node_modules/
+web/.next/
+web/.env.local
