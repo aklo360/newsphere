@@ -50,8 +50,8 @@ export default function Dashboard() {
           <Image
             src="/logomark.png"
             alt="NewSphere"
-            width={80}
-            height={80}
+            width={96}
+            height={96}
             className="mb-4 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)]"
             priority
           />

@@ -64,8 +64,8 @@ export async function GET() {
           {/* Logo */}
           <img
             src={`data:image/png;base64,${Buffer.from(logoData).toString('base64')}`}
-            width={120}
-            height={120}
+            width={144}
+            height={144}
             style={{
               marginBottom: '24px',
               filter: 'drop-shadow(0 0 30px rgba(255,255,255,0.8))',

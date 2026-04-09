@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     description: "Automate your branding & marketing with our fully agentic creative agency.",
     images: [
       {
-        url: "/og-image.jpg",
+        url: "/api/og",
         width: 1280,
         height: 675,
         alt: "NewSphere - Agentic Creative Agency",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     creator: "@newsphere_ai",
     title: "NewSphere — Agentic Creative Agency",
     description: "Automate your branding & marketing with our fully agentic creative agency.",
-    images: ["/og-image.jpg"],
+    images: ["/api/og"],
   },
   icons: {
     icon: "/favicon.png",
