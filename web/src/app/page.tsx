@@ -79,7 +79,7 @@ export default function LandingPage() {
           className="mb-12 flex flex-col items-center group"
         >
           <Image
-            src="/logomark.png"
+            src="/newsphere-logo-v2.png"
             alt="NewSphere"
             width={96}
             height={96}

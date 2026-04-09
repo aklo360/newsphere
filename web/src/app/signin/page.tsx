@@ -79,7 +79,7 @@ export default function SignIn() {
           {/* Logo */}
           <div className="flex flex-col items-center mb-10">
             <Image
-              src="/logomark.png"
+              src="/newsphere-logo-v2.png"
               alt="NewSphere"
               width={96}
               height={96}

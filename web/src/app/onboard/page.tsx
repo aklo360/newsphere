@@ -19,7 +19,7 @@ export default function OnboardPage() {
         {/* Logo */}
         <div className="mb-16 flex flex-col items-center">
           <Image
-            src="/logomark.png"
+            src="/newsphere-logo-v2.png"
             alt="NewSphere"
             width={96}
             height={96}

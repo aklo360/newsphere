@@ -5,7 +5,7 @@ export const runtime = 'edge';
 export async function GET() {
   // Fetch the logo
   const logoData = await fetch(
-    new URL('/logomark.png', 'https://newsphere.xyz')
+    new URL('/newsphere-logo-v2.png', 'https://newsphere.xyz')
   ).then((res) => res.arrayBuffer());
 
   return new ImageResponse(
