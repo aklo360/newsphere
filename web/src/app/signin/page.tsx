@@ -79,10 +79,10 @@ export default function SignIn() {
           {/* Logo */}
           <div className="flex flex-col items-center mb-10">
             <Image
-              src="/newsphere-logo-v2.png"
+              src="/newsphere-logo-v4.png"
               alt="NewSphere"
-              width={96}
-              height={96}
+              width={80}
+              height={80}
               className="mb-4 drop-shadow-[0_0_25px_rgba(255,255,255,0.6)]"
               priority
             />
