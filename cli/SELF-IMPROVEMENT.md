@@ -3,45 +3,45 @@
 ## The Loop
 
 ```
-Generate ANY asset → Notice issue/success → Update LEARNINGS.md → ALL future generations improve
+Generate ANY asset → Notice issue/success → Update CHANGELOG.md → ALL future generations improve
 ```
 
 ## How It Works
 
 ```
-src/learnings/LEARNINGS.md    ← THE BRAIN (edit this file)
+src/guidance/CHANGELOG.md     ← THE BRAIN (edit this file)
          ↓
-    loadLearnings()           ← Read at runtime
+    loadGuidance()            ← Read at runtime
          ↓
     Injected into prompts     ← Affects ALL generation
 ```
 
 ## The Magic
 
-**Edit `src/learnings/LEARNINGS.md` → change ALL future design outputs.**
+**Edit `src/guidance/CHANGELOG.md` → change ALL future design outputs.**
 
 That's it. One markdown file. Services load it at runtime and inject into prompts.
 
 ## Usage in Services
 
 ```typescript
-import { loadLearnings, injectLearnings, getLearningsSection } from "../learnings/index.js";
+import { loadGuidance, injectGuidance, getGuidanceSection } from "../guidance/index.js";
 
-// Option 1: Inject full learnings
-const prompt = injectLearnings("Create a logo for...");
+// Option 1: Inject full guidance
+const prompt = injectGuidance("Create a logo for...");
 
 // Option 2: Inject specific sections
-const prompt = injectLearnings("Create a mascot...", ["MASCOT RULES", "HIGHLIGHTS"]);
+const prompt = injectGuidance("Create a mascot...", ["MASCOT RULES", "HIGHLIGHTS"]);
 
 // Option 3: Get section for manual use
-const mascotRules = getLearningsSection("MASCOT RULES");
+const mascotRules = getGuidanceSection("MASCOT RULES");
 ```
 
 ## File Structure
 
 ```
-src/learnings/
-├── LEARNINGS.md     ← THE BRAIN (edit to improve ALL design)
+src/guidance/
+├── CHANGELOG.md     ← THE BRAIN (edit to improve ALL design)
 ├── index.ts         ← Loader functions
 ├── core.ts          ← TypeScript constants (optional, for type safety)
 ├── logo.ts          ← Logo-specific (optional)
@@ -50,7 +50,7 @@ src/learnings/
 └── mascot.ts        ← Mascot-specific (optional)
 ```
 
-**Primary**: `LEARNINGS.md` — edit this to improve outputs
+**Primary**: `CHANGELOG.md` — edit this to improve outputs
 **Secondary**: `*.ts` files — for structured data when needed
 
 ## Self-Improvement Workflow
@@ -59,12 +59,12 @@ src/learnings/
 1. GENERATE    → Create any asset
 2. REVIEW      → Check output quality  
 3. IDENTIFY    → What went wrong/right?
-4. EDIT        → Update LEARNINGS.md
+4. EDIT        → Update CHANGELOG.md
 5. TEST        → Regenerate to verify
 6. COMMIT      → Save with descriptive message
 ```
 
-## LEARNINGS.md Sections
+## CHANGELOG.md Sections
 
 | Section | Affects |
 |---------|---------|
@@ -79,15 +79,15 @@ src/learnings/
 
 ## Determinism
 
-- Same LEARNINGS.md + same inputs = same outputs
+- Same CHANGELOG.md + same inputs = same outputs
 - Changes only happen when you edit the file
 - Git tracks all changes for rollback
 
 ## Key Insight
 
 OpenGFX is not a static tool. It's a **stateful agent** with:
-- **Persistent memory** (LEARNINGS.md, MEMORY.md)
-- **Self-modification** (can edit its own learnings)
-- **Runtime-loaded rules** (LEARNINGS.md read at generation time)
+- **Persistent memory** (CHANGELOG.md, MEMORY.md)
+- **Self-modification** (can edit its own guidance)
+- **Runtime-loaded rules** (CHANGELOG.md read at generation time)
 
-The learnings ARE OpenGFX's design brain. Edit them → rewire future outputs.
+The guidance changelog is OpenGFX's design brain. Edit it → rewire future outputs.

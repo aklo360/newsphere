@@ -290,12 +290,12 @@ See `SELF-IMPROVEMENT.md` for full documentation.
 
 ### The Loop
 ```
-Generate ANY asset → Notice issue/success → Update learnings → ALL future generations improve
+Generate ANY asset → Notice issue/success → Update guidance → ALL future generations improve
 ```
 
-### Learnings Hierarchy
+### Guidance Hierarchy
 ```
-src/learnings/
+src/guidance/
 ├── index.ts       ← Import from here
 ├── core.ts        ← UNIVERSAL (Gemini, colors, post-processing)
 ├── logo.ts        ← Logo rules (icons, wordmarks, lockups)
@@ -315,12 +315,12 @@ src/learnings/
 | Creature/pose issues | `mascot.ts` |
 
 ### Principle
-**Edit learnings files to change output, NOT service files.**
-Learnings are read at runtime → changes automatically affect ALL future generations.
+**Edit guidance files to change output, NOT service files.**
+Guidance is read at runtime → changes automatically affect ALL future generations.
 
 ## CRITICAL: Development Process (NEVER FORGET)
 **This Telegram thread with @aklo360 is the DEVELOPMENT ENVIRONMENT for OpenGFX.**
-- ALL feedback, corrections, and learnings MUST be embedded into SOURCE CODE (`src/*.ts`)
+- ALL feedback, corrections, and durable guidance MUST be embedded into SOURCE CODE (`src/*.ts`)
 - MEMORY.md is for MY context only — it does NOT affect production/ACP
 - When aklo gives notes → UPDATE THE CODE, not just memory
 - The pipeline must EVOLVE and GET BETTER with each iteration

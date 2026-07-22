@@ -1,4 +1,4 @@
-# OpenGFX Design Learnings
+# OpenGFX Design Changelog
 
 This file is loaded at runtime and injected into ALL design generation prompts.
 Edit this file → change ALL future outputs.

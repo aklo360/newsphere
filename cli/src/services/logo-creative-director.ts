@@ -29,7 +29,7 @@ import { FONT_LIBRARY, INSTALLED_FONTS } from "../constants.js";
 
 const CDN_BASE = "https://pub-156972f0e0f44d7594f4593dbbeaddcb.r2.dev";
 
-// Import existing learnings — these are PRESERVED
+// Import existing prompt guidance.
 import {
   LOGO_RULES,
   LOGO_ANTI_PATTERNS,
@@ -41,7 +41,7 @@ import {
   BANNER_PROMPT_BLOCK,
   RENDER_STYLES,
   EYE_RENDERING_RULES,
-} from "../learnings/logo.js";
+} from "../guidance/logo.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

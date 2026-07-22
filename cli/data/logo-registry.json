@@ -27,12 +27,76 @@
       "primaryColor": "#34A853",
       "renderStyle": "flat-solid",
       "createdAt": "2026-02-19"
+    },
+    {
+      "brandName": "EXENT",
+      "iconConcept": "Geometric NYC skyline seal",
+      "primaryColor": "#000000",
+      "renderStyle": "chrome",
+      "createdAt": "2026-04-09"
+    },
+    {
+      "brandName": "EXENT",
+      "iconConcept": "Minimalist laurel wreath seal",
+      "primaryColor": "#000000",
+      "renderStyle": "chrome",
+      "createdAt": "2026-04-09"
+    },
+    {
+      "brandName": "EXENT",
+      "iconConcept": "Art Deco 'EE' monogram",
+      "primaryColor": "#D4AF37",
+      "renderStyle": "chrome",
+      "createdAt": "2026-04-09"
+    },
+    {
+      "brandName": "EXENT",
+      "iconConcept": "Geometric crown circular seal",
+      "primaryColor": "#D4AF37",
+      "renderStyle": "chrome",
+      "createdAt": "2026-04-09"
+    },
+    {
+      "brandName": "EXENT",
+      "iconConcept": "Modern shield sword seal",
+      "primaryColor": "#FFFFFF",
+      "renderStyle": "chrome",
+      "createdAt": "2026-04-09"
+    },
+    {
+      "brandName": "EXENT",
+      "iconConcept": "Upward peak within circular seal",
+      "primaryColor": "#FFFFFF",
+      "renderStyle": "chrome",
+      "createdAt": "2026-04-09"
+    },
+    {
+      "brandName": "EXENT",
+      "iconConcept": "Minimalist shutter in circular seal",
+      "primaryColor": "#000000",
+      "renderStyle": "chrome",
+      "createdAt": "2026-04-09"
+    },
+    {
+      "brandName": "EXENT",
+      "iconConcept": "Minimalist circular ribbon seal",
+      "primaryColor": "#000000",
+      "renderStyle": "chrome",
+      "createdAt": "2026-04-09"
     }
   ],
   "takenConcepts": [
     "abstract brain muscle form",
     "stylized crescent moon coffee bean",
     "interlocking quantum circuit glyph",
-    "abstract vertical leaf growth"
+    "abstract vertical leaf growth",
+    "geometric nyc skyline seal",
+    "minimalist laurel wreath seal",
+    "art deco 'ee' monogram",
+    "geometric crown circular seal",
+    "modern shield sword seal",
+    "upward peak within circular seal",
+    "minimalist shutter in circular seal",
+    "minimalist circular ribbon seal"
   ]
 }

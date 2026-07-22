@@ -1,4 +1,4 @@
-# OpenGFX Logo Learnings
+# OpenGFX Logo Changelog
 
 Production-learned guidance for logo generation.
 **Update this file to improve logo quality.**
